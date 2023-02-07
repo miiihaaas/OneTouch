@@ -1,0 +1,236 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>ovo je lista učenika</h2>
+<a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>ID učenika</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Razred</th>
+            <th>Odeljenje</th>
+            <th>Aktivnosti</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr class="odd">
+            <td>{{ student.id }}</td>
+            <td>{{ student.student_name }}</td>
+            <td>{{ student.student_surname }}</td>
+            <td>{{ student.student_class }}</td>
+            <td>{{ student.student_section }}</td>
+            <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{student.id}}">edit</a>
+                <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#DeleteModal{{student.id}}">delete</a></td>
+        </tr>
+        <!-- Modal Delete -->
+        <div class="modal fade" id="DeleteModal{{student.id}}" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                <label for="input_password">Da bi ste obrisali profil učenika {{ student.student_name }} {{ student.student_surname }} potrebno je potvrditi svojom lozinkom:</label>
+                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                        <form action="{{ url_for('students.delete_student', student_id=student.id) }}" method="post">
+                            <input class="btn btn-danger" type="submit" value="Obrišite Učenika">
+                            <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Edit -->
+        <div class="modal fade" id="EditModal{{student.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="EditModalLabel">Detalji učenika</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                <label for="input_password">neki opisni tekst {{student}}</label>
+                <form action="" method="POST">
+                    {{ edit_form.hidden_tag() }}
+                    <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
+                        <input value="{{student.id}}" id="get_student" name="get_student">
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.student_name.label(class="form-control-label") }}
+                        {% if edit_form.student_name.errors %}
+                            {{ edit_form.student_name(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.student_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ edit_form.student_name(class="form-control form-control-lg", value=student.student_name) }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.student_surname.label(class="form-control-label") }}
+                        {% if edit_form.student_surname.errors %}
+                            {{ edit_form.student_surname(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.student_surname.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ edit_form.student_surname(class="form-control form-control-lg", value=student.student_surname) }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.student_class.label(class="form-control-label") }}
+                        {% if edit_form.student_class.errors %}
+                            {{ edit_form.student_class(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.student_class.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ edit_form.student_class(class="form-select form-select-lg", selected=student.student_class) }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.student_section.label(class="form-control-label") }}
+                        {% if edit_form.student_section.errors %}
+                            {{ edit_form.student_section(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.student_section.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ edit_form.student_section(class="form-select form-select-lg", selected=student.student_section) }}
+                        {% endif %}
+                    </div>
+                    </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                            {{ edit_form.submit_edit(class="btn btn-info") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal Register -->
+<div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="RegisterModalLabel">Registracija novog učenika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <div class="modal-body">
+        <label for="input_password">Popunite podatke učenika</label>
+        <form action="" method="POST">
+            {{ register_form.hidden_tag() }}
+            <div class="form-group">
+                {{ register_form.student_name.label(class="form-control-label") }}
+                {% if register_form.student_name.errors %}
+                    {{ register_form.student_name(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_name(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.student_surname.label(class="form-control-label") }}
+                {% if register_form.student_surname.errors %}
+                    {{ register_form.student_surname(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_surname.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_surname(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.student_class.label(class="form-control-label") }}
+                {% if register_form.student_class.errors %}
+                    {{ register_form.student_class(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_class.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_class(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.student_section.label(class="form-control-label") }}
+                {% if register_form.student_section.errors %}
+                    {{ register_form.student_section(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_section.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_section(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    <div class="form-group"></div>
+                        {{ register_form.submit_register(class="btn btn-outline-info") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content%}
+
+{% block scripts %}
+<!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
+<!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
+<!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
+<!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
+    <script>
+        $(document).ready(function () {
+            $('#data').DataTable({
+                    columnDefs: [
+                    {
+                        // targets: [5],
+                        visible: false,
+                        searchable: true,
+                    },
+                ],
+                order: [[3, 'desc'], [4, 'desc']],
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                }
+            });
+        });
+    </script>
+
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>ovo je škola brale, nema tu zajebancije</h2>
+
+<div class="content-section">
+    <form method= "POST" action="">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <div class="row">
+                <div class="col form-group">
+                    {{ form.school_name.label(class="form-control-label") }} 
+                    {% if form.school_name.errors %} 
+                        {{ form.school_name(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.school_name.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %} 
+                        {{ form.school_name(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>
+                <div class="col form-group">
+                    {{ form.school_address.label(class="form-control-label") }} 
+                    {% if form.school_address.errors %} 
+                        {{ form.school_address(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.school_address.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %} 
+                        {{ form.school_address(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col form-group">
+                    {{ form.school_zip_code.label(class="form-control-label") }} 
+                    {% if form.school_zip_code.errors %} 
+                        {{ form.school_zip_code(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.school_zip_code.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %} 
+                        {{ form.school_zip_code(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>
+                <div class="col form-group">
+                    {{ form.school_city.label(class="form-control-label") }} 
+                    {% if form.school_city.errors %} 
+                        {{ form.school_city(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.school_city.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %} 
+                        {{ form.school_city(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col form-group">
+                    {{ form.school_municipality.label(class="form-control-label") }} 
+                    {% if form.school_municipality.errors %} 
+                        {{ form.school_municipality(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.school_municipality.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %} 
+                        {{ form.school_municipality(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>
+                <div class="col form-group">
+                    {{ form.school_bank_account.label(class="form-control-label") }} 
+                    {% if form.school_bank_account.errors %} 
+                        {{ form.school_bank_account(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.school_bank_account.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %} 
+                        {{ form.school_bank_account(class="form-control form-control-lg") }} 
+                    {% endif %}
+                </div>
+            </div>
+            {{ form.submit(class="btn btn-outline-info") }}
+        </fieldset>
+    </form>
+</div>
+
+{% endblock content%}
