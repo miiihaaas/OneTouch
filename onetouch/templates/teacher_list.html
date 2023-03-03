@@ -35,7 +35,7 @@
                         </button>
                     </div>
                 <div class="modal-body">
-                <label for="input_password">Da bi ste obrisali profil razrednog starešine {{ teacher.teacher_name }} {{ teacher.teacher_surname }} potrebno je potvrditi svojom lozinkom:</label>
+                <label for="input_password">Da bi ste obrisali profil razrednog starešine "{{ teacher.teacher_name }} {{ teacher.teacher_surname }}" potrebno je potvrditi svojom lozinkom:</label>
                 </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
@@ -101,7 +101,8 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ edit_form.teacher_class(class="form-select form-select-lg", selected=teacher.teacher_class) }}
+                            {% set z = edit_form.teacher_class.process_data(teacher.teacher_class) %}
+                            {{ edit_form.teacher_class(class="form-select form-select-lg", value=teacher.teacher_class) }}
                         {% endif %}
                     </div>
                     <div class="form-group">
@@ -114,6 +115,7 @@
                                 {% endfor %}
                             </div>
                         {% else %}
+                            {% set z = edit_form.teacher_section.process_data(teacher.teacher_section) %}
                             {{ edit_form.teacher_section(class="form-select form-select-lg", selected=teacher.teacher_section) }}
                         {% endif %}
                     </div>

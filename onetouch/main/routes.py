@@ -1,5 +1,5 @@
 from flask import Blueprint
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user
 
 
@@ -20,3 +20,9 @@ def home():
 @main.route("/about")
 def about():
     return render_template('about.html', title='O softveru')
+
+
+@main.route('/ajax', methods=['POST'])
+def ajax():
+    new_value = request.form.get('new_value')
+    return new_value

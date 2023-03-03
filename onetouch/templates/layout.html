@@ -21,6 +21,14 @@
     {% else %}
       <title>OneTouch</title>
     {% endif %}
+
+    <!-- dropdown checkboxes --><!--! Miki kad bude radio CSS ovde imaju neki predefinisani linkovi koji utiču na izgled! a bitni su sa dropdown checkboxes -->
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script> -->
+    <script src="{{ url_for('static', filename='miki_mihas.js') }}"></script> <!--! ovo je kopirana skripta u lokalu - verzija za gornji red -->
   </head>
   <body>
     <header class="site-header">
@@ -40,7 +48,7 @@
                 <a class="nav-item nav-link" href="{{ url_for('main.about') }}">O softveru</a>
                 <a class="nav-item nav-link" href="{{ url_for('students.student_list') }}">Učenici</a>
                 <a class="nav-item nav-link" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
-                <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Odjavite se se</a>
+                <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Odjavite se</a>
                 <a class="nav-item nav-link" href="#">{{ current_user.user_name }}</a>
                 
               {% else %}
@@ -71,14 +79,17 @@
               <a href="#">Početna strana</a>
             </li>
             <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">
-                Unos podataka #
-              </a>
+              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Unos podataka #</a>
+              <a class="nav-item nav-link" href="{{ url_for('students.student_list') }}">Učenici</a>
+              <a class="nav-item nav-link" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
+              <a class="nav-item nav-link" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
+              <a class="nav-item nav-link" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
+              <a class="nav-item nav-link" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
+              <a class="nav-item nav-link" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
             </li>
             <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">
-                Knjiženje #
-              </a>
+              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Knjiženje #</a>
+              <a class="nav-item nav-link" href="{{ url_for('students.student_debts') }}">Zaduživanje učenika</a>
             </li>
             <li class="active">
               <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">

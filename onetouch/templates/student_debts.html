@@ -1,0 +1,241 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Student Debts</h2>
+<div class="form-group" style="display: inline-block;">
+    <label for="classes" class="form-control-label">Razred</label>
+    <select name="classes" id="classes" class="form-select form-select-lg">
+        <option value="0">Selektujte razred</option>
+        {% for i in range(1,9) %}
+        <option value="{{i}}">{{i}}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="section" class="form-control-label">Odeljenje</label>
+    <select name="section" id="section" class="form-select form-select-lg" disabled>
+        <option value="">Selektujte odeljenje</option>
+        {% for i in range(1,15) %}
+        <option value="{{i}}">{{i}}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="service_item" class="form-control-label">Usluga</label>
+    <select name="service_item" id="service_item" class="form-select form-select-lg" disabled>
+        <option value="0">Selektujte uslugu</option>
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="installment" class="form-control-label">Rata</label>
+    <select name="installment" id="installment" class="form-select form-select-lg" disabled>
+        <option value="">Selektujte ratu</option>
+        {% for service in services %}
+            <option value="">work in progress</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="installment_value">Iznos</label>
+    <input name="installment_value" id="installment_value" type="text" class="form-control form-control-lg" value="---" readonly>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="today_date" class="form-control-label">Datum</label>
+    <input type="date" id="today_date" class="form-control form-control-lg" readonly>
+</div>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>Učenik</th>
+            <th>Odeljenje</th>
+            <th>Razred</th>
+            <th>Poziv na broj</th>
+            <th>Usluga</th>
+            <th>Količina</th>
+            <th>Iznos</th>
+            <th>Olakšica</th>
+            <th>iznos zaduženja</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in students %}
+        <tr class="odd">
+            <td>{{ student.student_name }} {{ student.student_surname }}</td>
+            <td>{{ student.student_class }}</td>
+            <td>{{ student.student_section }}</td>
+            <td id="poziv_na_broj_{{ student.id }}"></td>
+            <td id="usluga_{{ student.id }}"></td>
+            <td id="kolicina_{{ student.id }}">0</td>
+            <td id="iznos_{{ student.id }}"></td>
+            <td id="olaksice_{{ student.id }}">100</td>
+            <td id="iznos_zaduženja_{{ student.id }}">3</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="form-group">
+    <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
+    <input type="text" id="purpose_of_payment" class="form-control form-control-lg" disabled>
+</div>
+<div class="form-group">
+    <button class="btn btn-info" disabled>Sačuvajte</button>
+    <button class="btn btn-info" disabled>Štampa</button>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function () {
+            const selectFieldClasses = $('#classes');
+            const selectFieldSection = $('#section');
+            const selectFieldServiceItem = $('#service_item');
+            const selectFieldInstallment = $('#installment');
+            const inputFieldInstallmentValue = $('#installment_value');
+            const iznosCells = document.querySelectorAll('[id^="iznos_"]');
+
+            const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
+            document.getElementById("today_date").value = today;
+
+            selectFieldClasses.on('change', function() {
+                const newValue = selectFieldClasses.val();
+                if(selectFieldClasses.val() === "0") {
+                    console.log('selectkovani razred: ', selectFieldClasses.val());
+                    selectFieldSection.prop('disabled', true);
+                    selectFieldSection.prop('value', "");
+                    selectFieldServiceItem.prop('disabled', true);
+                    selectFieldServiceItem.prop('value', 0);
+                    selectFieldInstallment.prop('disabled', true);
+                } else {
+                    console.log('selectkovani razred: ', selectFieldClasses.val());
+                    selectFieldSection.prop('disabled', false);
+                    selectFieldSection.prop('value', "");
+                    $.ajax({
+                        url: 'get_service_items',
+                        data: {classes: newValue},
+                        method: 'POST',
+                        success: function(data) {
+                            selectFieldServiceItem.html(data);
+                            selectFieldServiceItem.prop('disabled', false);
+                        }
+                    })
+                }
+            });
+            selectFieldServiceItem.on('change', function() {
+                const newValue2 = selectFieldServiceItem.val();
+                console.log('selectkovani usluga nova vrednost: ', newValue2);
+                if(selectFieldServiceItem.val() === "0") {
+                    console.log('selectkovani usluga je nula');
+                    selectFieldInstallment.prop('disabled', true);
+                    selectFieldInstallment.prop('value', "");
+                } else {
+                    $.ajax({
+                        url: 'get_installments',
+                        data: {installments: newValue2},
+                        method: 'POST',
+                        success: function(data) {
+                            selectFieldInstallment.html(data);
+                            selectFieldInstallment.prop('disabled', false);
+                        }
+                    })                    
+                }
+            });
+            selectFieldInstallment.on('change', function() {
+                const newValue = selectFieldInstallment.val();
+                const newValue2 = selectFieldServiceItem.val();
+                console.log('rata broj: ', newValue);
+                if(selectFieldInstallment.val() === "0") {
+                    inputFieldInstallmentValue.prop('value', "----")
+                    iznosCells.forEach(cell => {
+                        cell.innerText = 0;
+                    });
+                } else {
+                    $.ajax({
+                        url: 'get_installment_values',
+                        data: {installment_values: newValue,
+                                installments: newValue2},
+                        method: 'POST',
+                        success: function(data) {
+                            var value = data.result
+                            inputFieldInstallmentValue.val(value)
+                            iznosCells.forEach(cell => {
+                                cell.innerText = value;
+                            });
+                        }
+                    })
+                }
+            })
+        })
+    </script>
+    <script>
+        // krerira tabelu
+        $(document).ready(function () {
+            var table = $('#data').DataTable({
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                }
+            });
+            // prazna tabela
+            table.column(1).search("0").draw();
+            // filter po razredu
+            $('#classes').on('change', function () {
+                var classes = $(this).val();
+                table.column(1).search(classes).draw();
+            });
+            // filter po odeljenju
+            $('#section').on('change', function () {
+                var section = $(this).val();
+                table.column(2).search(section).draw();
+            });
+        });
+    </script>
+    <script>
+        const select = document.getElementById('service_item');
+        const selectInstallment = document.getElementById('installment');
+        const pozivNaBrojCells = document.querySelectorAll('[id^="poziv_na_broj_"]');
+        const uslugaCells = document.querySelectorAll('[id^="usluga_"]');
+        const inputIznos = document.getElementById('installment_value');
+        
+        select.addEventListener('change', (event) => {
+            const selectedServiceId = event.target.value;
+            const selectedServiceText = event.target.options[event.target.selectedIndex].text;
+        
+            pozivNaBrojCells.forEach(cell => {
+                const studentId = cell.id.split('_')[3];
+                cell.innerText = `${studentId}-${selectedServiceId}`;
+            });
+            uslugaCells.forEach(cell => {
+                cell.innerText = `${selectedServiceText}`;
+            });
+        });
+        // In this code, we first retrieve the dropdown menu and all the "Poziv na broj" cells using their respective IDs and a query selector. 
+        // We then add an event listener to the dropdown menu for the change event. When the dropdown menu value changes, the event listener function is called, 
+        // and we retrieve the selected service ID using event.target.value.
+
+        // We then loop through all the "Poziv na broj" cells using the forEach method, and for each cell, we extract the student ID from the cell's ID attribute using the split method. 
+        // We then update the cell's text using the innerText property, concatenating the student ID and the selected service ID with a hyphen.
+    </script>
+    <script>
+        console.log("Event listener added!");
+        $(document).ready(function() {
+            // Add an event listener for any change in the document
+            $(document).on('change', function() {
+                // Loop through each row in the table
+                $('#data tbody tr').each(function() {
+                    // Get the values of količina, iznos, and olakšica for the current row
+                    console.log('debug text: ' + $(this).find('td:nth-child(6)').text())
+                    var kolicina = parseFloat($(this).find('td:nth-child(6)').text());
+                    var iznos = parseFloat($(this).find('td:nth-child(7)').text());
+                    var olaksice = parseFloat($(this).find('td:nth-child(8)').text());
+                    console.log('količina: ' + kolicina)
+                    console.log('iznos: ' + iznos)
+                    console.log('olaksice: ' + olaksice)
+                    
+                    // Calculate the value of iznos zaduženja using the formula and update the corresponding cell
+                    var iznos_zaduzenja = kolicina * iznos - olaksice;
+                    $(this).find('td:nth-of-type(9)').text(iznos_zaduzenja.toFixed(2));
+                });
+            });
+        });
+    </script>
+    
+
+{% endblock %}

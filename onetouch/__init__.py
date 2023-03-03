@@ -34,14 +34,16 @@ app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') # https://www.youtube.com/
 app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASS') # https://www.youtube.com/watch?v=IolxqkL7cD8&ab_channel=CoreySchafer -- za 2 step verification: https://support.google.com/accounts/answer/185833
 mail = Mail(app)
 
-from onetouch.schools.routes import schools
 from onetouch.main.routes import main
-from onetouch.users.routes import users
+from onetouch.schools.routes import schools
 from onetouch.students.routes import students
+from onetouch.suppliers.routes import suppliers
 from onetouch.teachers.routes import teachers
+from onetouch.users.routes import users
 
-app.register_blueprint(schools)
 app.register_blueprint(main)
-app.register_blueprint(users)
+app.register_blueprint(schools)
 app.register_blueprint(students)
+app.register_blueprint(suppliers)
 app.register_blueprint(teachers)
+app.register_blueprint(users)

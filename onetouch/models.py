@@ -30,12 +30,40 @@ class Supplier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_name = db.Column(db.String(255), nullable=False)
     services = db.relationship('Service', backref='service_supplier', lazy=True)
+    service_items = db.relationship('ServiceItem', backref='service_item_supplier', lazy=True)
 
 
 class Service(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     service_name = db.Column(db.String(255), nullable=False)
+    payment_per_unit = db.Column(db.String(255), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False) # ovde treba da bude dropdown menu
+    service_items = db.relationship('ServiceItem', backref='service_item_service', lazy=True)
+
+
+class ServiceItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    service_item_name = db.Column(db.String(255), nullable=False)
+    service_item_date = db.Column(db.DateTime, nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    service_item_class = db.Column(db.Integer, nullable=True) #! ovo treba da je dropdown meni sa cekbox itemima koji kada se čekiraju imaju listu kao input
+    price = db.Column(db.Float, nullable=False)
+    # discount = db.Column(db.Float, nullable=False)
+    installment_number = db.Column(db.Integer)
+    installment_1 = db.Column(db.Float, nullable=True)
+    installment_2 = db.Column(db.Float, nullable=True)
+    installment_3 = db.Column(db.Float, nullable=True)
+    installment_4 = db.Column(db.Float, nullable=True)
+    installment_5 = db.Column(db.Float, nullable=True)
+    installment_6 = db.Column(db.Float, nullable=True)
+    installment_7 = db.Column(db.Float, nullable=True)
+    installment_8 = db.Column(db.Float, nullable=True)
+    installment_9 = db.Column(db.Float, nullable=True)
+    installment_10 = db.Column(db.Float, nullable=True)
+    installment_11 = db.Column(db.Float, nullable=True)
+    installment_12 = db.Column(db.Float, nullable=True)
+    student_debts = db.relationship('StudentDebt', backref='student_debt_student_item', lazy=True ) #todo: dodaj u db
 
 
 class Student(db.Model):
@@ -44,6 +72,7 @@ class Student(db.Model):
     student_surname = db.Column(db.String(255), nullable=False)
     student_class = db.Column(db.Integer, nullable=False)
     student_section = db.Column(db.Integer, nullable=False) #todo: naći bolji prevod za odeljenje
+    student_debts = db.relationship('StudentDebt', backref='student_debt_student', lazy=True) #todo: dodaj u db
 
 
 class Teacher(db.Model): #! ovo se odnosi na razrednog tj učitelja
@@ -52,6 +81,16 @@ class Teacher(db.Model): #! ovo se odnosi na razrednog tj učitelja
     teacher_surname = db.Column(db.String(255), nullable=False)
     teacher_class = db.Column(db.Integer, nullable=False)
     teacher_section = db.Column(db.Integer, nullable=False) #todo: naći bolji prevod za odeljenje
+
+
+class StudentDebt(db.Model): #todo: dodaj u db
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    student_debt_reference_number = db.Column(db.String(15), nullable=False)
+    service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
+    student_debt_amount = db.Column(db.Integer) #! ovde treba da bude vrednost ako je na komaad od 0 - 31 tj 0 ili 1 ako nije na komad
+    student_debt_debit_amount = db.Column(db.Float)
+    
     
 
 with app.app_context():

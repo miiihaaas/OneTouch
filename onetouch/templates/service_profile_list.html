@@ -1,0 +1,911 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>ovo je "detaljna" lista usluga</h2>
+<a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>ID usluge</th>
+            <th>Detalji usluge</th>
+            <th>Naziv dobavljača</th>
+            <th>Naziv usluge</th>
+            <th>Cena</th>
+            <th>Broj rata</th>
+            <th>Razred</th>
+            <th>Aktivnosti</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for service_profile in service_profiles %}
+        <tr class="odd">
+            <td>{{ service_profile.id }}</td>
+            <td>{{ service_profile.service_item_service.service_name }} - {{ service_profile.service_item_name }}</td>
+            <td>{{ service_profile.service_item_supplier.supplier_name }}</td>
+            <td>{% if service_profile.service_item_service.payment_per_unit == 'kom' %}
+                {{ service_profile.service_item_service.service_name }} (kom)
+            {% else %}
+                {{ service_profile.service_item_service.service_name }}
+            {% endif %}</td>
+            <td>{{ service_profile.price }}</td>
+            <td>{{ service_profile.installment_number }}</td>
+            <td>{{ service_profile.service_item_class }}</td>
+            <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}"><img src="/static/img/edit_button.png" alt="Edit"></a>
+                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}"><img src="/static/img/delete_button.png" alt="Delete"></a></td>
+        </tr>
+        <!-- Modal Delete -->
+        <div class="modal fade" id="DeleteModal{{service_profile.id}}" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                <label for="input_password">Da bi ste obrisali uslugu "{{ service_profile.service_item_name }}" potrebno je potvrditi svojom lozinkom:</label>
+                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                        <form action="{{ url_for('suppliers.delete_service_profile', service_profile_id=service_profile.id) }}" method="post">
+                            <input class="btn btn-danger" type="submit" value="Obrišite uslugu">
+                            <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Edit -->
+        <div class="modal fade bd-example-modal-lg" id="EditModal{{service_profile.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="EditModalLabel">Detalji usluge</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                <label for="input_password">neki opisni tekst {{service_profile}}</label>
+                <form action="" method="POST">
+                    {{ edit_form.hidden_tag() }}
+                    <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
+                        <input type="" value="{{service_profile.id}}" id="get_service_profile-{{service_profile.id}}" name="get_service_profile-{{service_profile.id}}" readonly>
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.supplier_id.label(class="form-control-label") }}
+                        {% if edit_form.supplier_id.errors %}
+                            {{ edit_form.supplier_id(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.supplier_id.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% set z = edit_form.supplier_id.process_data(service_profile.supplier_id) %}
+                            {{ edit_form.supplier_id(class="form-select form-select-lg", id="supplier_id-" + service_profile.id|string) }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        NAPRAVITI KONDICIONAL KADA SE PROMENI TIP USLUGE DA POLJE BUDE EDITABILNO ILI NE
+                        {{ edit_form.service_id.label(class="form-control-label") }}
+                        {% if edit_form.service_id.errors %}
+                            {{ edit_form.service_id(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.service_id.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% set z = edit_form.service_id.process_data(service_profile.service_id) %}
+                            {{ edit_form.service_id(class="form-select form-select-lg", type="date", id="service_id-" + service_profile.id|string) }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.service_item_name.label(class="form-control-label") }} 
+                        {% if edit_form.service_item_name.errors %}
+                            {{ edit_form.service_item_name(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.service_item_name.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% set z = edit_form.service_item_name.process_data(service_profile.service_item_name) %}
+                            {{ edit_form.service_item_name(class="form-control form-control-lg", id="service_item_name-" + service_profile.id|string) }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        napraviti da radi select meni za razrede (učitava iz liste izabrane razrede i preselektuje ih)
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.service_item_class.label(class="form-control-label") }}
+                        {% if edit_form.service_item_class.errors %}
+                            {{ edit_form.service_item_class(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.service_item_class.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                        <select name="classes-{{service_profile.id}}" id="classes-{{service_profile.id}}" class="form-control selectpicker" data-live-search="true" multiple>
+                            {% for i in range(1,9) %}
+                                {% if i|string in service_profile.service_item_class %}
+                                <option value="{{i}}" selected>{{i}}</option>
+                                {% else %}
+                                <option value="{{i}}">{{i}}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {{service_profile.service_item_class}}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.price.label(class="form-control-label") }} 
+                        {% if edit_form.price.errors %}
+                            {{ edit_form.price(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.price.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ edit_form.price(class="form-control form-control-lg", id="price-" + service_profile.id|string, value=service_profile.price) }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_number.label(class="form-control-label") }}
+                        {% if edit_form.installment_number.errors %}
+                            {{ edit_form.installment_number(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_number.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% set z = edit_form.installment_number.process_data(service_profile.installment_number) %}
+                            {{ edit_form.installment_number(class="form-select form-select-lg", id="installment_number-" + service_profile.id|string, onfocus="getIdOfClickedInput(event);") }}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_1.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_1.errors %}
+                            {{ edit_form.installment_1(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_1.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 1 %}
+                                {{ edit_form.installment_1.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_1.process_data(service_profile.installment_1) %}
+                                {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_2.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_2.errors %}
+                            {{ edit_form.installment_2(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_2.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 1 %}
+                                {{ edit_form.installment_2.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_2.process_data(service_profile.installment_2) %}
+                                {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_3.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_3.errors %}
+                            {{ edit_form.installment_3(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_3.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 2 %}
+                                {{ edit_form.installment_3.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_3.process_data(service_profile.installment_3) %}
+                                {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_4.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_4.errors %}
+                            {{ edit_form.installment_4(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_4.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 3 %}
+                                {{ edit_form.installment_4.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_4.process_data(service_profile.installment_4) %}
+                                {{ edit_form.installment_4(class="form-control form-control-lg", id="installment_4-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_4(class="form-control form-control-lg", id="installment_4-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_5.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_5.errors %}
+                            {{ edit_form.installment_5(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_5.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 4 %}
+                                {{ edit_form.installment_5.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_5.process_data(service_profile.installment_5) %}
+                                {{ edit_form.installment_5(class="form-control form-control-lg", id="installment_5-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_5(class="form-control form-control-lg", id="installment_5-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_6.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_6.errors %}
+                            {{ edit_form.installment_6(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_6.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 5 %}
+                                {{ edit_form.installment_6.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_6.process_data(service_profile.installment_6) %}
+                                {{ edit_form.installment_6(class="form-control form-control-lg", id="installment_6-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_6(class="form-control form-control-lg", id="installment_6-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_7.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_7.errors %}
+                            {{ edit_form.installment_7(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_7.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 6 %}
+                                {{ edit_form.installment_7.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_7.process_data(service_profile.installment_7) %}
+                                {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div><div class="form-group">
+                        {{ edit_form.installment_8.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_8.errors %}
+                            {{ edit_form.installment_8(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_8.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 7 %}
+                                {{ edit_form.installment_8.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_8.process_data(service_profile.installment_8) %}
+                                {{ edit_form.installment_8(class="form-control form-control-lg", id="installment_8-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_8(class="form-control form-control-lg", id="installment_8-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_9.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_9.errors %}
+                            {{ edit_form.installment_9(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_9.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 8 %}
+                                {{ edit_form.installment_9.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_9.process_data(service_profile.installment_9) %}
+                                {{ edit_form.installment_9(class="form-control form-control-lg", id="installment_9-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_9(class="form-control form-control-lg", id="installment_9-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_10.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_10.errors %}
+                            {{ edit_form.installment_10(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_10.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 9 %}
+                                {{ edit_form.installment_10.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_10.process_data(service_profile.installment_10) %}
+                                {{ edit_form.installment_10(class="form-control form-control-lg", id="installment_10-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_10(class="form-control form-control-lg", id="installment_10-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_11.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_11.errors %}
+                            {{ edit_form.installment_11(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_11.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 10 %}
+                                {{ edit_form.installment_11.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_11.process_data(service_profile.installment_11) %}
+                                {{ edit_form.installment_11(class="form-control form-control-lg", id="installment_11-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_11(class="form-control form-control-lg", id="installment_11-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        {{ edit_form.installment_12.label(class="form-control-label", style="display: none;") }}
+                        {% if edit_form.installment_12.errors %}
+                            {{ edit_form.installment_12(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.installment_12.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {% if service_profile.installment_number|int > 11 %}
+                                {{ edit_form.installment_12.label(class="form-control-label") }}
+                                {% set z = edit_form.installment_12.process_data(service_profile.installment_12) %}
+                                {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string) }}
+                            {% else %}
+                                {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string, type="hidden") }}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                            {{ edit_form.submit_edit(class="btn btn-info") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Modal Register -->
+<div class="modal fade bd-example-modal-lg" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="RegisterModalLabel">Registracija nove usluge</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <div class="modal-body">
+        <label for="input_password">Popunite podatke usluge</label>
+        <form action="" method="POST">
+            {{ register_form.hidden_tag() }}
+            <div class="form-group">
+                {{ register_form.supplier_id.label(class="form-control-label") }}
+                {% if register_form.supplier_id.errors %}
+                    {{ register_form.supplier_id(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.supplier_id.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.supplier_id(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.service_id.label(class="form-control-label") }}
+                {% if register_form.service_id.errors %}
+                    {{ register_form.service_id(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.service_id.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.service_id(class="form-select form-select-lg", disabled="disabled") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.service_item_name.label(class="form-control-label") }}
+                {% if register_form.service_item_name.errors %}
+                    {{ register_form.service_item_name(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.service_item_name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.service_item_name(class="form-control form-control-lg", disabled="disabled") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.service_item_class.label(class="form-control-label") }}
+                {% if register_form.service_item_class.errors %}
+                    {{ register_form.service_item_class(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.service_item_class.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <select name="classes" id="classes" class="form-control selectpicker" data-live-search="true" multiple>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.price.label(class="form-control-label") }}
+                {% if register_form.price.errors %}
+                    {{ register_form.price(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.price.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.price(class="form-control form-control-lg", disabled="disabled") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_number.label(class="form-control-label") }}
+                {% if register_form.installment_number.errors %}
+                    {{ register_form.installment_number(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_number.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_number(class="form-select form-select-lg", disabled="disabled") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_1.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_1.errors %}
+                    {{ register_form.installment_1(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_1.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_1(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_2.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_2.errors %}
+                    {{ register_form.installment_2(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_2.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_2(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_3.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_3.errors %}
+                    {{ register_form.installment_3(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_3.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_3(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_4.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_4.errors %}
+                    {{ register_form.installment_4(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_4.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_4(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_5.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_5.errors %}
+                    {{ register_form.installment_5(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_5.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_5(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_6.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_6.errors %}
+                    {{ register_form.installment_6(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_6.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_6(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_7.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_7.errors %}
+                    {{ register_form.installment_7(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_7.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_7(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div><div class="form-group">
+                {{ register_form.installment_8.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_8.errors %}
+                    {{ register_form.installment_8(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_8.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_8(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_9.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_9.errors %}
+                    {{ register_form.installment_9(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_9.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_9(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_10.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_10.errors %}
+                    {{ register_form.installment_10(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_10.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_10(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_11.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_11.errors %}
+                    {{ register_form.installment_11(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_11.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_11(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.installment_12.label(class="form-control-label", style="display: none;") }}
+                {% if register_form.installment_12.errors %}
+                    {{ register_form.installment_12(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.installment_12.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.installment_12(class="form-control form-control-lg", type="hidden") }}
+                {% endif %}
+            </div>
+            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    <div class="form-group"></div>
+                        {{ register_form.submit_register(class="btn btn-outline-info", disabled="disabled") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    // skripta za tabelu
+    $(document).ready(function () {
+        $('#data').DataTable({
+                columnDefs: [
+                {
+                    // targets: [5],
+                    visible: false,
+                    searchable: true,
+                },
+            ],
+            order: [[2, 'asc'], [3, 'asc'],],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+    });
+</script>
+
+<script>
+    // skripta dependent dropdown liste (dobavljač -> usluga)
+    $(document).ready(function () {
+        const selectFieldSupplier = $('#supplier_id');
+        const selectFieldService = $('#service_id');
+        const serviceItemNameField = $('#service_item_name');
+        const selectFieldClass = $('#classes')
+        const inputPriceField = $('#price');
+        const selectInstallmentNumberField = $('#installment_number');
+        const buttonSubmitRegister = $('#submit_register');
+        selectFieldSupplier.on('change', function () {
+            const newValue = selectFieldSupplier.val();
+            console.log('New value:', selectFieldSupplier.val());
+            serviceItemNameField.prop('value', '');
+            inputPriceField.prop('value', '');
+            selectInstallmentNumberField.prop('value', 1);
+
+            if(selectFieldSupplier.val() == 0) {
+                console.log('selektovana vrednost je nula, treba da ostane onesposobljeno polje za usluge...');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                selectFieldService.prop('disabled', true);
+                selectFieldService.prop('value', 0);
+                serviceItemNameField.prop('disabled', true);
+                selectFieldClass.prop('disabled', true);
+                inputPriceField.prop('disabled', true);
+                selectInstallmentNumberField.prop('disabled', true);
+            } else {
+                console.log('selektovana vrednost NIJE nula, treba da polje za usluge bude klikabilno...');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                $.ajax({
+                    url: 'get_services',
+                    data: {supplier_id: newValue},
+                    method: 'POST',
+                    success: function (data) {
+                        selectFieldService.html(data);
+                        selectFieldService.prop('disabled', false);
+                    } 
+                })
+                serviceItemNameField.prop('disabled', true);
+                selectFieldClass.prop('disabled', true);
+                inputPriceField.prop('disabled', true);
+                selectInstallmentNumberField.prop('disabled', true);
+            }
+        });
+        selectFieldService.on('change', function () {
+            console.log('vrednost usluge: ', selectFieldService.val());
+            if(selectFieldService.val() == 0) {
+                console.log('selektovana vrednost usluge je nula, treba da datum i detalji usluge budu onesposobljena polja');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                serviceItemNameField.prop('disabled', true);
+                serviceItemNameField.prop('value', '');
+                inputPriceField.prop('disabled', true);
+                inputPriceField.prop('value', '');
+                selectInstallmentNumberField.prop('disabled', true);
+                selectInstallmentNumberField.prop('value', 1);
+            } else {
+                console.log('selektovana vrednost usluge NIJE nula, treba da i detalji usluge, datum, razred i cena budu osposobljena polja');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                $.ajax({
+                    url: 'get_payment',
+                    method: 'POST',
+                    data: {service_id: selectFieldService.val()},
+                    success: function (response) {
+                        var paymentPerUnit = response.payment_per_unit;
+                        if(paymentPerUnit == 'god') {
+                            console.log('god - datum je readonly i vrednost je današnji dan; mogu da se biraju rate (1-12)');
+                            selectInstallmentNumberField.prop('disabled', false);
+                            console.log('napraviti kod koji će da postavi da u select fileld bude izbor od 1-12 rate');
+                            selectInstallmentNumberField.html("");
+                            for (var i = 1; i <= 12; i++) {
+                                    var option = $("<option>");
+                                    option.val(i).text(i);
+                                    selectInstallmentNumberField.append(option); 
+                                }
+                        } else {
+                            console.log('mes ili kom - datum je editabilan; postoji samo izbor od jedne rate');
+                            selectInstallmentNumberField.prop('disabled', false);
+                            console.log('napraviti kod koji će da postavi da u select fileld bude samo izbor od jedne rate'); 
+                            selectInstallmentNumberField.html("");
+                            var option = $("<option>");
+                            option.val(1).text(1);
+                            selectInstallmentNumberField.append(option);
+                        }
+                        serviceItemNameField.prop('disabled', false);
+                        selectFieldClass.prop('disabled', false);
+                        inputPriceField.prop('disabled', false);
+                    }
+                })
+            }
+        });
+        inputPriceField.on('change', function() {
+            console.log('input price: ', inputPriceField.val());
+            if (inputPriceField.val() == '') {
+                buttonSubmitRegister.prop('disabled', true);
+            } else {
+                buttonSubmitRegister.prop('disabled', false);
+                console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
+                console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
+            }
+        })
+        buttonSubmitRegister.on('submit', function(event){
+            event.preventDefault();
+            console.log('trebalo bi da uglavi remove disabled pre submita');
+            selectInstallmentNumberField.removeAttr('disabled');
+            $(this).submit();
+        })
+    });
+</script>
+
+<script>
+    // skripta za selektovanje više razreda iz padajučeg menija u register formi
+    $(document).ready(function(){
+        $('.selectpicker').selectpicker();
+        
+        $('#classes').change(function(){
+            $('#hidden_classes').val($('#classes').val());
+        });
+        
+        $('#multiple_select_form').on('submit', function(event){
+            event.preventDefault();
+            if($('#classes').val() != '')
+            {
+                var form_data = $(this).serialize();
+                $.ajax({
+                    url:"/ajax_add",
+                    method:"POST",
+                    data:form_data,
+                    success:function(data)
+                    {
+                    //console.log(data);
+                    $('#hidden_classes').val('');
+                    $('.selectpicker').selectpicker('val', '');
+                    alert(data);
+                    }
+                })
+            }
+            else
+            {
+            alert("Please select framework");
+            return false;
+            }
+        });
+    });
+</script>
+<script>
+    // menja broj input polja za rate na osnovu izabranog broja rata u register formi
+    const installmentNumber = document.getElementById("installment_number");
+
+    installmentNumber.addEventListener('change', function(){
+    const numInstallments = parseInt(installmentNumber.value);
+    console.log('broj rata: ', numInstallments);
+
+    if (numInstallments > 1) {
+        // show the necessary installments and labels
+        for (let i = 1; i <= numInstallments; i++) {
+        const installment = document.getElementById(`installment_${i}`);
+        const label = installment.previousElementSibling;
+        installment.type = "number";
+        installment.value = "";
+        label.style.display = "block";
+        }
+    } else {
+        // hide all installments and labels
+        for (let i = 1; i <= 12; i++) {
+        const installment = document.getElementById(`installment_${i}`);
+        const label = installment.previousElementSibling;
+        installment.type = "hidden";
+        installment.value = "";
+        label.style.display = "none";
+        }
+    }
+    });
+</script>
+<script>
+    // dinamički menja broj input polja za rate na osnovu izabranog broja rata u edit formama
+    // get the installment number element
+    function getIdOfClickedInput(event) {
+        const recordId = event.target.id.split("-")[1];
+        handleInstallmentNumberChange(recordId);
+        }
+
+        function handleInstallmentNumberChange(recordId) {
+        const installmentNumber = document.getElementById(`installment_number-${recordId}`);
+        installmentNumber.addEventListener('change', function() {
+            const numInstallments = parseInt(installmentNumber.value);
+            console.log('broj rata: ', numInstallments);
+
+            for (let i = 1; i <= 12; i++) {
+            const installment = document.getElementById(`installment_${i}-${recordId}`);
+            const label = installment.previousElementSibling;
+            if (numInstallments > 1) {
+                if (i <= numInstallments) {
+                installment.type = "number";
+                installment.value = "";
+                label.style.display = "block";
+                } else {
+                installment.type = "hidden";
+                installment.value = "";
+                label.style.display = "none";
+                }
+            } else {
+                installment.type = "hidden";
+                installment.value = "";
+                label.style.display = "none";
+            }
+            }
+        });
+}
+</script>
+
+{% endblock %}

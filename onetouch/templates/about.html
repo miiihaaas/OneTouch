@@ -1,4 +1,87 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1>testing brale</h1>
-{% endblock content%}
+<h2>testing brale</h2>
+
+<!--todo: https://tutorial101.blogspot.com/2021/02/python-flask-multiple-select-option.html -->
+<!--todo: https://tutorial101.blogspot.com/2021/02/python-flask-multiple-select-option.html -->
+<!--todo: https://tutorial101.blogspot.com/2021/02/python-flask-multiple-select-option.html -->
+<!--todo: https://tutorial101.blogspot.com/2021/02/python-flask-multiple-select-option.html -->
+
+<div class="col-md-4" style="margin-left:200px;">
+    <form method="post" id="multiple_select_form">
+        <select name="skills" id="skills" class="form-control selectpicker" data-live-search="true" multiple>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+        </select>
+        <br /><br />
+        <input type="hidden" name="hidden_skills" id="hidden_skills" />
+        <input type="submit" name="submit" class="btn btn-info" value="Submit" />
+    </form>
+    <br />
+</div>
+
+<div>
+    <input id="ajax_varible" class="form-control" type="text" value="ajax-test">
+    <button id="ajax_button" class="btn">test me</button>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $('#ajax_button').click(function() {
+            $.ajax({
+                url: '/ajax',
+                type: 'POST',
+                data: {new_value: 'new-ajax-test'},
+                success: function(response) {
+                    console.log('AJAX success');
+                    console.log('Response:', response);
+                    $('#ajax_varible').val(response);
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function(){
+        $('.selectpicker').selectpicker();
+        
+        $('#skills').change(function(){
+            $('#hidden_skills').val($('#skills').val());
+        });
+        
+        $('#multiple_select_form').on('submit', function(event){
+            event.preventDefault();
+            if($('#skills').val() != '')
+            {
+                var form_data = $(this).serialize();
+                $.ajax({
+                    url:"/ajax_add",
+                    method:"POST",
+                    data:form_data,
+                    success:function(data)
+                    {
+                    //console.log(data);
+                    $('#hidden_skills').val('');
+                    $('.selectpicker').selectpicker('val', '');
+                    alert(data);
+                    }
+                })
+            }
+            else
+            {
+            alert("Please select framework");
+            return false;
+            }
+        });
+    });
+</script>
+{% endblock scripts %}

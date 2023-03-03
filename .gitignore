@@ -10,6 +10,8 @@ onetouch/__pycache__/
 onetouch/main/__pycache__/
 onetouch/school/__pycache__/
 onetouch/students/__pycache__/
+onetouch/services/__pycache__/
+onetouch/suppliers/__pycache__/
 onetouch/teachers/__pycache__/
 onetouch/users/__pycache__/
 __pycache__/
