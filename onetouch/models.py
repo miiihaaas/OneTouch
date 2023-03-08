@@ -86,10 +86,11 @@ class Teacher(db.Model): #! ovo se odnosi na razrednog tj učitelja
 class StudentDebt(db.Model): #todo: dodaj u db
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
-    student_debt_reference_number = db.Column(db.String(15), nullable=False)
     service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
+    student_debt_installment_number = db.Column(db.Integer)
     student_debt_amount = db.Column(db.Integer) #! ovde treba da bude vrednost ako je na komaad od 0 - 31 tj 0 ili 1 ako nije na komad
-    student_debt_debit_amount = db.Column(db.Float)
+    studetn_debt_installment_value = db.Column(db.Float)
+    student_debt_discount = db.Column(db.Float)
     
     
 

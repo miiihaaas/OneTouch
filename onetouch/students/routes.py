@@ -1,7 +1,7 @@
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
-from onetouch.models import Student, ServiceItem
+from onetouch.models import Student, ServiceItem, StudentDebt
 from onetouch.students.forms import EditStudentModalForm, RegisterStudentModalForm
 from flask_login import login_required, current_user
 
@@ -100,11 +100,17 @@ def get_installments():
     options = [(0, "Selektujte ratu")]
     service_item = ServiceItem.query.get_or_404(service_item_id)
     
-    for i in range(1, service_item.installment_number + 1):
-        options.append((i, f'Rata {i}'))
-        installment_attr = f'installment_{i}'
+    if service_item_id == 1:
+        options.append((1, f'Rata 1'))
+        installment_attr = f'price'
         installment_option = getattr(service_item, installment_attr)
         print(f'{installment_option=}')
+    else:
+        for i in range(1, service_item.installment_number + 1):
+            options.append((i, f'Rata {i}'))
+            installment_attr = f'installment_{i}'
+            installment_option = getattr(service_item, installment_attr)
+            print(f'{installment_option=}')
     
     html = ''
     for option in options:
@@ -120,7 +126,36 @@ def get_installment_values():
     print(f'{service_item_id=} {installment_number=}')
     service_item = ServiceItem.query.get_or_404(service_item_id)
     print(service_item)
-    installment_attr = f'installment_{installment_number}'
+    if service_item.installment_number == 1:
+        installment_attr = 'price'
+    else:
+        installment_attr = f'installment_{installment_number}'
     installment_value_result = {"result" : getattr(service_item,installment_attr)} 
     print(f'{installment_value_result=}')
     return installment_value_result
+
+
+@students.route('/submit_records', methods=['post'])
+def submit_records():
+    data = request.get_json()
+    print(f'{data}')
+    all_records = StudentDebt.query.all()
+    new_record_exists = False
+    for record in all_records:
+        if record.student_id == int(data['studentId']) and record.service_item_id == int(data['serviceId']) and record.student_debt_installment_number == int(data['installment']):
+            new_record_exists = True
+            break
+    if new_record_exists:
+        print('već je u tabeli ovo zaduženje')
+    else:
+        print('dodaj u sql')
+        new_record = StudentDebt(student_id=int(data['studentId']),
+                                    service_item_id=int(data['serviceId']),
+                                    student_debt_installment_number=int(data['installment']),
+                                    student_debt_amount=int(data['amount']),
+                                    studetn_debt_installment_value=data['installmentValue'],
+                                    student_debt_discount=data['discount'])
+        db.session.add(new_record)
+        db.session.commit()
+    
+    return "dobro ti je ovo"
