@@ -1,4 +1,28 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1>testing brale - home</h1>
+<h1>Brzi linkovi</h1>
+<div class="row">
+    <div class="col">
+        <a class="btn btn-primary btn-block mt-2 mb-2" href="{{url_for('transactions.student_debts')}}">Zaduživanje učenika</a>
+    </div>
+    <div class="col">
+        <a class="btn btn-primary btn-block mt-2 mb-2" href="{{ url_for('transactions.posting_payment') }}">Knjiženje uplata</a>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <a class="btn btn-primary btn-block mt-2 mb-2" href="">Pregled po učeniku</a>
+    </div>
+    <div class="col">
+        <a class="btn btn-primary btn-block mt-2 mb-2" href="">Pregled po odeljenju</a>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <a class="btn btn-primary btn-block mt-2 mb-2" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
+    </div>
+    <div class="col">
+        <a class="btn btn-primary btn-block mt-2 mb-2" href="">Arhiva izvoda</a>
+    </div>
+</div>
 {% endblock content%}

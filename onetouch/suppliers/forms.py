@@ -55,6 +55,7 @@ class RegisterServiceProfileModalForm(FlaskForm):
     installment_10 = DecimalField('Rata 10', validators=[Optional()])
     installment_11 = DecimalField('Rata 11', validators=[Optional()])
     installment_12 = DecimalField('Rata 12', validators=[Optional()])
+    # archived = BooleanField('Usluga arhivirana')
     submit_register = SubmitField('Kreirajte uslugu')
 
 
@@ -78,4 +79,5 @@ class EditServiceProfileModalForm(FlaskForm):
     installment_10 = DecimalField('Rata 10', validators=[Optional()])
     installment_11 = DecimalField('Rata 11', validators=[Optional()])
     installment_12 = DecimalField('Rata 12', validators=[Optional()])
+    archived = BooleanField('Usluga arhivirana')
     submit_edit = SubmitField('Sačuvajte')

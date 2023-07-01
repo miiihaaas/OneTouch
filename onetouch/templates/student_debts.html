@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <h2>Student Debts</h2>
+ovo su učitelji: {{teachers}}
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
     <select name="classes" id="classes" class="form-select form-select-lg">
@@ -46,8 +47,8 @@
     <thead>
         <tr role="row">
             <th>Učenik</th>
-            <th>Odeljenje</th>
             <th>Razred</th>
+            <th>Odeljenje</th>
             <th>Poziv na broj</th>
             <th>Usluga</th>
             <th>Količina</th>
@@ -64,7 +65,7 @@
             <td>{{ student.student_section }}</td>
             <td id="poziv_na_broj_{{ student.id }}"></td>
             <td id="usluga_{{ student.id }}"></td>
-            <td id="kolicina_{{ student.id }}">0</td>
+            <td id="kolicina_{{ student.id }}">0</td> <!-- dodati input element unutar ovog td -->
             <td id="iznos-{{ student.id }}">0</td>
             <td id="olaksice_{{ student.id }}">0</td>
             <td id="iznos_zaduženja_{{ student.id }}">0</td>
@@ -83,298 +84,388 @@
 {% endblock content %}
 
 {% block scripts %}
-    <script>
-        console.log("Event listener added!");
-        function dataChanged() {
-            const inputFieldInstallmentValue = $('#installment_value')
-            const kolicinaCells = document.querySelectorAll('[id^="kolicina_"]');
-            // Add an event listener for any change in the document
-            // Loop through each row in the table
+<script>
+    function dataChanged() {
+        const inputFieldInstallmentValue = $('#installment_value');
+        const kolicinaCells = document.querySelectorAll('[id^="kolicina_"]');
+
+        // Iteriranje kroz svaki red u tabeli
+        $('#data tbody tr').each(function() {
+            // Postavljanje slušaoca događaja za klik na td elementu za količinu
+            $(this).find('td:nth-child(6)').on('click', function() {
+            var currentValue = $(this).text().trim();
+            var inputElement = $('<input class="form-control form-control-lg">').attr({
+                'type': 'text',
+                'value': currentValue
+            });
+
+            $(this).html(inputElement);
+            inputElement.focus();
+
+            // Postavljanje slušaoca događaja blur na input elementu
+            inputElement.on('blur', function() {
+                var newValue = $(this).val().trim();
+                $(this).parent().text(newValue);
+
+                recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
+            });
+            });
+
+            // Postavljanje slušaoca događaja za klik na td elementu za olakšice
+            $(this).find('td:nth-child(8)').on('click', function() {
+            var currentValue = $(this).text().trim();
+            var inputElement = $('<input class="form-control form-control-lg">').attr({
+                'type': 'text',
+                'value': currentValue
+            });
+
+            $(this).html(inputElement);
+            inputElement.focus();
+
+            // Postavljanje slušaoca događaja blur na input elementu
+            inputElement.on('blur', function() {
+                var newValue = $(this).val().trim();
+                $(this).parent().text(newValue);
+
+                recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
+            });
+            });
+        });
+
+        // Funkcija za ponovno izračunavanje rezultata
+        function recalculateResults() {
             $('#data tbody tr').each(function() {
-            // Add a click event listener to the kolicina td element
-                $(this).find('td:nth-child(6)').on('click', function() {
-                    // Get the current value of the td element
-                    var currentValue = $(this).text().trim();
-                    // Create a new input element with the current value as its value
-                    var inputElement = $('<input class="form-control form-control-lg">').attr({
-                    'type': 'text',
-                    'value': currentValue
-                    });
-                    // Replace the contents of the td element with the input element
-                    $(this).html(inputElement);
-                    // Set the focus to the input element
-                    inputElement.focus();
-                    // Add a blur event listener to the input element
-                    inputElement.on('blur', function() {
-                        // Get the new value of the input element
-                        var newValue = $(this).val().trim();
-                        // Update the contents of the td element with the new value
-                        $(this).parent().text(newValue);
-                        });
-                    });
-                $(this).find('td:nth-child(8)').on('click', function() {
-                    // Get the current value of the td element
-                    var currentValue = $(this).text().trim();
-                    // Create a new input element with the current value as its value
-                    var inputElement = $('<input class="form-control form-control-lg">').attr({
-                    'type': 'text',
-                    'value': currentValue
-                    });
-                    // Replace the contents of the td element with the input element
-                    $(this).html(inputElement);
-                    // Set the focus to the input element
-                    inputElement.focus();
-                    // Add a blur event listener to the input element
-                    inputElement.on('blur', function() {
-                        // Get the new value of the input element
-                        var newValue = $(this).val().trim();
-                        // Update the contents of the td element with the new value
-                        $(this).parent().text(newValue);
-                        });
-                    });
-                });
-            $(document).on('change', function () {
-                // Loop through each row in the table
-                $('#data tbody tr').each(function() {
-                    // Get the values of količina, iznos, and olakšica for the current row
-                    console.log('debug text: ', $(this).find('td:nth-child(6)').val())
-                    var kolicina = parseFloat($(this).find('td:nth-child(6)').text());
-                    var iznos = inputFieldInstallmentValue.val() //($(this).find('td:nth-child(7)').text().trim()); 
-                    var olaksice = parseFloat($(this).find('td:nth-child(8)').text());
-                    console.log('količina: ', kolicina)
-                    console.log('iznos: ', typeof parseFloat(iznos), iznos)
-                    console.log('olaksice: ', - olaksice)
-                    
-                    // Calculate the value of iznos zaduženja using the formula and update the corresponding cell
-                    var iznos_zaduzenja = kolicina * iznos - olaksice;
-                    console.log(`iznos zaduženja // ${kolicina} * ${iznos} - ${olaksice} = ${iznos_zaduzenja}: `, typeof iznos_zaduzenja, iznos_zaduzenja)
-                    $(this).find('td:nth-of-type(9)').text(iznos_zaduzenja);
-                });
-            });
-            // Trigger the change event on the input field, regardless of how it was changed.
-            inputFieldInstallmentValue.trigger('change');
-            // kolicinaCells.trigger('change');
-            
-            
-        };
-        $(document).ready(dataChanged());
-        $(document).ready(function() {
-            const selectFieldClasses = $('#classes');
-            const selectFieldSection = $('#section');
-            const selectFieldServiceItem = $('#service_item');
-            const selectFieldInstallment = $('#installment');
-            const inputFieldInstallmentValue = $('#installment_value');
-            const iznosCells = document.querySelectorAll('[id^="iznos-"]');
-            const inputFieldPurposeOfPayment = $('#purpose_of_payment');
-            const buttonSave = $('#save_button');
-            const buttonPrint = $('#print_button');
+            var kolicina = parseFloat($(this).find('td:nth-child(6)').text());
+            var iznos = parseFloat(inputFieldInstallmentValue.val());
+            var olaksice = parseFloat($(this).find('td:nth-child(8)').text());
 
-            const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
-            document.getElementById("today_date").value = today;
-            // dropdown: RAZRED
-            selectFieldClasses.on('change', function() {
-                const newValue = selectFieldClasses.val();
-                if(selectFieldClasses.val() === "0") {
-                    console.log('selectkovani razred: ', selectFieldClasses.val());
-                    selectFieldSection.prop('disabled', true);
-                    selectFieldSection.prop('value', "");
-                    selectFieldServiceItem.prop('disabled', true);
-                    selectFieldServiceItem.prop('value', 0);
-                    selectFieldInstallment.prop('disabled', true);
-                    selectFieldInstallment.prop('value', 0);
-                    inputFieldPurposeOfPayment.prop('value', "");
-                    inputFieldPurposeOfPayment.prop('disabled', true);
-                    buttonSave.prop('disabled', true);
-                    buttonPrint.prop('disabled', true);
-                } else {
-                    console.log('selectkovani razred: ', selectFieldClasses.val());
-                    selectFieldSection.prop('disabled', false);
-                    selectFieldSection.prop('value', "");
-                    selectFieldInstallment.prop('disabled', false);
-                    selectFieldInstallment.prop('value', 0);
-                    inputFieldInstallmentValue.prop('value', "----");
-                    $.ajax({
-                        url: 'get_service_items',
-                        data: {classes: newValue},
-                        method: 'POST',
-                        success: function(data) {
-                            selectFieldServiceItem.html(data);
-                            selectFieldServiceItem.prop('disabled', false);
-                            inputFieldPurposeOfPayment.prop('value', "");
-                            inputFieldPurposeOfPayment.prop('disabled', true);
-                            buttonSave.prop('disabled', true);
-                            buttonPrint.prop('disabled', true);
-                        }
-                    })
-                }
+            var iznos_zaduzenja = kolicina * iznos - olaksice;
+            $(this).find('td:nth-of-type(9)').text(iznos_zaduzenja);
             });
-            // dropdown: Usluga
-            selectFieldServiceItem.on('change', function() {
-                const newValue2 = selectFieldServiceItem.val();
-                console.log('selectkovani usluga nova vrednost: ', newValue2);
-                if(selectFieldServiceItem.val() === "0") {
-                    console.log('selectkovani usluga je nula');
-                    selectFieldInstallment.prop('disabled', true);
-                    selectFieldInstallment.prop('value', "");
-                    inputFieldPurposeOfPayment.prop('value', "");
-                    inputFieldPurposeOfPayment.prop('disabled', true);
-                    buttonSave.prop('disabled', true);
-                    buttonPrint.prop('disabled', true);
-                } else {
-                    $.ajax({
-                        url: 'get_installments',
-                        data: {installments: newValue2},
-                        method: 'POST',
-                        success: function(data) {
-                            selectFieldInstallment.html(data);
-                            selectFieldInstallment.prop('disabled', false);
-                            inputFieldInstallmentValue.prop('value', "----");
-                            inputFieldPurposeOfPayment.prop('value', "");
-                            inputFieldPurposeOfPayment.prop('disabled', true);
-                            buttonSave.prop('disabled', true);
-                            buttonPrint.prop('disabled', true);
-                        },
-                    })                    
-                    dataChanged(); // call function
-                }
-            });
-            // dropdown: RATA
-            selectFieldInstallment.on('change', function() {
-                const newValue3 = selectFieldInstallment.val();
-                const newValue2 = selectFieldServiceItem.val();
-                console.log('rata broj: ', newValue3);
-                if(selectFieldInstallment.val() === "0") {
-                    inputFieldInstallmentValue.prop('value', "----")
-                    iznosCells.forEach(cell => {
-                        cell.innerText = 0;
-                    });
-                    inputFieldPurposeOfPayment.prop('value', "");
-                    inputFieldPurposeOfPayment.prop('disabled', true);
-                    buttonSave.prop('disabled', true);
-                    buttonPrint.prop('disabled', true);
-                } else {
-                    $.ajax({
-                        url: 'get_installment_values',
-                        data: {installment_values: newValue3,
-                                installments: newValue2},
-                        method: 'POST',
-                        success: function(data) {
-                            var value = data.result
-                            inputFieldInstallmentValue.val(value)
-                            iznosCells.forEach(cell => {
-                                cell.innerText = value;
-                                console.log('vrednost rate-- posle izmene rednog broja rate: ', cell.innerText);
-                                inputFieldPurposeOfPayment.prop('value', "");
-                                inputFieldPurposeOfPayment.prop('disabled', false);
-                                inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
-                                buttonSave.prop('disabled', true);
-                                buttonPrint.prop('disabled', true);
-                            });
-                            dataChanged(); // call function
-                        }
-                    })
-                }
-            });
-            inputFieldPurposeOfPayment.on('change', function() {
-                if(inputFieldPurposeOfPayment.val() === "") {
-                    buttonSave.prop('disabled', true)
-                    buttonPrint.prop('disabled', true)
-                } else {
-                    buttonSave.prop('disabled', false)
-                }
-            })
-        })
-    </script>
-    <script>
-        // krerira tabelu
-        $(document).ready(function () {
-            var table = $('#data').DataTable({
-                language: {
-                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
-                }
-            });
-            // prazna tabela
-            table.column(1).search("0").draw();
-            // filter po razredu
-            $('#classes').on('change', function () {
-                var classes = $(this).val();
-                var section = "";
-                table.column(1).search(classes).draw();
-                table.column(2).search(section).draw();
-            });
-            // filter po odeljenju
-            $('#section').on('change', function () {
-                var section = $(this).val();
-                table.column(2).search(section).draw();
-            });
-        });
-    </script>
-    <script>
-        const select = document.getElementById('service_item');
-        const selectInstallment = document.getElementById('installment');
-        const pozivNaBrojCells = document.querySelectorAll('[id^="poziv_na_broj_"]');
-        const uslugaCells = document.querySelectorAll('[id^="usluga_"]');
-        const inputIznos = document.getElementById('installment_value');
-        
-        select.addEventListener('change', (event) => {
-            const selectedServiceId = event.target.value;
-            const selectedServiceText = event.target.options[event.target.selectedIndex].text;
-        
-            pozivNaBrojCells.forEach(cell => {
-                const studentId = cell.id.split('_')[3];
-                cell.innerText = `${studentId}-${selectedServiceId}`;
-            });
-            uslugaCells.forEach(cell => {
-                cell.innerText = `${selectedServiceText}`;
-            });
-        });
-        // In this code, we first retrieve the dropdown menu and all the "Poziv na broj" cells using their respective IDs and a query selector. 
-        // We then add an event listener to the dropdown menu for the change event. When the dropdown menu value changes, the event listener function is called, 
-        // and we retrieve the selected service ID using event.target.value.
+        }
 
-        // We then loop through all the "Poziv na broj" cells using the forEach method, and for each cell, we extract the student ID from the cell's ID attribute using the split method. 
-        // We then update the cell's text using the innerText property, concatenating the student ID and the selected service ID with a hyphen.
-    </script>
-    <script>
-        const records = $('#data tbody tr'); // table.rows({ filter: 'applied' }).nodes(); // trebalo bi da povuče samo fitrirane redove, a ne sve redove u tabelitt
+        // Postavljanje slušaoca događaja change na polju za unos
+        inputFieldInstallmentValue.on('change', recalculateResults);
+        inputFieldInstallmentValue.trigger('change');
+    }
+
+
+    $(document).ready(function() {
+        const selectFieldClasses = $('#classes');
+        const selectFieldSection = $('#section');
+        const selectFieldServiceItem = $('#service_item'); //
+        const selectFieldInstallment = $('#installment'); //
+        const inputFieldInstallmentValue = $('#installment_value');
+        const pozivNaBrojCells = $('[id^="poziv_na_broj_"]'); ///
+        const uslugaCells = $('[id^="usluga_"]'); ///
+        const inputIznos = $('#installment_value'); ///
+
+        const iznosCells = document.querySelectorAll('[id^="iznos-"]');
+        const inputFieldPurposeOfPayment = $('#purpose_of_payment');
         const buttonSave = $('#save_button');
         const buttonPrint = $('#print_button');
 
-        buttonSave.on('click', (event) => {
-            for (let i = 0; i < records.length; i++) {
-                const record = records[i];
-                const columns = record.getElementsByTagName("td");
+        const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
+        document.getElementById("today_date").value = today;
 
-                const amount = columns[5].textContent;
-                if (amount > 0) {
-                    const studentId = columns[3].textContent.split('-')[0];
-                    const serviceId = columns[3].textContent.split('-')[1];
-                    const installmentNumber = $('#installment').val(); // redni broj rate
-                    const installmentValue = columns[6].textContent
-                    const discount = columns[7].textContent
+        // Krerira tabelu
+        var table = $('#data').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
 
-                    const output = {
-                        "studentId": studentId,
-                        "serviceId": serviceId,
-                        "installment": installmentNumber, // redni borj rate
-                        "amount": amount,
-                        "installmentValue": installmentValue,
-                        "discount": discount,
+        // Prazna tabela
+        table.column(1).search("0").draw();
+
+        // Filter po razredu
+        selectFieldClasses.on('change', function() {
+            const classes = $(this).val();
+            const section = "";
+            table.column(1).search(classes).draw();
+            table.column(2).search(section).draw();
+        });
+
+        // Filter po odeljenju
+        selectFieldSection.on('change', function() {
+            const section = $(this).val();
+            table.column(2).search(section).draw();
+        });
+
+        // Dropdown: RAZRED
+        selectFieldClasses.on('change', function() {
+            const newValue = selectFieldClasses.val();
+            if(selectFieldClasses.val() === "0") {
+                console.log('selectkovani razred: ', selectFieldClasses.val());
+                selectFieldSection.prop('disabled', true);
+                selectFieldSection.prop('value', "");
+                selectFieldServiceItem.prop('disabled', true);
+                selectFieldServiceItem.prop('value', 0);
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonPrint.prop('disabled', true);
+            } else {
+                console.log('selectkovani razred: ', selectFieldClasses.val());
+                selectFieldSection.prop('disabled', false);
+                selectFieldSection.prop('value', "");
+                selectFieldServiceItem.prop('disabled', true);
+                selectFieldServiceItem.prop('value', 0);
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonPrint.prop('disabled', true);
+                inputFieldInstallmentValue.prop('value', "----");
+                $.ajax({
+                    url: 'get_service_items',
+                    data: {classes: newValue},
+                    method: 'POST',
+                    success: function(data) {
+                        inputFieldPurposeOfPayment.prop('value', "");
+                        inputFieldPurposeOfPayment.prop('disabled', true);
+                        buttonSave.prop('disabled', true);
+                        buttonPrint.prop('disabled', true);
                     }
-                    console.log(JSON.stringify(output));
-                    $.ajax({
-                        url: 'submit_records',
-                        method: 'POST',
-                        data: JSON.stringify(output),
-                        contentType: 'application/json',
+                })
+                dataChanged(); // call function
+            }
+        });
+        // dropdown: Odeljenje
+        selectFieldSection.on('change', function() {
+            const newValue = selectFieldClasses.val();
+            const newValue4 = selectFieldSection.val()
+            console.log('selectkovano odeljenje - nova vrednost: ', newValue4);
+            if (selectFieldSection.val() === "0") {
+                console.log('selektovano odeljenje je 0');
+                selectFieldServiceItem.prop('disabled', true);
+                selectFieldServiceItem.prop('value', 0);
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonPrint.prop('disabled', true);
+            } else {
+                console.log('nastavi kod')
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonPrint.prop('disabled', true);
+                $.ajax({
+                    url: 'get_service_items',
+                    data: {classes: newValue},
+                    method: 'POST',
+                    success: function(data) {
+                        selectFieldServiceItem.html(data);
+                        selectFieldServiceItem.prop('disabled', false);
+                        inputFieldPurposeOfPayment.prop('value', "");
+                        inputFieldPurposeOfPayment.prop('disabled', true);
+                        buttonSave.prop('disabled', true);
+                        buttonPrint.prop('disabled', true);
+                    }
+                })
+                dataChanged(); // call function
+            }
+        })
+
+
+        // dropdown: Usluga
+        selectFieldServiceItem.on('change', function() {
+            const newValue2 = selectFieldServiceItem.val();
+            console.log('selectkovani usluga nova vrednost: ', newValue2);
+            if(selectFieldServiceItem.val() === "0") {
+                console.log('selectkovani usluga je nula');
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonPrint.prop('disabled', true);
+            } else {
+                $.ajax({
+                    url: 'get_installments',
+                    data: {installments: newValue2},
+                    method: 'POST',
+                    success: function(data) {
+                        selectFieldInstallment.html(data);
+                        selectFieldInstallment.prop('disabled', false);
+                        inputFieldInstallmentValue.prop('value', "----");
+                        inputFieldPurposeOfPayment.prop('value', "");
+                        inputFieldPurposeOfPayment.prop('disabled', true);
+                        buttonSave.prop('disabled', true);
+                        buttonPrint.prop('disabled', true);
+
+                        const selectedServiceId = selectFieldServiceItem.val();
+                        const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
+
+                        pozivNaBrojCells.each(function() {
+                            const studentId = this.id.split('_')[3];
+                            $(this).text(`${studentId.padStart(4, '0')}-${selectedServiceId.padStart(3, '0')}`);
+                        });
+                        uslugaCells.each(function() {
+                            $(this).text(`${selectedServiceText}`); // ovaj tekst mi treba i na drugom mestu
+                        });
+                    },
+                })                    
+                dataChanged(); // call function
+            }
+        });
+
+        // dropdown: RATA
+        selectFieldInstallment.on('change', function() {
+            const newValue3 = selectFieldInstallment.val();
+            const newValue2 = selectFieldServiceItem.val();
+            console.log(newValue2)
+            console.log('rata broj: ', newValue3);
+            if(selectFieldInstallment.val() === "0") {
+                inputFieldInstallmentValue.prop('value', "----")
+                iznosCells.forEach(cell => {
+                    cell.innerText = 0;
+                });
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonPrint.prop('disabled', true);
+            } else {
+                $.ajax({
+                    url: 'get_installment_values',
+                    data: {installment_values: newValue3,
+                            installments: newValue2},
+                    method: 'POST',
+                    success: function(data) {
+                        var value = data.result
+                        inputFieldInstallmentValue.val(value)
+                        iznosCells.forEach(cell => {
+                            cell.innerText = value;
+                            console.log('vrednost rate-- posle izmene rednog broja rate: ', cell.innerText);
+
+                            const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
+                            const selectedInstallmentText = selectFieldInstallment.find('option:selected').text();
+
+
+
+                            inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / '+ selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
+                            inputFieldPurposeOfPayment.prop('disabled', false);
+                            inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
+                            buttonSave.prop('disabled', false);
+                            buttonPrint.prop('disabled', true);
+                        });
+                        dataChanged(); // call function
+                    }
+                })
+            }
+        });
+        inputFieldPurposeOfPayment.on('input', function() {
+            if(inputFieldPurposeOfPayment.val() === "") {
+                buttonSave.prop('disabled', true)
+                buttonPrint.prop('disabled', true)
+            } else {
+                buttonSave.prop('disabled', false)
+            }
+        })
+
+
+        // Onemogućavanje polja
+        function disableFields() {
+            selectFieldSection.prop('disabled', true);
+            selectFieldInstallment.prop('disabled', true);
+            selectFieldServiceItem.prop('disabled', true);
+            inputFieldInstallmentValue.val("----");
+            iznosCells.forEach(cell => {
+                cell.innerText = 0;
+            });
+            inputFieldPurposeOfPayment.val("");
+            inputFieldPurposeOfPayment.prop('disabled', true);
+            buttonSave.prop('disabled', true);
+            buttonPrint.prop('disabled', true);
+        }
+
+        // Inicijalno onemogućavanje polja
+        disableFields();
+    });
+</script>
+<script>
+    // skripta koja prikuplja sve filtere prosleđuje ih u backend za kreranje zadužejna (StudentDebt) i zapisa transakcija (TransactionRecord)
+    const buttonSave = $('#save_button');
+    const buttonPrint = $('#print_button');
+
+    buttonSave.on('click', (event) => {
+        var selectClass = $('#classes').val();
+        var selectSection = $('#section').val();
+        var selectServiceItem = $('#service_item').val()
+        var selectInstallmentNumber = $('#installment').val()
+        // var selectInstallmentValue = $('#installment_value').val() // može da se izvuče podatak na osnovu service_item ID
+        var listStudentId = 'provali rešenje'
+        var listInstallmentAmount = 'provali rešenje'
+        var listDiscount = 'provali rešenje'
+        console.log('razred: ', selectClass);
+        console.log('odeljenje: ', selectSection);
+        console.log('detalji usluge: ', selectServiceItem);
+        console.log('rata: ', selectInstallmentNumber);
+
+        var table = $('#data');
+        var rows = table.find('tr');
+        console.log('redovi: ', rows)
+        console.log('broj redova: ', rows.length)
+        var records = []
+        for (var i = 0; i < rows.length; i++) {
+            var quantityCell = rows[i].querySelector('[id^="kolicina_"]');
+            if (quantityCell !== null && quantityCell.textContent !== null) {
+                var quantity = parseInt(quantityCell.textContent);
+                console.log('količina: ', quantity)
+                
+                if ((rows[i].querySelector('[id^="poziv_na_broj_"]'))) {
+                    var studentIdCell = rows[i].querySelector('[id^="poziv_na_broj_"]');
+                    var studentId = studentIdCell.id.split('_')[3];
+                    
+                    var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
+                    var olaksica = parseInt(olaksicaCell.textContent);
+                    
+                    console.log('Student ID:', studentId);
+                    console.log('Količina:', quantity);
+                    console.log('Olakšica:', olaksica);
+                    
+                    // Ovde možete dodati svoju logiku za dalju obradu podataka
+                    records.push({
+                        'student_id': studentId,
+                        'amount': quantity,
+                        'discount': olaksica
                     })
                 }
             }
-            buttonSave.prop('disabled', true);
-            buttonPrint.prop('disabled', false);
+        }
+        console.log('podaci: ', records)
+        const output = {
+            'class': selectClass,
+            'section': selectSection,
+            'service_item': selectServiceItem,
+            'installment': selectInstallmentNumber,
+            'records': records,
+        }
+        console.log('output: ', output)
+        console.log(JSON.stringify(output));
+        $.ajax({
+            url: 'submit_records',
+            method: 'POST',
+            data: JSON.stringify(output),
+            contentType: 'application/json',
+            success: function(response) {
+                // Uspešan AJAX zahtjev
+                // Preusmjeravanje na edit debt stranicu
+                var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
+                editDebtUrl = editDebtUrl.replace('1', response);
+                window.location.href = editDebtUrl;
+    }
         })
-        
-    </script>
-    
+        buttonSave.prop('disabled', true);
+        buttonPrint.prop('disabled', false);
+    })
+</script>
 
 {% endblock %}

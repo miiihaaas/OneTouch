@@ -1,9 +1,11 @@
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
-from onetouch.models import Student, ServiceItem, StudentDebt
+from onetouch.models import Student, ServiceItem, StudentDebt, School, TransactionRecord
 from onetouch.students.forms import EditStudentModalForm, RegisterStudentModalForm
 from flask_login import login_required, current_user
+import xml.etree.ElementTree as ET
+from flask import jsonify
 
 
 students = Blueprint('students', __name__)
@@ -67,95 +69,6 @@ def delete_student(student_id):
         return redirect(url_for("students.student_list"))
 
 
-@students.route('/student_debts', methods=['POST', 'GET'])
-@login_required
-def student_debts():
-    students = Student.query.all()
-    service_items = ServiceItem.query.all()
-    print(f'{service_items=}')
-    return render_template('student_debts.html', students=students, service_items=service_items)
-
-#! Ajax
-@students.route('/get_service_items', methods=['POST'])
-def get_service_items():
-    service_item_class = request.form.get('classes', 0, type=int)
-    print(f'from AJAX service items: {service_item_class=}')
-    options = [(0, "Selektujte uslugu")]
-    service_items = ServiceItem.query.all()
-    for service_item in service_items:
-        if str(service_item_class) in service_item.service_item_class:
-            options.append((service_item.id, service_item.service_item_service.service_name + " - " + service_item.service_item_name))
-            print(options)
-    html = ''
-    for option in options:
-        html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
-    return html
 
 
-@students.route('/get_installments', methods=['POST'])
-def get_installments():
-    print(request.form)
-    service_item_id = int(request.form.get('installments'))
-    print(f'from AJAX installments: {service_item_id=}')
-    options = [(0, "Selektujte ratu")]
-    service_item = ServiceItem.query.get_or_404(service_item_id)
-    
-    if service_item_id == 1:
-        options.append((1, f'Rata 1'))
-        installment_attr = f'price'
-        installment_option = getattr(service_item, installment_attr)
-        print(f'{installment_option=}')
-    else:
-        for i in range(1, service_item.installment_number + 1):
-            options.append((i, f'Rata {i}'))
-            installment_attr = f'installment_{i}'
-            installment_option = getattr(service_item, installment_attr)
-            print(f'{installment_option=}')
-    
-    html = ''
-    for option in options:
-        html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
-    return html
 
-
-@students.route('/get_installment_values', methods=['POST'])
-def get_installment_values():
-    print(request.form)
-    service_item_id = int(request.form.get('installments'))
-    installment_number = int(request.form.get('installment_values'))
-    print(f'{service_item_id=} {installment_number=}')
-    service_item = ServiceItem.query.get_or_404(service_item_id)
-    print(service_item)
-    if service_item.installment_number == 1:
-        installment_attr = 'price'
-    else:
-        installment_attr = f'installment_{installment_number}'
-    installment_value_result = {"result" : getattr(service_item,installment_attr)} 
-    print(f'{installment_value_result=}')
-    return installment_value_result
-
-
-@students.route('/submit_records', methods=['post'])
-def submit_records():
-    data = request.get_json()
-    print(f'{data}')
-    all_records = StudentDebt.query.all()
-    new_record_exists = False
-    for record in all_records:
-        if record.student_id == int(data['studentId']) and record.service_item_id == int(data['serviceId']) and record.student_debt_installment_number == int(data['installment']):
-            new_record_exists = True
-            break
-    if new_record_exists:
-        print('već je u tabeli ovo zaduženje')
-    else:
-        print('dodaj u sql')
-        new_record = StudentDebt(student_id=int(data['studentId']),
-                                    service_item_id=int(data['serviceId']),
-                                    student_debt_installment_number=int(data['installment']),
-                                    student_debt_amount=int(data['amount']),
-                                    studetn_debt_installment_value=data['installmentValue'],
-                                    student_debt_discount=data['discount'])
-        db.session.add(new_record)
-        db.session.commit()
-    
-    return "dobro ti je ovo"

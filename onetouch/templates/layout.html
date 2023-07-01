@@ -76,7 +76,7 @@
           </h1>
           <ul class="list-unstyled components mb-5">
             <li>
-              <a href="#">Početna strana</a>
+              <a href="{{ url_for('main.home') }}">Početna strana</a>
             </li>
             <li class="active">
               <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Unos podataka #</a>
@@ -89,17 +89,19 @@
             </li>
             <li class="active">
               <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Knjiženje #</a>
-              <a class="nav-item nav-link" href="{{ url_for('students.student_debts') }}">Zaduživanje učenika</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Zaduživanje učenika</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.posting_payment') }}">Knjiženje uplata</a>
             </li>
             <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">
-                Pregled #
-              </a>
+              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Pregled #</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Učenik</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Odeljenje</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Škola</a>
             </li>
             <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">
-                Arhiva #
-              </a>
+              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Arhiva #</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
+              <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Arhiva izvoda</a>
             </li>
           </ul>
         </div>

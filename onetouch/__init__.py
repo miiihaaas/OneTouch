@@ -39,6 +39,7 @@ from onetouch.schools.routes import schools
 from onetouch.students.routes import students
 from onetouch.suppliers.routes import suppliers
 from onetouch.teachers.routes import teachers
+from onetouch.transactions.routes import transactions
 from onetouch.users.routes import users
 
 app.register_blueprint(main)
@@ -46,4 +47,5 @@ app.register_blueprint(schools)
 app.register_blueprint(students)
 app.register_blueprint(suppliers)
 app.register_blueprint(teachers)
+app.register_blueprint(transactions)
 app.register_blueprint(users)

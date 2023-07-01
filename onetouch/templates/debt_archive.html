@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Razredni starešina: {{ teacher.teacher_name }} {{ teacher.teacher_surname }}</h1>
+<div class="form-group" style="display: inline-block;">
+    <label for="classes" class="form-control-label">Razred</label>
+    <input id="classes" name="classes" type="text" class="form-control" value="{{ debt.debt_class }}" disabled>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="section" class="form-control-label">Odeljenje</label>
+    <input id="section" name="section" type="text" class="form-control" value="{{ debt.debt_section }}" disabled>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="installment" class="form-control-label">Rata</label>
+    <input id="installment" name="installment" type="text" class="form-control" value="{{ debt.installment_number }}" disabled>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="today_date" class="form-control-label">Datum zaduživanja</label>
+    <input id="today_date" name="today_date" type="text" class="form-control" value="{{ debt.student_debt_date.strftime('%d.%m.%Y.') }}" disabled>
+</div>
+<hr>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
+    <thead>
+        <tr>
+            <th>Učenik</th>
+            <th>Poziv na broj</th>
+            <th>Detalji usluge</th>
+            <th>Količina</th>
+            <th>Iznos</th>
+            <th>Olakšica</th>
+            <th>Iznos zaduženja</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</td>
+            <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
+            <td>{{ record.transaction_record_student_debt.student_debt_student_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_student_item.service_item_name }}</td>
+            <td id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
+            <td id="installment_{{ record.transaction_record_student.id }}">{{ record.studetn_debt_installment_value }}</td>
+            <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_discount}}</td>
+            <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount}}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Kreiranje tabele
+        var table = $('#data').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+        // Postavljanje događaja nakon izmjene ćelija "Količina" i "Olakšica"
+        $('.edit-cell').on('input', function() {
+            var id = $(this).data('id');
+            var kolicina = parseFloat($('#kolicina_' + id).text());
+            var olaksice = parseFloat($('#olaksice_' + id).text());
+            var iznosRate = parseFloat($('#installment_' + id).text());
+            console.log('test vrednosti radte: ', parseFloat($('#installment').val()))
+            var iznosZaduzenja = (kolicina * iznosRate) - olaksice;
+            $('#iznos_zaduženja_' + id).text(iznosZaduzenja.toFixed(2));
+        });
+    });
+</script>
+
+
+{% endblock %}

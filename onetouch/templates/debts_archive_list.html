@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Arhiva naloga</h1>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
+    <thead>
+        <tr>
+            <th>Datum</th>
+            <th>Razred</th>
+            <th>Odeljenje</th>
+            <th>Detalji usluge</th>
+            <th>buttons</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for debt in debts %}
+        <tr>
+            <td>{{ debt.student_debt_date.strftime('%d.%m.%Y.') }}</td>
+            <td>{{ debt.debt_class }}</td>
+            <td>{{ debt.debt_section }}</td>
+            <td>{{ debt.student_debt_student_item.service_item_service.service_name }} - {{ debt.student_debt_student_item.service_item_name }}</td>
+            <td><a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}">edit</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    // Krerira tabelu
+    var table = $('#data').DataTable({
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                }
+            });
+</script>
+{% endblock %}

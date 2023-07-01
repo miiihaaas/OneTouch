@@ -142,7 +142,7 @@ def service_profile_list():
                 print(f'{field}: {error}')
     
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        print(f'get id je: {request.form.get("get_service_profile-1")}')
+        print(f'get id je: {request.form.get("get_service_profile-1")}') #! get_service_profile-{1} treba da bude dinamično
         service_profile = ServiceItem.query.get(request.form.get('get_service_profile-1'))
         print('validation, edit from, service profile')
         print(f"klasa je: classes-{service_profile.id}")
@@ -170,6 +170,9 @@ def service_profile_list():
         service_profile.installment_10 = edit_form.installment_10.data
         service_profile.installment_11 = edit_form.installment_11.data
         service_profile.installment_12 = edit_form.installment_12.data
+        service_profile.archived = edit_form.archived.data
+        if service_profile.installment_number == 1:
+            service_profile.installment_1 = service_profile.price
         db.session.commit()
         return redirect(url_for("suppliers.service_profile_list"))
         
@@ -198,7 +201,11 @@ def service_profile_list():
                                         installment_9=register_form.installment_9.data,
                                         installment_10=register_form.installment_10.data,
                                         installment_11=register_form.installment_11.data,
-                                        installment_12=register_form.installment_12.data)
+                                        installment_12=register_form.installment_12.data,
+                                        archived=False)
+        print(f'{service_profile.installment_number=}')
+        if service_profile.installment_number == '1':
+            service_profile.installment_1 = service_profile.price
         flash(f'Kreirana je usluga "{service_profile.service_item_name}"', 'success')
         db.session.add(service_profile)
         db.session.commit()

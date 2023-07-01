@@ -1,0 +1,120 @@
+{% extends "layout.html" %}
+{% block content %}
+<form method="POST" action="/posting_payment" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col">
+            <div class="form-group text-left">
+                <label for="fileInput">Izaberite XML fajl:</label>
+                <input type="file" class="form-control-file" id="fileInput" name="fileInput" accept=".xml">
+            </div>
+            <div class="form-group text-left">
+                <button type="submit" class="btn btn-primary" name="submitBtnImportData" id="submitBtnImportData" disabled>Uvezite izvod</button>
+                <button type="submit" class="btn btn-primary" name="submitBtnSaveData" id="submitBtnSaveData" disabled>Sačuvajte i rasknjižite uplate</button>
+            </div>
+        </div>
+        <div class="col">
+            {% if broj_izvoda_element %}
+                <p>Datum izvoda: <input id="payment_date" name="payment_date" type="text" value="{{ datum_izvoda_element }}"  readonly></p>
+                <p>Broj izvoda: <input id="statment_nubmer" name="statment_nubmer" type="text" value="{{ broj_izvoda_element }}"  readonly></p>
+                <p>Iznos potražuje: <input id="total_payment_amount" name="total_payment_amount" type="text" value="{{ iznos_potrazuje_element }}"  readonly></p>
+                <p>Broj uplatnica: <input id="number_of_items" name="number_of_items" type="text" value="{{ broj_pojavljivanja }}"  readonly></p>
+            {% endif %}
+        </div>
+    </div>
+    {% if stavke %}
+    <hr>
+    <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+        <thead>
+            <tr>
+                <th>RacunZaduzenja = Broj bankovnog računa?</th>
+                <th>NazivZaduzenja = Uplatilac?</th>
+                <th>Iznos</th>
+                <th>PozivOdobrenja = Poziv na broj?</th>
+                <th>SvrhaDoznake = Svrha uplate?</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in stavke %}
+            <tr>
+                <td>{{ item['RacunZaduzenja'] }}</td>
+                <td>{{ item['NazivZaduzenja'] }}</td>
+                <td><input name="iznos" type="text" class="form-control" value="{{ item['Iznos'] }}" readonly></td>
+                <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input" value="{{ item['PozivOdobrenja'] }}" readonly></td>
+                <td><textarea name="svrha_uplate" class="form-control" readonly>{{ item['SvrhaDoznake'] }}</textarea></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</form>
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        var fileInput = $('#fileInput');
+        var submitBtnImportData = $('#submitBtnImportData');
+        var submitBtnSaveData = $('#submitBtnSaveData');
+        
+        fileInput.on('change', function() {
+            if (fileInput.get(0).files.length > 0) {
+                submitBtnImportData.prop('disabled', false);
+            } else {
+                submitBtnImportData.prop('disabled', true);
+            }
+        });
+        if ($('#data').length) {
+            submitBtnSaveData.prop('disabled', false)
+        }
+        // Validacija vrednosti input polja prilikom učitavanja stranice
+        $('.poziv-odobrenja-input').each(function() {
+            validateInput($(this));
+        });
+        // Omogući uređivanje kada se klikne na input
+        $('.poziv-odobrenja-input').on('click', function() {
+            $(this).prop('readonly', false);
+        });
+        
+        // Onemogući uređivanje kada se klikne izvan inputa ili na novo polje
+        $(document).on('click', function(event) {
+            var clickedElement = $(event.target);
+            var inputFields = $('.poziv-odobrenja-input');
+            
+            if (!clickedElement.closest('.poziv-odobrenja-input').length) {
+                inputFields.prop('readonly', true);
+            }
+            
+            if (clickedElement.is('.poziv-odobrenja-input')) {
+                inputFields.not(clickedElement).prop('readonly', true);
+                clickedElement.prop('readonly', false);
+            }
+        });
+        // Validacija vrednosti input polja pri promeni vrednosti
+        var inputFields = $('.poziv-odobrenja-input');
+        inputFields.on('input', function() {
+            console.log('validizacija input elementa koji se trenutno edituje')
+            validateInput($(this));
+        });
+        
+        // Funkcija za validaciju vrednosti input polja
+        function validateInput(input) {
+            var value = input.val().trim();
+            var isValid = false;
+            
+            // Provera validnosti vrednosti
+            if (/^\d{7}$/.test(value)) {
+                isValid = true;
+            } else if (/^\d{4}-\d{3}$/.test(value)) {
+                isValid = true;
+            }
+            
+            // Dodavanje ili uklanjanje klase za prikaz validnosti
+            if (isValid) {
+                input.removeClass('invalid-input');
+            } else {
+                input.addClass('invalid-input');
+            }
+        }
+    });
+</script>
+{% endblock %}
