@@ -15,33 +15,8 @@
         <tr class="odd">
             <td>{{ supplier.id }}</td>
             <td>{{ supplier.supplier_name }}</td>
-            <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{supplier.id}}">edit</a>
-                <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#DeleteModal{{supplier.id}}">delete</a></td>
+            <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{supplier.id}}">edit</a> {% if supplier.archived %} arhiviran {% endif %}</td>
         </tr>
-        <!-- Modal Delete -->
-        <div class="modal fade" id="DeleteModal{{supplier.id}}" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                <div class="modal-body">
-                <label for="input_password">Da bi ste obrisali dobavljača {{ supplier.supplier_name }} potrebno je potvrditi svojom lozinkom:</label>
-                </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                        <form action="{{ url_for('suppliers.delete_supplier', supplier_id=supplier.id) }}" method="post">
-                            <input class="btn btn-danger" type="submit" value="Obrišite dobavljača">
-                            <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Modal Edit -->
         <div class="modal fade" id="EditModal{{supplier.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -71,6 +46,11 @@
                         {% else %}
                             {{ edit_form.supplier_name(class="form-control form-control-lg", value=supplier.supplier_name) }}
                         {% endif %}
+                    </div>
+                    <div class="form-check form-switch">
+                        {% set z = edit_form.archived.process_data(supplier.archived) %}
+                        {{ edit_form.archived(class="form-check-input", value=supplier.archived ) }}
+                        {{ edit_form.archived.label(class="form-check-label") }}
                     </div>
                     </div>
                         <div class="modal-footer">

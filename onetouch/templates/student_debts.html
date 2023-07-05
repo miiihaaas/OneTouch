@@ -75,11 +75,10 @@ ovo su učitelji: {{teachers}}
 </table>
 <div class="form-group">
     <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
-    <input type="text" id="purpose_of_payment" class="form-control form-control-lg" disabled>
+    <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
 </div>
 <div class="form-group">
     <button class="btn btn-info" id="save_button" disabled>Sačuvajte</button>
-    <button class="btn btn-info" id="print_button" disabled>Štampa</button>
 </div>
 {% endblock content %}
 
@@ -394,6 +393,7 @@ ovo su učitelji: {{teachers}}
     // skripta koja prikuplja sve filtere prosleđuje ih u backend za kreranje zadužejna (StudentDebt) i zapisa transakcija (TransactionRecord)
     const buttonSave = $('#save_button');
     const buttonPrint = $('#print_button');
+    const inputFieldPurposeOfPayment = $('#purpose_of_payment');
 
     buttonSave.on('click', (event) => {
         var selectClass = $('#classes').val();
@@ -446,6 +446,7 @@ ovo su učitelji: {{teachers}}
             'section': selectSection,
             'service_item': selectServiceItem,
             'installment': selectInstallmentNumber,
+            'purpose_of_payment': inputFieldPurposeOfPayment.val(),
             'records': records,
         }
         console.log('output: ', output)
@@ -461,7 +462,7 @@ ovo su učitelji: {{teachers}}
                 var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
                 editDebtUrl = editDebtUrl.replace('1', response);
                 window.location.href = editDebtUrl;
-    }
+            }
         })
         buttonSave.prop('disabled', true);
         buttonPrint.prop('disabled', false);

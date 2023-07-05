@@ -1,7 +1,30 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>ovo je lista razrednih starešina</h2>
-<a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija novog razrednog starešine</a>
+<div class="row form-group">
+    <div class="col form-group">
+        <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog odeljenskog starešine</a>
+    </div>
+    <div class="col form-group">
+        <label for="searchRazred">Pretraga po razredu:</label>
+        <select id="searchRazred" class="form-select">
+            <option value=""></option>
+            {% for class in range(9) %}
+                <option value="{{ class }}">{{ class }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="col form-group">
+        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
+        <select id="searchOdeljenje" class="form-select">
+            <option value=""></option>
+            {% for section in range(16) %}
+                <option value="{{ section }}">{{ section }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <hr>
+</div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
@@ -215,7 +238,7 @@
 {% block scripts %}
     <script>
         $(document).ready(function () {
-            $('#data').DataTable({
+            var table = $('#data').DataTable({
                     columnDefs: [
                     {
                         // targets: [5],
@@ -227,6 +250,15 @@
                 language: {
                     url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
                 }
+            });
+            $('#searchRazred').on('change', function () {
+                var selectedValue = $(this).val();
+                table.column(3).search(selectedValue).draw();
+            });
+
+            $('#searchOdeljenje').on('change', function () {
+                var selectedValue = $(this).val();
+                table.column(4).search(selectedValue).draw();
             });
         });
     </script>

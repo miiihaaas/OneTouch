@@ -37,7 +37,7 @@
             {% for item in stavke %}
             <tr>
                 <td>{{ item['RacunZaduzenja'] }}</td>
-                <td>{{ item['NazivZaduzenja'] }}</td>
+                <td><textarea name="uplatilac" class="form-control" readonly>{{ item['NazivZaduzenja'] }}</textarea></td>
                 <td><input name="iznos" type="text" class="form-control" value="{{ item['Iznos'] }}" readonly></td>
                 <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input" value="{{ item['PozivOdobrenja'] }}" readonly></td>
                 <td><textarea name="svrha_uplate" class="form-control" readonly>{{ item['SvrhaDoznake'] }}</textarea></td>

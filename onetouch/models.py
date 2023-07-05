@@ -29,6 +29,7 @@ class School(db.Model):
 class Supplier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     supplier_name = db.Column(db.String(255), nullable=False)
+    archived = db.Column(db.Boolean, nullable=False, default=False) #! ovo treba da je checkbox, ako je true onda neće se prikazati u listi
     services = db.relationship('Service', backref='service_supplier', lazy=True)
     service_items = db.relationship('ServiceItem', backref='service_item_supplier', lazy=True)
 
@@ -39,6 +40,7 @@ class Service(db.Model):
     payment_per_unit = db.Column(db.String(255), nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False) # ovde treba da bude dropdown menu
     service_items = db.relationship('ServiceItem', backref='service_item_service', lazy=True)
+    archived = db.Column(db.Boolean, nullable=False, default=False) #! ovo treba da je checkbox, ako je true onda neće se prikazati u listi
 
 
 class ServiceItem(db.Model):
@@ -64,7 +66,8 @@ class ServiceItem(db.Model):
     installment_11 = db.Column(db.Float, nullable=True)
     installment_12 = db.Column(db.Float, nullable=True)
     archived = db.Column(db.Boolean, nullable=False, default=False) #! ovo treba da je checkbox, ako je true onda neće se prikazati u listi
-    student_debts = db.relationship('StudentDebt', backref='student_debt_student_item', lazy=True ) #todo: dodaj u db
+    student_debts = db.relationship('StudentDebt', backref='student_debt_service_item', lazy=True ) #todo: dodaj u db
+    transaction_records = db.relationship('TransactionRecord', backref='transaction_record_service_item', lazy=True)
 
 
 class Student(db.Model):
@@ -85,17 +88,18 @@ class Teacher(db.Model): #! ovo se odnosi na razrednog tj učitelja
     teacher_section = db.Column(db.Integer, nullable=False) 
 
 
-class StudentDebt(db.Model): #todo: dodaj u db
+class StudentDebt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_debt_date = db.Column(db.DateTime, nullable=False)
     service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
     debt_class = db.Column(db.Integer, nullable=False)
     debt_section = db.Column(db.Integer, nullable=False)
     installment_number = db.Column(db.Integer)
+    purpose_of_payment = db.Column(db.String(255), nullable=True)
     transaction_records = db.relationship('TransactionRecord', backref='transaction_record_student_debt', lazy=True)
 
 
-class StudentPayment(db.Model): #todo: dodaj u db
+class StudentPayment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     payment_date = db.Column(db.DateTime, nullable=False) #! izvlači iz XML fajla (<DatumIzvoda>20.05.2021</DatumIzvoda>)
     statment_nubmer = db.Column(db.Integer, nullable=False) #! izvlači iz XML fajla (<BrojIzvoda>108</BrojIzvoda>)
@@ -115,7 +119,7 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     studetn_debt_installment_value = db.Column(db.Float)
     student_debt_discount = db.Column(db.Float)
     student_debt_total = db.Column(db.Float) #! ovde će da bude proračun za zaduženje i podatak iz XML fala ako je upitanju uplatnica za razduženje
-    purpose_of_payment = db.Column(db.String(255), nullable=True)
+    payer = db.Column(db.String(255), nullable=True)
     reference_number = db.Column(db.String(100), nullable=True)
 
 with app.app_context():

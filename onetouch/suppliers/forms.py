@@ -12,6 +12,7 @@ class RegisterSupplierModalForm(FlaskForm):
 
 class EditSupplierModalForm(FlaskForm):
     supplier_name = StringField('Naziv dobavljača', validators=[DataRequired()])
+    archived = BooleanField('Dobavljač arhiviran')
     submit_edit = SubmitField('Sačuvajte')
     
 
@@ -29,6 +30,7 @@ class EditServiceModalForm(FlaskForm):
     service_name = StringField('Naziv usluge', validators=[DataRequired()])
     supplier_id = SelectField('Naziv dobavljača', choices=[], coerce=int) #! nastavi kod za choices...
     payment_per_unit = SelectField('Tip Plaćanja', choices=[('kom', 'Plaćanje po jedinici*'), ('mes', 'Mesečno plaćanje*'), ('god', 'Kalendarska usluga*')])
+    archived = BooleanField('Usluga arhivirana')
     submit_edit = SubmitField('Sačuvajte')
     
     def reset(self):

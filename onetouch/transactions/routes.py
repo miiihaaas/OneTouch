@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, date
 from flask import  render_template, url_for, flash, redirect, request, abort
 from flask import Blueprint
 from flask_login import login_required, current_user
@@ -85,83 +85,140 @@ def submit_records():
     print(f'{data=}')
     print(f'{type(data)=}')
     
-    service_item_id = int(data['service_item'])
-    debt_class = int(data['class'])
-    debt_section = None if data['section'] == '' else int(data['section'])
-    installment_number = int(data['installment'])
-    print(f'{service_item_id=}, {debt_class=}, {debt_section=}, {installment_number=}')
-    
-    existing_debt = StudentDebt.query.filter_by(
-        service_item_id=service_item_id,
-        debt_class=debt_class,
-        debt_section=debt_section,
-        installment_number=installment_number
-    ).first()
-    
-    if existing_debt:
-        print(f'Već postoji ovo zaduženje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.')
-        flash(f'Već postoji ovo zadušenje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.', 'info')
-        return str(existing_debt.id)
-    
-    if len(data['records']) == 0:
-        print('Nema studenta')
-        return 'Nema studenta'
+    if 'service_item' in data:
+        print('dodavanje novog zaduženja')
+        service_item_id = int(data['service_item'])
+        debt_class = int(data['class'])
+        debt_section = None if data['section'] == '' else int(data['section'])
+        installment_number = int(data['installment'])
+        purpose_of_payment = data['purpose_of_payment'] #todo: uvezi iz frontenda uz pomoć ajaksa preko data objekta :)
+        print(f'{service_item_id=}, {debt_class=}, {debt_section=}, {installment_number=}')
         
-    
-    new_debt = StudentDebt(student_debt_date = datetime.now(),
-                            service_item_id = service_item_id,
-                            debt_class = debt_class,
-                            debt_section = debt_section,
-                            installment_number=installment_number)
-    
-    print(f'{new_debt=}')
-    db.session.add(new_debt)
-    db.session.commit()
-    
-    print(f'{new_debt.id=}')
-    
-    
-    
-    student_debt_id = new_debt.id
-    student_payment_id = None
-    for i in range(len(data['records'])):
-        student_id = data['records'][i]['student_id']
-        #! service_item_id = ima već definisano na početku funkcije, ako bude trebalo napiši kod za to
-        student_debt_installment_number = int(data['installment'])
-        print(f'{student_debt_installment_number=}')
-        student_debt_amount = data['records'][i]['amount']
-        studetn_debt_installment_value = getattr(ServiceItem.query.get_or_404(service_item_id), f'installment_{student_debt_installment_number}')
-        student_debt_discount = data['records'][i]['discount']
-        print(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
-        print(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
-        student_debt_total = student_debt_amount * studetn_debt_installment_value - student_debt_discount
-        print(f'{student_debt_id=}, {student_payment_id=}, {student_id=}, {service_item_id=}, {student_debt_installment_number=}, {student_debt_amount=}')
-        print(f'{studetn_debt_installment_value=}, {student_debt_discount=}, {student_debt_total=}')
-        new_record = TransactionRecord(student_debt_id = student_debt_id,
-                                        student_payment_id = student_payment_id,
-                                        student_id = student_id,
-                                        service_item_id = service_item_id,
-                                        student_debt_installment_number = student_debt_installment_number,
-                                        student_debt_amount = student_debt_amount,
-                                        studetn_debt_installment_value = studetn_debt_installment_value,
-                                        student_debt_discount = student_debt_discount,
-                                        student_debt_total = student_debt_total)
-        db.session.add(new_record)
+        existing_debt = StudentDebt.query.filter_by(
+            service_item_id=service_item_id,
+            debt_class=debt_class,
+            debt_section=debt_section,
+            installment_number=installment_number
+        ).first()
+        
+        if existing_debt:
+            print(f'Već postoji ovo zaduženje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.')
+            flash(f'Već postoji ovo zadušenje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.', 'info')
+            return str(existing_debt.id)
+        
+        if len(data['records']) == 0:
+            print('Nema zaduženih studenta')
+            return 'Nema zaduženih studenta'
+            
+        
+        new_debt = StudentDebt(student_debt_date = datetime.now(),
+                                service_item_id = service_item_id,
+                                debt_class = debt_class,
+                                debt_section = debt_section,
+                                installment_number=installment_number,
+                                purpose_of_payment=purpose_of_payment)
+        
+        print(f'{new_debt=}')
+        db.session.add(new_debt)
         db.session.commit()
+        
+        print(f'{new_debt.id=}')
+        
+        
+        
+        student_debt_id = new_debt.id
+        student_payment_id = None
+        for i in range(len(data['records'])):
+            student_id = data['records'][i]['student_id']
+            #! service_item_id = ima već definisano na početku funkcije, ako bude trebalo napiši kod za to
+            student_debt_installment_number = int(data['installment'])
+            print(f'{student_debt_installment_number=}')
+            student_debt_amount = data['records'][i]['amount']
+            studetn_debt_installment_value = getattr(ServiceItem.query.get_or_404(service_item_id), f'installment_{student_debt_installment_number}')
+            student_debt_discount = data['records'][i]['discount']
+            print(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
+            print(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
+            student_debt_total = student_debt_amount * studetn_debt_installment_value - student_debt_discount
+            print(f'{student_debt_id=}, {student_payment_id=}, {student_id=}, {service_item_id=}, {student_debt_installment_number=}, {student_debt_amount=}')
+            print(f'{studetn_debt_installment_value=}, {student_debt_discount=}, {student_debt_total=}')
+            new_record = TransactionRecord(student_debt_id = student_debt_id,
+                                            student_payment_id = student_payment_id,
+                                            student_id = student_id,
+                                            service_item_id = service_item_id,
+                                            student_debt_installment_number = student_debt_installment_number,
+                                            student_debt_amount = student_debt_amount,
+                                            studetn_debt_installment_value = studetn_debt_installment_value,
+                                            student_debt_discount = student_debt_discount,
+                                            student_debt_total = student_debt_total)
+            db.session.add(new_record)
+            db.session.commit()
+        return str(student_debt_id)
+
+    elif 'student_debt_id' in data:
+        print('izmena postojećeg zadušenja')
+        student_debt_id = int(data['student_debt_id'])
+        purpose_of_payment = data['purpose_of_payment']
+        print(f'{student_debt_id=}, {purpose_of_payment=}')
+        debt = StudentDebt.query.get_or_404(student_debt_id)
+        debt.purpose_of_payment = purpose_of_payment
+        db.session.commit()
+        
+        for i in range(len(data['records'])):
+            student_id = data['records'][i]['student_id']
+            student_debt_amount = data['records'][i]['amount']
+            student_debt_discount = data['records'][i]['discount']
+            record_for_edit = TransactionRecord.query.filter(
+                TransactionRecord.student_debt_id == student_debt_id,
+                TransactionRecord.student_id == student_id).first()
+            student_debt_total = student_debt_amount * record_for_edit.studetn_debt_installment_value - student_debt_discount
+            print(f'{record_for_edit=}')
+            record_for_edit.student_debt_amount = student_debt_amount
+            record_for_edit.student_debt_discount = student_debt_discount
+            record_for_edit.student_debt_total = student_debt_total
+            db.session.commit()
+        return str(student_debt_id)
     
-    return str(student_debt_id)
+    
 
 
 @transactions.route('/debts_archive_list', methods=['get', 'post'])
 def debts_archive_list():
-    debts = StudentDebt.query.all()
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    if start_date is None or end_date is None:
+        start_date = date.today().replace(day=1, month=1).isoformat()
+        end_date = date.today().isoformat()
+    debts = StudentDebt.query.filter(
+        StudentDebt.student_debt_date.between(start_date, end_date)).all()
     print(f'{debts=}')
-    return render_template('debts_archive_list.html', debts=debts)
+    return render_template('debts_archive_list.html', 
+                            debts=debts,
+                            start_date=start_date,
+                            end_date=end_date,
+                            legend="Arhiva naloga")
+
+@transactions.route('/payments_archive_list', methods=['get', 'post'])
+def payments_archive_list():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    if start_date is None or end_date is None:
+        start_date = date.today().replace(day=1, month=1).isoformat()
+        end_date = date.today().isoformat()
+    payments = StudentPayment.query.filter(
+        StudentPayment.payment_date.between(start_date, end_date)).all()
+    print(f'{payments=}')
+    return render_template('payments_archive_list.html', 
+                            payments=payments,
+                            start_date=start_date,
+                            end_date=end_date,
+                            legend="Arhiva izvoda") #todo napravi html fajl
 
 
 @transactions.route('/debt_archive/<int:debt_id>', methods=['get', 'post'])
 def debt_archive(debt_id):
     debt = StudentDebt.query.get_or_404(debt_id)
+    purpose_of_payment = debt.purpose_of_payment
+    print(f'{purpose_of_payment=}')
     teacher = Teacher.query.filter_by(teacher_class=debt.debt_class).filter_by(teacher_section=debt.debt_section).first()
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
     print(f'{records=}')
@@ -169,7 +226,19 @@ def debt_archive(debt_id):
                             records=records, 
                             debt=debt, 
                             teacher=teacher,
+                            purpose_of_payment=purpose_of_payment,
                             legend=f"Pregled zadušenja: {debt.id}")
+
+
+@transactions.route('/payment_archive/<int:payment_id>', methods=['get', 'post'])
+def payment_archive(payment_id):
+    payment = StudentPayment.query.get_or_404(payment_id)
+    records = TransactionRecord.query.filter_by(student_payment_id=payment_id).all()
+    print(f'{records=}')
+    return render_template('payment_archive.html', 
+                            records=records, 
+                            payment=payment,
+                            legend=f"Pregled izvoda: {payment.id}")
 
 
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
@@ -212,7 +281,7 @@ def posting_payment():
             error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element.text}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
             print('racuni nisu isti')
             flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', error_mesage=error_mesage)
+            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
 
         stavke = []
         for stavka in root.findall('Stavka'):
@@ -241,7 +310,9 @@ def posting_payment():
             stavke.append(podaci)
         print(f'{stavke=}')
         flash('Uspešno je učitan XML fajl.', 'success')
-        return render_template('posting_payment.html', legend="Knjiženje uplata",
+        return render_template('posting_payment.html', 
+                                title="Knjišenje uplata",
+                                legend="Knjiženje uplata",
                                 stavke=stavke,
                                 datum_izvoda_element=datum_izvoda_element,
                                 broj_izvoda_element=broj_izvoda_element,
@@ -266,7 +337,7 @@ def posting_payment():
             print('postoji vec uplata u bazi')
             error_mesage = f'Uplata za dati datum ({payment_date}) i broj računa ({statment_nubmer}) već postoji u bazi. Izaberite novi XML fajl i pokušajte ponovo.'
             flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', error_mesage=error_mesage)
+            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
         # Spremanje podataka u bazu
         new_payment = StudentPayment(
             payment_date=payment_date,
@@ -279,6 +350,7 @@ def posting_payment():
         # print('dodato u db - proveri')
         # print(f'{new_payment.id=}')
         
+        uplatioci = request.form.getlist('uplatilac')
         iznosi = request.form.getlist('iznos')
         pozivi_na_broj = request.form.getlist('poziv_na_broj')
         svrha_uplate = request.form.getlist('svrha_uplate')
@@ -288,6 +360,7 @@ def posting_payment():
         records = []
         for i in range(len(iznosi)):
             records.append({
+                    'uplatilac': uplatioci[i],
                     'iznos': iznosi[i],
                     'poziv_na_broj': pozivi_na_broj[i],
                     'svrha_uplate': svrha_uplate[i]
@@ -295,6 +368,7 @@ def posting_payment():
         print(f'{records=}')
         
         for record in records:
+            payer = record['uplatilac']
             purpose_of_payment = record['svrha_uplate']
             reference_number = record['poziv_na_broj']
             student_id = record['poziv_na_broj'][:4]
@@ -310,6 +384,7 @@ def posting_payment():
                                             student_debt_discount = None,
                                             student_debt_total = student_debt_total,
                                             purpose_of_payment=purpose_of_payment,
+                                            payer=payer,
                                             reference_number=reference_number)
             print(f'{new_record.student_id=}')
             print(f'{new_record.service_item_id=}')
@@ -319,4 +394,4 @@ def posting_payment():
             db.session.add(new_record)
             db.session.commit()
         
-    return render_template('posting_payment.html', legend="Knjiženje uplata")
+    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")

@@ -1,7 +1,38 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>ovo je lista učenika</h2>
-<a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+
+
+<div class="row form-group">
+    <div class="col form-group">
+        <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+    </div>
+    <div class="col form-group">
+        <label for="searchRazred">Pretraga po razredu:</label>
+        <select id="searchRazred" class="form-select">
+            <option value=""></option>
+            {% for class in range(9) %}
+                <option value="{{ class }}">{{ class }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="col form-group">
+        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
+        <select id="searchOdeljenje" class="form-select">
+            <option value=""></option>
+            {% for section in range(16) %}
+                <option value="{{ section }}">{{ section }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col form-group">
+        {% if danas >= active_date_start and danas <= active_date_end %}
+            <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
+        {% endif %}
+    </div>
+    <hr>
+</div>
+
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
@@ -11,12 +42,12 @@
             <th>Razred</th>
             <th>Odeljenje</th>
             <th>Aktivnosti</th>
-        </tr>
+        </tr><a href=""></a>
     </thead>
     <tbody>
         {% for student in students %}
         <tr class="odd">
-            <td>{{ student.id }}</td>
+            <td>{{ "{:04d}".format(student.id) }}</td>
             <td contenteditable="true">{{ student.student_name }}</td>
             <td>{{ student.student_surname }}</td>
             <td>{{ student.student_class }}</td>
@@ -24,6 +55,26 @@
             <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{student.id}}">edit</a>
                 <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#DeleteModal{{student.id}}">delete</a></td>
         </tr>
+        <!-- Modal +1 razred -->
+        <div class="modal fade" id="PlusJedanRazredModal" tabindex="-1" role="dialog" aria-labelledby="PlusJedanRazredModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="PlusJedanRazredModalLabel">Potvrda</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                <label for="input_password">Da li ste sigurni da sve đake prevedete u sledeći razred?</label>
+                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                        <a href="{{url_for('students.class_plus_one')}}" class="btn btn-info">+1 razred</a>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Modal Delete -->
         <div class="modal fade" id="DeleteModal{{student.id}}" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -217,22 +268,23 @@
 <!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
 <!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
 <!-- todo: izmeniti donju skriptu da ima pretragu padajućeg menija za razred i odeljenje: https://datatables.net/examples/api/multi_filter_select.html -->
-    <script>
-        $(document).ready(function () {
-            $('#data').DataTable({
-                    columnDefs: [
-                    {
-                        // targets: [5],
-                        visible: false,
-                        searchable: true,
-                    },
-                ],
-                order: [[3, 'desc'], [4, 'asc']],
-                language: {
+<script>
+    $(document).ready(function () {
+        var table = $('#data').DataTable({
+            language: {
                     url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
                 }
-            });
         });
-    </script>
+        $('#searchRazred').on('change', function () {
+            var selectedValue = $(this).val();
+            table.column(3).search(selectedValue).draw();
+        });
+
+        $('#searchOdeljenje').on('change', function () {
+            var selectedValue = $(this).val();
+            table.column(4).search(selectedValue).draw();
+        });
+    });
+</script>
 
 {% endblock %}

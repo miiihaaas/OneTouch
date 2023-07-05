@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
@@ -13,7 +14,10 @@ students = Blueprint('students', __name__)
 
 @students.route('/student_list', methods=['GET', 'POST'])
 def student_list():
-    students = Student.query.all()
+    danas = datetime.now()
+    active_date_start = danas.replace(month=4, day=15)
+    active_date_end = danas.replace(month=9, day=15)
+    students = Student.query.filter(Student.student_class < 9).all()
     edit_form = EditStudentModalForm()
     register_form = RegisterStudentModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
@@ -50,7 +54,19 @@ def student_list():
                             legend="Učenici", 
                             students=students, 
                             edit_form=edit_form, 
-                            register_form=register_form)
+                            register_form=register_form,
+                            active_date_start=active_date_start,
+                            active_date_end=active_date_end,
+                            danas=danas)
+
+
+@students.route('/class_plus_one', methods=['GET', 'POST'])
+def class_plus_one():
+    students = Student.query.filter(Student.student_class < 9).all()
+    for student in students:
+        student.student_class = int(student.student_class) + 1
+        db.session.commit()
+    return redirect(url_for('students.student_list'))
 
 
 @students.route('/student/<int:student_id>/delete', methods=['POST'])
@@ -58,13 +74,21 @@ def student_list():
 def delete_student(student_id):
     student = Student.query.get(student_id)
     if not current_user.is_authenticated:
-        flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
+        flash('Morate da budete prijavljeni da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         print ('nije dobar password')
         abort(403)
     else:
-        db.session.delete(student)
+        # proveri da li je studeent zadužen nekom uslugom
+        list_of_students_with_debts = TransactionRecord.query.filter_by(student_id=student.id).all()
+        print(f'{list_of_students_with_debts=}')
+        if list_of_students_with_debts:
+            print('student ima zaduzenje, prebacujem ga u 9. razred')
+            student.student_class = 9
+        else:
+            print('student nema zaduženje, brišem ga iz baze')
+            db.session.delete(student)
         db.session.commit()
         return redirect(url_for("students.student_list"))
 

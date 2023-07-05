@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block content %}
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
+    <thead>
+        <tr>
+            <th>Učenik</th>
+            <th>Poziv na broj</th>
+            <th>ID učenika (e)</th>
+            <th>ID usluge (e)</th>
+            <th>Detalji usluge??</th>
+            <th>Svrha uplate</th>
+            <th>Uplatilac</th>
+            <th>Iznos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td>{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</td>
+            <td>{{ record.reference_number }}</td>
+            <td>{{ record.student_id }}</td>
+            <td>{{ record.service_item_id }}</td>
+            <td>{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}</td>
+            <td>{{ record.purpose_of_payment }}</td>
+            <td>{{ record.payer }}</td>
+            <td>{{ record.student_debt_total }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content%}
+
+{% block scripts %}
+{% endblock %}

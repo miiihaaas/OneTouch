@@ -35,7 +35,7 @@
         <tr>
             <td>{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</td>
             <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
-            <td>{{ record.transaction_record_student_debt.student_debt_student_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_student_item.service_item_name }}</td>
+            <td>{{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_service_item.service_item_name }}</td>
             <td id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
             <td id="installment_{{ record.transaction_record_student.id }}">{{ record.studetn_debt_installment_value }}</td>
             <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_discount}}</td>
@@ -44,6 +44,14 @@
         {% endfor %}
     </tbody>
 </table>
+<div class="form-group">
+    <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
+    <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
+</div>
+<div class="form-group">
+    <button class="btn btn-info" id="save_button">Sačuvajte</button>
+    <button class="btn btn-info" id="print_button">Štampa</button>
+</div>
 
 {% endblock content%}
 
@@ -66,6 +74,78 @@
             var iznosZaduzenja = (kolicina * iznosRate) - olaksice;
             $('#iznos_zaduženja_' + id).text(iznosZaduzenja.toFixed(2));
         });
+        const buttonSave = $('#save_button');
+        const buttonPrint = $('#print_button');
+        const inputFieldPurposeOfPayment = $('#purpose_of_payment');
+
+        buttonSave.on('click', (event) => {
+            console.log('test radi - pritisnuto je dugme sačuvaj. nastavi kodiranje')
+            var studentDebtId;
+
+            var url = new URL(window.location.href); // Dohvaćanje trenutnog URL-a stranice
+            var pathname = url.pathname; // Dohvaćanje putanje URL-a
+            var parts = pathname.split('/'); // Razdvajanje putanje na dijelove koristeći "/"
+            if (parts.length > 0) {
+                var lastPart = parts[parts.length - 1]; // Dohvaćanje posljednjeg dijela putanje
+                studentDebtId = parseInt(lastPart); // Pretvaranje posljednjeg dijela u broj
+            }
+            console.log(studentDebtId); // Ispis studentDebtId u konzoli
+            var table = $('#data');
+            var rows = table.find('tr');
+            console.log('redovi: ', rows)
+            console.log('broj redova: ', rows.length)
+            var records = []
+            for (var i = 1; i < rows.length; i++) {
+                // var studentIdCell = rows[i].querySelector('[id^="poziv_na_broj_"]');
+                // var studentId = studentIdCell.id.split('_')[3];
+                // console.log('student_id: ', studentId)
+                
+                var quantityCell = rows[i].querySelector('[id^="kolicina_"]');
+                var quantity = parseInt(quantityCell.textContent); // ovaj podatak mi treba
+                console.log('red: ', quantityCell);
+                console.log('red, vrednost količina: ', quantity);
+
+                var studentId = parseInt(quantityCell.getAttribute("id").split("_")[1])
+                console.log('student_id: ', studentId)
+
+                // var installmentCell = rows[i].querySelector('[id^="installment_"]');
+                // var installmentValue = parseFloat(installmentCell.textContent);
+                // console.log('red, vrednost iznos: ', installmentValue);
+
+                var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
+                var olaksica = parseFloat(olaksicaCell.textContent);
+                console.log('red, vrednost olakšica: ', olaksica);
+
+                records.push({
+                    'student_id': studentId,
+                    'amount': quantity,
+                    'discount': olaksica
+                })
+            }
+            console.log('rezultati: ', records)
+            const output = {
+                'student_debt_id': studentDebtId,
+                'purpose_of_payment': inputFieldPurposeOfPayment.val(),
+                'records': records,
+            }
+            console.log('output: ', output)
+            console.log(JSON.stringify(output));
+            $.ajax({
+                url: '/submit_records',
+                method: 'POST',
+                data: JSON.stringify(output),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Uspešan AJAX zahtjev
+                    // Preusmjeravanje na edit debt stranicu
+                    var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
+                    editDebtUrl = editDebtUrl.replace('1', response);
+                    window.location.href = editDebtUrl;
+                }
+            })
+
+
+        })
     });
 </script>
 

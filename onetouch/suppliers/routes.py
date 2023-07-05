@@ -19,6 +19,7 @@ def supplier_list():
         supplier = Supplier.query.get(request.form.get('get_supplier'))
         
         supplier.supplier_name = edit_form.supplier_name.data
+        supplier.archived = edit_form.archived.data
         db.session.commit()
         flash('izmene su napravljene...', 'success')
         return redirect(url_for('suppliers.supplier_list'))
@@ -27,44 +28,30 @@ def supplier_list():
         #
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
-        supplier = Supplier(supplier_name=register_form.supplier_name.data)
+        supplier = Supplier(supplier_name=register_form.supplier_name.data,
+                            archived=False)
         db.session.add(supplier)
         db.session.commit()
         flash('dobavljač je registrovan', 'success')
         return redirect(url_for('suppliers.supplier_list'))
-    
-    
+
+
     return render_template('supplier_list.html',
                             tite = 'Dobavljači',
                             legend = 'Dobavljači',
                             suppliers=suppliers,
                             edit_form=edit_form,
                             register_form=register_form)
-    
 
-@suppliers.route('/supplier/<int:supplier_id>/delete', methods=['POST'])
-@login_required
-def delete_supplier(supplier_id):
-    supplier = Supplier.query.get(supplier_id)
-    if not current_user.is_authenticated:
-        flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
-        return redirect(url_for('users.login'))
-    elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
-        print ('nije dobar password')
-        abort(403)
-    else:
-        db.session.delete(supplier)
-        db.session.commit()
-        return redirect(url_for("suppliers.supplier_list"))
-    
-    
+
 @suppliers.route('/service_list', methods=['GET', 'POST'])
 def service_list():
     services=Service.query.all()
     edit_form = EditServiceModalForm()
     edit_form.reset()
-    suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).all()]
-    edit_form.supplier_id.choices = suppliers_chices
+    suppliers_chices_not_archived = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).all()]
+    suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
+    edit_form.supplier_id.choices = suppliers_chices_not_archived
     register_form = RegisterServiceModalForm()
     register_form.reset()
     register_form.supplier_id.choices = suppliers_chices
@@ -77,6 +64,7 @@ def service_list():
         service.service_name = edit_form.service_name.data
         service.payment_per_unit = edit_form.payment_per_unit.data
         service.supplier_id = edit_form.supplier_id.data
+        service.archived = edit_form.archived.data
         
         db.session.commit()
         flash('Podaci usluge su ažurirani.', 'success')
@@ -86,7 +74,8 @@ def service_list():
         print('register form triggered.')
         service = Service(service_name=register_form.service_name.data, 
                             payment_per_unit=register_form.payment_per_unit.data,
-                            supplier_id=register_form.supplier_id.data)
+                            supplier_id=register_form.supplier_id.data,
+                            archived=False)
         db.session.add(service)
         db.session.commit()
         flash('Usluga je registrovana', 'success')
@@ -101,21 +90,21 @@ def service_list():
     
 
 
-@suppliers.route('/service/<int:service_id>/delete', methods=['POST'])
-@login_required
-def delete_service(service_id):
-    service = Service.query.get(service_id)
-    if not current_user.is_authenticated:
-        flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
-        return redirect(url_for('users.login'))
-    elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
-        print ('nije dobar password')
-        abort(403)
-    else:
-        flash(f'Uspešno je obrisana usluga "{service.service_name}"', 'success')
-        db.session.delete(service)
-        db.session.commit()
-        return redirect(url_for("suppliers.service_list"))
+# @suppliers.route('/service/<int:service_id>/delete', methods=['POST'])
+# @login_required
+# def delete_service(service_id):
+#     service = Service.query.get(service_id)
+#     if not current_user.is_authenticated:
+#         flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
+#         return redirect(url_for('users.login'))
+#     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
+#         print ('nije dobar password')
+#         abort(403)
+#     else:
+#         flash(f'Uspešno je obrisana usluga "{service.service_name}"', 'success')
+#         db.session.delete(service)
+#         db.session.commit()
+#         return redirect(url_for("suppliers.service_list"))
     
 
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
@@ -125,11 +114,11 @@ def service_profile_list():
     register_form = RegisterServiceProfileModalForm()
     edit_form = EditServiceProfileModalForm()
     
-    register_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in Supplier.query.all()]
-    register_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in Service.query.all()] # '/get_services' - ajax ažurira dinamičnu listu
+    register_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
+    register_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in db.session.query(Service.id, Service.service_name).filter(Service.archived == False).all()] # '/get_services' - ajax ažurira dinamičnu listu
     
         
-    edit_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in Supplier.query.all()]
+    edit_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
     edit_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in Service.query.all()] #todo: napraviti da bude dinamično na osnovu supplier_id
     
     if request.form.get('submit_edit'):
@@ -142,8 +131,8 @@ def service_profile_list():
                 print(f'{field}: {error}')
     
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        print(f'get id je: {request.form.get("get_service_profile-1")}') #! get_service_profile-{1} treba da bude dinamično
-        service_profile = ServiceItem.query.get(request.form.get('get_service_profile-1'))
+        print(f'get id je: {request.form.get("get_service_profile")}')
+        service_profile = ServiceItem.query.get(request.form.get('get_service_profile'))
         print('validation, edit from, service profile')
         print(f"klasa je: classes-{service_profile.id}")
         class_list = request.form.getlist(f"classes-{service_profile.id}")
@@ -223,7 +212,8 @@ def service_profile_list():
 @suppliers.route('/get_services', methods=['POST'])
 def get_services():
     supplier_id = request.form.get('supplier_id', 0, type=int)
-    services = Service.query.filter_by(supplier_id=supplier_id).all()
+    services = Service.query.filter_by(supplier_id=supplier_id, archived=False).all()
+    print(f'services: {[s.archived for s in services]}')
     options = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in services]
     html = ''
     for option in options:

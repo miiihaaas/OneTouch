@@ -71,7 +71,7 @@
                 <form action="" method="POST">
                     {{ edit_form.hidden_tag() }}
                     <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
-                        <input type="" value="{{service_profile.id}}" id="get_service_profile-{{service_profile.id}}" name="get_service_profile-{{service_profile.id}}" readonly>
+                        <input type="" value="{{service_profile.id}}" id="get_service_profile" name="get_service_profile" readonly>
                     </div>
                     <div class="form-group">
                         {{ edit_form.supplier_id.label(class="form-control-label") }}
@@ -855,25 +855,30 @@
     const numInstallments = parseInt(installmentNumber.value);
     console.log('broj rata: ', numInstallments);
 
-    if (numInstallments > 1) {
-        // show the necessary installments and labels
-        for (let i = 1; i <= numInstallments; i++) {
-        const installment = document.getElementById(`installment_${i}`);
-        const label = installment.previousElementSibling;
-        installment.type = "number";
-        installment.value = "";
-        label.style.display = "block";
-        }
-    } else {
-        // hide all installments and labels
-        for (let i = 1; i <= 12; i++) {
-        const installment = document.getElementById(`installment_${i}`);
-        const label = installment.previousElementSibling;
+
+    for (let i = 1; i <= 12; i++) {
+    const installment = document.getElementById(`installment_${i}`);
+    const label = installment.previousElementSibling;
+
+    if (numInstallments === 1) {
+        // Ishod 1: Sakrije sva polja
         installment.type = "hidden";
         installment.value = "";
         label.style.display = "none";
+    } else if (numInstallments >= 2 && numInstallments <= 12) {
+        // Ishod 2: Prikazuje polja od 1 do numInstallments
+        if (i <= numInstallments) {
+            installment.type = "number";
+            installment.value = "";
+            label.style.display = "block";
+        } else {
+            installment.type = "hidden";
+            installment.value = "";
+            label.style.display = "none";
         }
     }
+    }
+
     });
 </script>
 <script>

@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
@@ -12,6 +13,9 @@ teachers = Blueprint('teachers', __name__)
 @teachers.route('/teacher_list', methods=['GET', 'POST'])
 def teacher_list():
     teachers = Teacher.query.all()
+    danas = datetime.now()
+    active_date_start = danas.replace(month=4, day=15)
+    active_date_end = danas.replace(month=9, day=15)
     edit_form = EditTeacherModalForm()
     register_form = RegisterTeacherModalForm() 
     if register_form.validate_on_submit() and request.form.get('submit_register'):
@@ -42,7 +46,10 @@ def teacher_list():
                             legend='Razredne starešine', 
                             teachers=teachers, 
                             edit_form=edit_form, 
-                            register_form=register_form)
+                            register_form=register_form,
+                            active_date_start=active_date_start,
+                            active_date_end=active_date_end,
+                            danas=danas)
 
 
 @teachers.route('/teacher/<int:teacher_id>/delete', methods=['POST'])
