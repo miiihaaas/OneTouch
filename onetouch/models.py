@@ -119,6 +119,7 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     studetn_debt_installment_value = db.Column(db.Float)
     student_debt_discount = db.Column(db.Float)
     student_debt_total = db.Column(db.Float) #! ovde će da bude proračun za zaduženje i podatak iz XML fala ako je upitanju uplatnica za razduženje
+    purpose_of_payment = db.Column(db.String(255), nullable=True)
     payer = db.Column(db.String(255), nullable=True)
     reference_number = db.Column(db.String(100), nullable=True)
 

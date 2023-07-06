@@ -70,31 +70,31 @@
         $('.poziv-odobrenja-input').each(function() {
             validateInput($(this));
         });
-        // Omogući uređivanje kada se klikne na input
-        $('.poziv-odobrenja-input').on('click', function() {
-            $(this).prop('readonly', false);
-        });
+        // // Omogući uređivanje kada se klikne na input
+        // $('.poziv-odobrenja-input').on('click', function() {
+        //     $(this).prop('readonly', false);
+        // });
         
-        // Onemogući uređivanje kada se klikne izvan inputa ili na novo polje
-        $(document).on('click', function(event) {
-            var clickedElement = $(event.target);
-            var inputFields = $('.poziv-odobrenja-input');
+        // // Onemogući uređivanje kada se klikne izvan inputa ili na novo polje
+        // $(document).on('click', function(event) {
+        //     var clickedElement = $(event.target);
+        //     var inputFields = $('.poziv-odobrenja-input');
             
-            if (!clickedElement.closest('.poziv-odobrenja-input').length) {
-                inputFields.prop('readonly', true);
-            }
+        //     if (!clickedElement.closest('.poziv-odobrenja-input').length) {
+        //         inputFields.prop('readonly', true);
+        //     }
             
-            if (clickedElement.is('.poziv-odobrenja-input')) {
-                inputFields.not(clickedElement).prop('readonly', true);
-                clickedElement.prop('readonly', false);
-            }
-        });
-        // Validacija vrednosti input polja pri promeni vrednosti
-        var inputFields = $('.poziv-odobrenja-input');
-        inputFields.on('input', function() {
-            console.log('validizacija input elementa koji se trenutno edituje')
-            validateInput($(this));
-        });
+        //     if (clickedElement.is('.poziv-odobrenja-input')) {
+        //         inputFields.not(clickedElement).prop('readonly', true);
+        //         clickedElement.prop('readonly', false);
+        //     }
+        // });
+        // // Validacija vrednosti input polja pri promeni vrednosti
+        // var inputFields = $('.poziv-odobrenja-input');
+        // inputFields.on('input', function() {
+        //     console.log('validizacija input elementa koji se trenutno edituje')
+        //     validateInput($(this));
+        // });
         
         // Funkcija za validaciju vrednosti input polja
         function validateInput(input) {

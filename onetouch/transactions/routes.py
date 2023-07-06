@@ -1,3 +1,4 @@
+import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, date
 from flask import  render_template, url_for, flash, redirect, request, abort
@@ -234,10 +235,30 @@ def debt_archive(debt_id):
 def payment_archive(payment_id):
     payment = StudentPayment.query.get_or_404(payment_id)
     records = TransactionRecord.query.filter_by(student_payment_id=payment_id).all()
+    students = Student.query.all()
+    students_data = []
+    for student in students:
+        student_data = {
+            'student_id': student.id,
+            'student_name': student.student_name,
+            'student_surname': student.student_surname,
+        }
+        students_data.append(student_data)
+    services = ServiceItem.query.all()
+    services_data = []
+    for service in services:
+        service_data = {
+            'service_id': service.id,
+            'service_item_name': service.service_item_name,
+            'service_debt': service.service_item_service.service_name
+        }
+        services_data.append(service_data)
     print(f'{records=}')
     return render_template('payment_archive.html', 
                             records=records, 
                             payment=payment,
+                            students=json.dumps(students_data),
+                            services=json.dumps(services_data),
                             legend=f"Pregled izvoda: {payment.id}")
 
 

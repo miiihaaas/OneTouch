@@ -5,8 +5,8 @@
         <tr>
             <th>Učenik</th>
             <th>Poziv na broj</th>
-            <th>ID učenika (e)</th>
-            <th>ID usluge (e)</th>
+            <th>ID učenika</th>
+            <th>ID usluge</th>
             <th>Detalji usluge??</th>
             <th>Svrha uplate</th>
             <th>Uplatilac</th>
@@ -18,8 +18,8 @@
         <tr>
             <td>{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</td>
             <td>{{ record.reference_number }}</td>
-            <td>{{ record.student_id }}</td>
-            <td>{{ record.service_item_id }}</td>
+            <td contenteditable="true" class="edit-cell student-id">{{ record.student_id }}</td>
+            <td contenteditable="true" class="edit-cell service-id">{{ record.service_item_id }}</td>
             <td>{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}</td>
             <td>{{ record.purpose_of_payment }}</td>
             <td>{{ record.payer }}</td>
@@ -28,7 +28,63 @@
         {% endfor %}
     </tbody>
 </table>
+<div>
+    <button class="btn btn-primary">Sačuvajte izmene</button>
+</div>
 {% endblock content%}
 
 {% block scripts %}
+<script>
+    // Dodajte funkciju za dobijanje imena i prezimena studenta na osnovu ID-a
+    function get_student_name(studentId) {
+        var students = JSON.parse('{{ students|safe }}');
+        var student = students.find(function (s) {
+            console.log('iz funkcije - s: ', s)
+            return s.student_id === parseInt(studentId);
+        });
+        if (student) {
+            return student.student_name + ' ' + student.student_surname;
+        }
+        return '';
+    }
+    // Dodajte funkciju za dobijanje naziva usluge na osnovu ID-a
+    function get_service_name(serviceId) {
+        var services = JSON.parse('{{ services|safe }}');
+        var service = services.find(function (s) {
+            console.log('iz funkcije - s: ', s)
+            return s.service_id === parseInt(serviceId);
+        });
+        if (service) {
+            return service.service_debt + ' - ' +  service.service_item_name;
+        }
+        return '';
+    }
+    $(document).ready(function () {
+        // Kreiranje tabele
+        var table = $('#data').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+        // Promena vrednosti u koloni 'ID učenika'
+        $('.student-id').on('input', function() {
+            var row = $(this).closest('tr');
+            var studentId = $(this).text();
+            var studentName = get_student_name(studentId);
+            console.log('test_studen id: ', studentName, studentId)
+            row.find('td:nth-child(3)').text(studentId);
+            row.find('td:nth-child(1)').text(studentName);
+        });
+
+        // Promena vrednosti u koloni 'ID usluge'
+        $('.service-id').on('input', function() {
+            var row = $(this).closest('tr');
+            var serviceId = $(this).text();
+            var serviceDetails = get_service_name(serviceId);
+            console.log('test_service id: ', serviceDetails, serviceId)
+            row.find('td:nth-child(4)').text(serviceId);
+            row.find('td:nth-child(5)').text(serviceDetails);
+        });
+    })
+</script>
 {% endblock %}
