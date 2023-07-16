@@ -3,6 +3,7 @@
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
     <thead>
         <tr>
+            <th></th>
             <th>Učenik</th>
             <th>Poziv na broj</th>
             <th>ID učenika</th>
@@ -16,11 +17,24 @@
     <tbody>
         {% for record in records %}
         <tr>
-            <td>{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</td>
+            <td>{{ record.id }}</td>
+            <td>
+                {% if record.student_id|int == 0 %}
+                    <strong>Greška</strong>
+                {% else %}
+                    {{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}
+                {% endif %}
+            </td>
             <td>{{ record.reference_number }}</td>
             <td contenteditable="true" class="edit-cell student-id">{{ record.student_id }}</td>
             <td contenteditable="true" class="edit-cell service-id">{{ record.service_item_id }}</td>
-            <td>{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}</td>
+            <td>
+                {% if record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
+                    {{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}
+                {% else %}
+                    <strong>Greška</strong>
+                {% endif %}
+                </td>
             <td>{{ record.purpose_of_payment }}</td>
             <td>{{ record.payer }}</td>
             <td>{{ record.student_debt_total }}</td>
@@ -29,7 +43,30 @@
     </tbody>
 </table>
 <div>
-    <button class="btn btn-primary">Sačuvajte izmene</button>
+    <button id="save_button" class="btn btn-primary">Sačuvajte izmene</button>
+</div>
+<hr>
+<table id="export_data" class="table table-striped dataTable no-footer invoices" role="grid">
+    <thead>
+        <tr>
+            <th>ID usluge</th>
+            <th>Detalji usluge</th>
+            <th>Ukupan iznos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in export_data %}
+        <tr>
+            <td>{{ data.service_item_id }}</td>
+            <td>{{ data.name }}</td>
+            <td>{{ data.sum_amount }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="col">
+    <button class="btn btn-primary">Izvoz podataka po ID usluge - pdf</button>
 </div>
 {% endblock content%}
 
@@ -66,14 +103,19 @@
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             }
         });
+        var tableExport = $('#export_data').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
         // Promena vrednosti u koloni 'ID učenika'
         $('.student-id').on('input', function() {
             var row = $(this).closest('tr');
             var studentId = $(this).text();
             var studentName = get_student_name(studentId);
             console.log('test_studen id: ', studentName, studentId)
-            row.find('td:nth-child(3)').text(studentId);
-            row.find('td:nth-child(1)').text(studentName);
+            row.find('td:nth-child(4)').text(studentId);
+            row.find('td:nth-child(2)').text(studentName);
         });
 
         // Promena vrednosti u koloni 'ID usluge'
@@ -82,9 +124,57 @@
             var serviceId = $(this).text();
             var serviceDetails = get_service_name(serviceId);
             console.log('test_service id: ', serviceDetails, serviceId)
-            row.find('td:nth-child(4)').text(serviceId);
-            row.find('td:nth-child(5)').text(serviceDetails);
+            row.find('td:nth-child(5)').text(serviceId);
+            row.find('td:nth-child(6)').text(serviceDetails);
         });
+        const buttonSave = $('#save_button');
+        buttonSave.on('click', (event) => {
+            console.log('test radi - pritisnuto je dugme sačuvaj. nastavi kodiranje')
+            var studentPaymentId;
+            var url = new URL(window.location.href); // Dohvaćanje trenutnog URL-a stranice
+            var pathname = url.pathname;  // Dohvaćanje putanje URL-a
+            var parts = pathname.split('/'); // Razdvajanje putanje na dijelove koristeći "/"
+            if (parts.length > 0) {
+                var lastPart = parts[parts.length-1]; // Dohvaćanje posljednjeg dijela putanje
+                studentPaymentId = parseInt(lastPart); // Pretvaranje posljednjeg dijela u broj
+            }
+            console.log('student Payment Id: ',studentPaymentId)
+            var table = $('#data');
+            var rows = table.find('tr');
+            console.log('redovi: ', rows)
+            console.log('broj redova: ', rows.length)
+            var records = []
+            for (var i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const recordId = parseInt($(row).find('td:nth-child(1)').text());
+                const studentId = parseInt($(row).find('.student-id').text());
+                const serviceId = parseInt($(row).find('.service-id').text());
+                records.push({
+                    'record_id': recordId,
+                    'student_id': studentId,
+                    'service_item_id': serviceId,
+                })
+            }
+            console.log('izmenjeni podaci za čuvanje: ', records)
+            console.log(JSON.stringify(records));
+            const output = {
+                'student_payment_id': studentPaymentId,
+                'records': records
+            }
+            $.ajax({
+                url: '/submit_records', //!!!!
+                method: 'POST',
+                data: JSON.stringify(output),
+                contentType: 'application/json',
+                success: function(response) {
+                    // Uspešan AJAX zahtjev
+                    // Preusmjeravanje na edit debt stranicu
+                    var editDebtUrl = "{{ url_for('transactions.payment_archive', payment_id='1') }}";
+                    editDebtUrl = editDebtUrl.replace('1', response);
+                    window.location.href = editDebtUrl;
+                }
+            })
+        })
     })
 </script>
 {% endblock %}

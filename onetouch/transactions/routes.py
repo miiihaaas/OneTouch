@@ -86,7 +86,7 @@ def submit_records():
     print(f'{data=}')
     print(f'{type(data)=}')
     
-    if 'service_item' in data:
+    if 'service_item' in data: 
         print('dodavanje novog zaduženja')
         service_item_id = int(data['service_item'])
         debt_class = int(data['class'])
@@ -179,6 +179,27 @@ def submit_records():
             db.session.commit()
         return str(student_debt_id)
     
+    elif 'student_payment_id' in data: #! izmena pregleda izvoda (payment_archive/<int:>)
+        print('izmena postojećeg izvoda')
+        student_payment_id = int(data['student_payment_id'])
+        payment = StudentPayment.query.get_or_404(student_payment_id)
+        #! ideja je da se doda još jedan atribut za klasu StudentPayment u kome će se skladištiti podatak ukoliko ima greške u uplatnicama
+        #! ako ima greške onda se naznači nekako red sa greškom
+        #! db.session.commit()
+        
+        for i in range(len(data['records'])):
+            record_id = data['records'][i]['record_id']
+            student_id = data['records'][i]['student_id']
+            service_item_id = data['records'][i]['service_item_id']
+            record_for_edit = TransactionRecord.query.get_or_404(record_id)
+            print(f'{record_for_edit=}')
+            print(f'{record_id=}, {student_id=}, {service_item_id=},')
+            record_for_edit.student_id = student_id
+            record_for_edit.service_item_id = service_item_id
+            db.session.commit()
+        return str(student_payment_id)
+        
+    
     
 
 
@@ -189,6 +210,7 @@ def debts_archive_list():
     if start_date is None or end_date is None:
         start_date = date.today().replace(day=1, month=1).isoformat()
         end_date = date.today().isoformat()
+    print(f'{start_date=}, {end_date=}')
     debts = StudentDebt.query.filter(
         StudentDebt.student_debt_date.between(start_date, end_date)).all()
     print(f'{debts=}')
@@ -242,6 +264,7 @@ def payment_archive(payment_id):
             'student_id': student.id,
             'student_name': student.student_name,
             'student_surname': student.student_surname,
+            
         }
         students_data.append(student_data)
     services = ServiceItem.query.all()
@@ -250,15 +273,42 @@ def payment_archive(payment_id):
         service_data = {
             'service_id': service.id,
             'service_item_name': service.service_item_name,
-            'service_debt': service.service_item_service.service_name
+            'service_debt': service.service_item_service.service_name,
         }
         services_data.append(service_data)
+    
     print(f'{records=}')
+    unique_service_item_ids = []
+    for record in records:
+        if record.service_item_id not in unique_service_item_ids:
+            unique_service_item_ids.append(record.service_item_id)
+    print(f'{unique_service_item_ids=}')
+    export_data = []
+    record_data = {}
+    for unique_service_item_id in unique_service_item_ids:
+        # Filtrirajte zapise samo za trenutni unique_service_item_id
+        filtered_records = [record for record in records if record.service_item_id == unique_service_item_id]
+        
+        # Sabiranje svih vrednosti student_debt_total za trenutni unique_service_item_id
+        sum_amount = sum(record.student_debt_total for record in filtered_records)
+        
+        # Kreiranje record_data za trenutni unique_service_item_id
+        record_data = {
+            'service_item_id': unique_service_item_id,
+            'name': filtered_records[0].transaction_record_service_item.service_item_service.service_name + ' - ' + filtered_records[0].transaction_record_service_item.service_item_name,
+            'sum_amount': sum_amount,
+        }
+        
+        export_data.append(record_data)
+
+        print(f'{record_data=}')
+    print(f'{export_data=}')
     return render_template('payment_archive.html', 
                             records=records, 
                             payment=payment,
                             students=json.dumps(students_data),
                             services=json.dumps(services_data),
+                            export_data = export_data,
                             legend=f"Pregled izvoda: {payment.id}")
 
 

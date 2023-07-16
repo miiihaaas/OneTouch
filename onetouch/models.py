@@ -76,6 +76,7 @@ class Student(db.Model):
     student_surname = db.Column(db.String(255), nullable=False)
     student_class = db.Column(db.Integer, nullable=False)
     student_section = db.Column(db.Integer, nullable=False) 
+    parent_email = db.Column(db.String(255), nullable=True)
     # student_debts = db.relationship('StudentDebt', backref='student_debt_student', lazy=True) #todo: dodaj u db
     transaction_records = db.relationship('TransactionRecord', backref='transaction_record_student', lazy=True) #todo: dodaj u db
 

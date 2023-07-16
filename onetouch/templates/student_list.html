@@ -9,7 +9,7 @@
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
-            <option value=""></option>
+            <option value="">Svi razredi</option>
             {% for class in range(9) %}
                 <option value="{{ class }}">{{ class }}</option>
             {% endfor %}
@@ -19,7 +19,7 @@
     <div class="col form-group">
         <label for="searchOdeljenje">Pretraga po odeljenju:</label>
         <select id="searchOdeljenje" class="form-select">
-            <option value=""></option>
+            <option value="">Sva odeljenja</option>
             {% for section in range(16) %}
                 <option value="{{ section }}">{{ section }}</option>
             {% endfor %}

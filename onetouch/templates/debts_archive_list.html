@@ -27,7 +27,7 @@
             <td>{{ debt.debt_class }}</td>
             <td>{{ debt.debt_section }}</td>
             <td>{{ debt.student_debt_service_item.service_item_service.service_name }} - {{ debt.student_debt_service_item.service_item_name }}</td>
-            <td><a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}">edit</a></td>
+            <td><a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}" class="btn btn-primary">Izmenite</a> <a href="#" class="btn btn-danger">Izbrišite</a></td>
         </tr>
         {% endfor %}
     </tbody>

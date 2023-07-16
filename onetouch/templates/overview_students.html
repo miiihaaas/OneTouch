@@ -1,0 +1,145 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row form-group">
+    <div class="col form-group">
+        <label for="searchRazred">Pretraga po razredu:</label>
+        <select id="searchRazred" class="form-select">
+            <option value="">Svi razredi</option>
+            {% for class in range(9) %}
+                <option value="{{ class }}">{{ class }}</option>
+            {% endfor %}
+        </select>
+    </div>    
+    <div class="col form-group">
+        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
+        <select id="searchOdeljenje" class="form-select">
+            <option value="">Sva odeljenja</option>
+            {% for section in range(16) %}
+                <option value="{{ section }}">{{ section }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col form-group">
+        <label for="">Pretraga po usluzi</label>
+        <select name="searchUsluga" id="searchUsluga" class="form-select">
+            {% if service_id == "0" %}
+                <option value="0" selected>Sve</option>
+                {% for option in options %}
+                    <option value="{{option['value']}}">{{option['label']}}</option>
+                {% endfor %}
+            {% else %}
+                <option value="0">Sve</option>
+                {% for option in options %}
+                    {% if service_id == option['value'] %}
+                        <option value="{{option['value']}}" selected>{{option['label']}}</option>
+                    {% else %}
+                        <option value="{{option['value']}}">{{option['label']}}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </select>
+    </div>
+    <div class="col">
+        <label for="start-date" class="form-label">Početni datum:</label>
+        <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
+    </div>
+    <div class="col">
+        <label for="end-date" class="form-label">Krajnji datum:</label>
+        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
+    </div>
+    <hr>
+</div>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>ID učenika</th>
+            <th>Učenik</th>
+            <th>Razred</th>
+            <th>Odeljenje</th>
+            <th>Zaduženje</th>
+            <th>Uplate</th>
+            <th>Saldo</th>
+            <th>Kartica stanja</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for student in export_data %}
+        <tr>
+            <td>{{ "{:04d}".format(student['student_id']) }}</td>
+            <td>{{ student['student_name'] }} {{ student['student_surname'] }}</td>
+            <td>{{ student['student_class'] }}</td>
+            <td>{{ student['student_section'] }}</td>
+            <td>{{ student['student_debt'] }}</td>
+            <td>{{ student['student_payment'] }}</td>
+            <td>{{ student['saldo'] }}</td>
+            <td><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn btn primary">pregled</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<hr>
+<div>
+    <p>Zaduženje: <span id="zaduzenjeSum"></span></p>
+    <p>Uplate: <span id="uplateSum"></span></p>
+    <p>Saldo: <span id="saldoSum"></span></p>
+</div>
+{% endblock content%}
+{% block scripts %}
+<script>
+    // Dobijanje reference na HTML elemente koji će prikazivati sume
+    var zaduzenjeSumElement = document.getElementById('zaduzenjeSum');
+    var uplateSumElement = document.getElementById('uplateSum');
+    var saldoSumElement = document.getElementById('saldoSum');
+
+    // Izračunavanje sumi za svaki ključ
+    var data = JSON.parse('{{ export_data | tojson | safe }}');
+    var zaduzenjeSum = 0;
+    var uplateSum = 0;
+    var saldoSum = 0;
+
+    for (var i = 0; i < data.length; i++) {
+        zaduzenjeSum += data[i].student_debt;
+        uplateSum += data[i].student_payment;
+        saldoSum += data[i].saldo;
+    }
+
+    // Prikazivanje suma u HTML-u
+    zaduzenjeSumElement.textContent = zaduzenjeSum;
+    uplateSumElement.textContent = uplateSum;
+    saldoSumElement.textContent = saldoSum;
+    
+    $(document).ready(function () {
+        var table = $('#data').DataTable({
+            language: {
+                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                }
+        });
+        $('#searchUsluga').val('{{service_id}}')
+        $('#searchRazred').on('change', function () {
+            var selectedValue = $(this).val();
+            table.column(2).search(selectedValue).draw();
+        });
+
+        $('#searchOdeljenje').on('change', function () {
+            var selectedValue = $(this).val();
+            table.column(3).search(selectedValue).draw();
+        });
+
+        // Funkcija koja se poziva pri promeni datuma
+        function handleDateChange() {
+            var startDate = document.getElementById("start-date").value;
+            var endDate = document.getElementById("end-date").value;
+            var serviceId = document.getElementById("searchUsluga").value;
+            console.log('id usluge: ', serviceId)
+            var currentUrl = window.location.href.split('?')[0];
+            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId;
+            window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
+        }
+
+        // Dodavanje osluškivača događaja za promenu datuma
+        document.getElementById("start-date").addEventListener("change", handleDateChange);
+        document.getElementById("end-date").addEventListener("change", handleDateChange);
+        document.getElementById("searchUsluga").addEventListener("change", handleDateChange);
+    });
+</script>
+{% endblock %}
