@@ -18,8 +18,8 @@
         <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
 </div>
-<hr>
 {% for service in unique_services_list %}
+<hr>
     <legend>{{ service['service_name'] }}</legend>
     <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
         <thead>
@@ -49,10 +49,17 @@
     </table>
     {% endfor %}
     <hr>
-    <div>
-        <p>Zaduženje: <span id="zaduzenjeSum"></span></p>
-        <p>Uplate: <span id="uplateSum"></span></p>
-        <p>Saldo: <span id="saldoSum"></span></p>
+    <div class="row">
+        <div class="col">
+            <p>Zaduženje: <span id="zaduzenjeSum"></span></p>
+            <p>Uplate: <span id="uplateSum"></span></p>
+            <p>Saldo: <span id="saldoSum"></span></p>
+        </div>
+        <div class="col">
+            <p>Zaduženje: <span id="zaduzenjeFilterSum"></span></p>
+            <p>Uplate: <span id="uplateFilterSum"></span></p>
+            <p>Saldo: <span id="saldoFilterSum"></span></p>
+        </div>
     </div>
 
 {% endblock content%}
@@ -63,22 +70,55 @@
     var uplateSumElement = document.getElementById('uplateSum');
     var saldoSumElement = document.getElementById('saldoSum');
 
+    var zaduzenjeFilterSumElement = document.getElementById('zaduzenjeFilterSum');
+    var uplateFilterSumElement = document.getElementById('uplateFilterSum');
+    var saldoFilterSumElement = document.getElementById('saldoFilterSum');
+
+    var pocetniDatum = new Date(document.getElementById('start-date').value);
+    var krajnjiDatum = new Date(document.getElementById('end-date').value);
+
+    // Formatiranje pocetniDatum i krajnjiDatum bez vremenskog dela
+    pocetniDatum.setHours(0, 0, 0, 0);
+    krajnjiDatum.setHours(0, 0, 0, 0);
+
     // Izračunavanje sumi za svaki ključ
     var data = JSON.parse('{{ data | tojson | safe }}');
     var zaduzenjeSum = 0;
     var uplateSum = 0;
     var saldoSum = 0;
 
+    var zaduzenjeFilterSum = 0;
+    var uplateFilterSum = 0;
+    var saldoFilterSum = 0;
+
     for (var i = 0; i < data.length; i++) {
         zaduzenjeSum += data[i].debt_amount;
         uplateSum += data[i].payment_amount;
+        console.log('datum: ', data[i].date)
+        console.log('početni datum: ', pocetniDatum)
+        console.log('krajnji datum: ', krajnjiDatum)
+        
+        var currentDate = new Date(data[i].date);
+        currentDate.setHours(0, 0, 0, 0);
+
+        if (currentDate >= pocetniDatum && currentDate <= krajnjiDatum) {
+            zaduzenjeFilterSum += data[i].debt_amount;
+            uplateFilterSum += data[i].payment_amount;
+        }
     }
+
     saldoSum = zaduzenjeSum - uplateSum;
+    saldoFilterSum = zaduzenjeFilterSum - uplateFilterSum;
 
     // Prikazivanje suma u HTML-u
     zaduzenjeSumElement.textContent = zaduzenjeSum;
     uplateSumElement.textContent = uplateSum;
     saldoSumElement.textContent = saldoSum;
+
+    zaduzenjeFilterSumElement.textContent = zaduzenjeFilterSum;
+    uplateFilterSumElement.textContent = uplateFilterSum;
+    saldoFilterSumElement.textContent = saldoFilterSum;
+
 
     // Funkcija koja se poziva pri promeni datuma
     function handleDateChange() {

@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>ovo je "detaljna" lista usluga</h2>
 <a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+<hr>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
@@ -130,7 +130,7 @@
                             </div>
                         {% else %}
                         <select name="classes-{{service_profile.id}}" id="classes-{{service_profile.id}}" class="form-control selectpicker" data-live-search="true" multiple>
-                            {% for i in range(1,9) %}
+                            {% for i in range(0,9) %}
                                 {% if i|string in service_profile.service_item_class %}
                                 <option value="{{i}}" selected>{{i}}</option>
                                 {% else %}
@@ -138,7 +138,6 @@
                                 {% endif %}
                             {% endfor %}
                         </select>
-                        {{service_profile.service_item_class}}
                         {% endif %}
                     </div>
                     <div class="form-group">
@@ -477,6 +476,7 @@
                     </div>
                 {% else %}
                     <select name="classes" id="classes" class="form-control selectpicker" data-live-search="true" multiple>
+                        <option value="0">0</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>

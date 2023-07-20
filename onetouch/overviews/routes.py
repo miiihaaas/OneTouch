@@ -138,24 +138,25 @@ def overview_student(student_id):
         elif record.student_payment_id:
             description = record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name
             date_ = record.transaction_record_student_payment.payment_date
-        test_data = {
-            'id': record.id,
-            'service_item_id': record.service_item_id, #! ovo je za filtriranje po uslugama
-            'student_payment_id': record.student_payment_id,
-            'date': date_,
-            'description': description,
-            'debt_amount': record.student_debt_total if record.student_debt_id else 0,
-            'payment_amount': record.student_debt_total if record.student_payment_id else 0,
-        }
-        if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
-            print(f'postoji zapis sa service_item_id: {test_data["service_item_id"]}, napravi sumu svih ključeva "saldo"')
-            saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == test_data['service_item_id']]
-            print(f'saldo_sum: {saldo_sum=}')
-            test_data['saldo'] = saldo_sum[-1] + test_data['debt_amount'] - test_data['payment_amount'] #! iz liste 'saldo' uzima poslenju vrednost i na to dodaje razliku zaduženja i uplata
-        else:
-            print(f'ovo je prvi zapis sa service_item_id: {test_data["service_item_id"]}, ključ "saldo" je "debt_amount" - "payment_amount')
-            test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
-        data.append(test_data)
+        if record.student_debt_total: #! ako ima zaduženje ili uplatu dodaj ga u data
+            test_data = {
+                'id': record.id,
+                'service_item_id': record.service_item_id, #! ovo je za filtriranje po uslugama
+                'student_payment_id': record.student_payment_id,
+                'date': date_,
+                'description': description,
+                'debt_amount': record.student_debt_total if record.student_debt_id else 0,
+                'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+            }
+            if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
+                print(f'postoji zapis sa service_item_id: {test_data["service_item_id"]}, napravi sumu svih ključeva "saldo"')
+                saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == test_data['service_item_id']]
+                print(f'saldo_sum: {saldo_sum=}')
+                test_data['saldo'] = saldo_sum[-1] + test_data['debt_amount'] - test_data['payment_amount'] #! iz liste 'saldo' uzima poslenju vrednost i na to dodaje razliku zaduženja i uplata
+            else:
+                print(f'ovo je prvi zapis sa service_item_id: {test_data["service_item_id"]}, ključ "saldo" je "debt_amount" - "payment_amount')
+                test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
+            data.append(test_data)
     # unique_services_list.sort()
     
     print(f'{data=}')

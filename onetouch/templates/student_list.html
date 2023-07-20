@@ -41,6 +41,7 @@
             <th>Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
+            <th>Roditeljski mejl</th>
             <th>Aktivnosti</th>
         </tr><a href=""></a>
     </thead>
@@ -52,6 +53,7 @@
             <td>{{ student.student_surname }}</td>
             <td>{{ student.student_class }}</td>
             <td>{{ student.student_section }}</td>
+            <td>{{ student.parent_email }}</td>
             <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{student.id}}">edit</a>
                 <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#DeleteModal{{student.id}}">delete</a></td>
         </tr>
@@ -170,6 +172,19 @@
                             {{ edit_form.student_section(class="form-select form-select-lg", value=student.student_section) }}
                         {% endif %}
                     </div>
+                    <div class="form-group">
+                        {{ edit_form.parent_email.label(class="form-control-label") }}
+                        {% if edit_form.parent_email.errors %}
+                            {{ edit_form.parent_email(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.parent_email.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ edit_form.parent_email(class="form-control form-control-lg", value=student.parent_email) }}
+                        {% endif %}
+                    </div>
                     </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
@@ -247,6 +262,19 @@
                     </div>
                 {% else %}
                     {{ register_form.student_section(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ edit_form.parent_email.label(class="form-control-label") }}
+                {% if edit_form.parent_email.errors %}
+                    {{ edit_form.parent_email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in edit_form.parent_email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ edit_form.parent_email(class="form-control form-control-lg") }}
                 {% endif %}
             </div>
             </div>

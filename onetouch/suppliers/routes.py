@@ -21,7 +21,7 @@ def supplier_list():
         supplier.supplier_name = edit_form.supplier_name.data
         supplier.archived = edit_form.archived.data
         db.session.commit()
-        flash('izmene su napravljene...', 'success')
+        flash(f'Izmene profila dobavljača "{supplier.supplier_name}" su sačuvane.', 'success')
         return redirect(url_for('suppliers.supplier_list'))
     elif request.method == 'GET': 
         supplier = Supplier.query.get(request.form.get('get_supplier'))
@@ -32,7 +32,7 @@ def supplier_list():
                             archived=False)
         db.session.add(supplier)
         db.session.commit()
-        flash('dobavljač je registrovan', 'success')
+        flash(f'Registrovan je novi dobavljač "{supplier.supplier_name}".', 'success')
         return redirect(url_for('suppliers.supplier_list'))
 
 
@@ -67,7 +67,7 @@ def service_list():
         service.archived = edit_form.archived.data
         
         db.session.commit()
-        flash('Podaci usluge su ažurirani.', 'success')
+        flash(f'Podaci usluge "{service.service_name}" su ažurirani.', 'success')
         return redirect(url_for('suppliers.service_list'))
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
@@ -78,7 +78,7 @@ def service_list():
                             archived=False)
         db.session.add(service)
         db.session.commit()
-        flash('Usluga je registrovana', 'success')
+        flash(f'Usluga "{service.service_name}" je registrovana.', 'success')
         return redirect(url_for('suppliers.service_list'))
     return render_template('service_list.html',
                             tite = 'Tip usluge',
@@ -144,7 +144,7 @@ def service_profile_list():
         service_profile.service_item_date = date.today()
         service_profile.supplier_id = edit_form.supplier_id.data
         service_profile.service_id = edit_form.service_id.data
-        service_profile.service_item_class = "1, 5" #class_list_string
+        service_profile.service_item_class = "1, 5" #!class_list_string
         service_profile.price = edit_form.price.data
         service_profile.installment_number = edit_form.installment_number.data
         service_profile.installment_1 = edit_form.installment_1.data
@@ -240,7 +240,7 @@ def delete_service_profile(service_profile_id):
         print ('nije dobar password')
         abort(403)
     else:
-        flash(f'Uspešno je obrisana usluga "{service_profile.service_item_name}"', 'success')
+        flash(f'Uspešno je obrisana usluga "{service_profile.service_item_name}".', 'success')
         db.session.delete(service_profile)
         db.session.commit()
         return redirect(url_for("suppliers.service_profile_list"))

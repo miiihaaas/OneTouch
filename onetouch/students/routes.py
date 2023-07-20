@@ -27,6 +27,7 @@ def student_list():
         student.student_surname = edit_form.student_surname.data.capitalize()
         student.student_class = edit_form.student_class.data
         student.student_section = edit_form.student_section.data
+        student.parent_email = edit_form.parent_email.data
         db.session.commit()
         return redirect(url_for('students.student_list'))
     elif request.method == 'GET': # and request.form.get('get_student') != None:
@@ -43,7 +44,8 @@ def student_list():
         student = Student(student_name=register_form.student_name.data.capitalize(),
                         student_surname=register_form.student_surname.data.capitalize(),
                         student_class=str(register_form.student_class.data),
-                        student_section=register_form.student_section.data)
+                        student_section=register_form.student_section.data,
+                        parent_email=register_form.parent_email.data)
         print(student.student_name, student.student_surname, student.student_class)
         db.session.add(student)
         db.session.commit()

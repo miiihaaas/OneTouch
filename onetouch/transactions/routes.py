@@ -1,11 +1,14 @@
 import json
+import requests, os, io
 import xml.etree.ElementTree as ET
+from PIL import Image
 from datetime import datetime, date
 from flask import  render_template, url_for, flash, redirect, request, abort
 from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord
+from onetouch.transactions.functions import uplatnice_gen
 
 transactions = Blueprint('transactions', __name__)
 
@@ -18,7 +21,12 @@ def student_debts():
     service_items = ServiceItem.query.all()
     print(f'{service_items=}')
     print(f'{teachers=}')
-    return render_template('student_debts.html', students=students, service_items=service_items, teachers=teachers)
+    return render_template('student_debts.html', 
+                            legend = 'Zaduživanje učenika',
+                            title = 'Zaduživanje učenika',
+                            students=students, 
+                            service_items=service_items, 
+                            teachers=teachers)
 
 #! Ajax
 @transactions.route('/get_service_items', methods=['POST'])
@@ -237,20 +245,119 @@ def payments_archive_list():
                             legend="Arhiva izvoda") #todo napravi html fajl
 
 
-@transactions.route('/debt_archive/<int:debt_id>', methods=['get', 'post'])
+
+
+@transactions.route('/debt_archive/<int:debt_id>', methods=['GET', 'POST'])
 def debt_archive(debt_id):
     debt = StudentDebt.query.get_or_404(debt_id)
     purpose_of_payment = debt.purpose_of_payment
     print(f'{purpose_of_payment=}')
+    school = School.query.first()
+    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ', ' + school.school_city
     teacher = Teacher.query.filter_by(teacher_class=debt.debt_class).filter_by(teacher_section=debt.debt_section).first()
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
     print(f'{records=}')
+    data_list = []
+    qr_code_images = []
+    
+    if request.method == 'POST': #! ispraviti da se ovaj kod proziva samo kada se klikne na 'štampa', trenutno se poziva i kada je 'sačuvajte' i kada je 'štampa'
+        for i, record in enumerate(records):
+            if record.student_debt_total > 0:
+                new_data = {
+                    'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
+                    'svrha_uplate': purpose_of_payment,
+                    'primalac': school_info,
+                    'sifra_placanja': 189,
+                    'valuta': 'RSD', #! proveri da li je zbog QR koda potrebno drugačije definisati valutu
+                    'iznos': record.student_debt_total,
+                    'racun_primaoca': school.school_bank_account,
+                    'model': '', #! proveriti koji je model zbog QR koda 
+                    'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
+                }
+                data_list.append(new_data)
+                
+                racun = school.school_bank_account
+                racun = racun.replace('-', '')  # Uklanja sve crtice iz računa
+                racun = racun[:3] + racun[3:].zfill(15)  # Dodaje nule posle prvih 3 cifre računa do ukupne dužine od 18 cifara
+                print(f'test računa za QR kod: {racun=}')
+                dug = new_data['iznos']
+                dug = "RSD" + str(dug).replace('.', ',')
+                qr_data = {
+                    "K": "PR",
+                    "V": "01",
+                    "C": "1",
+                    "R": racun,
+                    "N": school_info,
+                    "I": dug,
+                    "P": new_data['uplatilac'],
+                    "SF": new_data['sifra_placanja'],
+                    "S": new_data['svrha_uplate'],
+                    "RO": new_data['model'] + new_data['poziv_na_broj']
+                }
+                print(f'{qr_data=}')
+                #! dokumentacija: https://ips.nbs.rs/PDF/Smernice_Generator_Validator_latinica_feb2023.pdf
+                url = 'https://nbs.rs/QRcode/api/qr/v1/gen/250'
+                headers = { 'Content-Type': 'application/json' }
+                response = requests.post(url, headers=headers, json=qr_data)
+                print(f'{response=}')
+                if response.status_code == 500:
+                    print(response.content)
+                    print(response.headers)
+                    response_data = response.json()
+                    if 'error_message' in response_data:
+                        error_message = response_data['error_message']
+                        print(f"Error message: {error_message}")
+
+                if response.status_code == 200:
+                    qr_code_image = Image.open(io.BytesIO(response.content))
+                    qr_code_filename = f'qr_{i}.png'
+                    qr_code_image.save(os.path.join('onetouch/static/payment_slips/qr_code/', qr_code_filename))
+                    qr_code_filepath = os.path.join('onetouch/static/payment_slips/qr_code/', qr_code_filename)
+                    with open(qr_code_filepath, 'wb') as file:
+                        file.write(response.content)
+                    qr_code_images.append(qr_code_filename)
+                else:
+                    pass
+                print(f'{qr_code_images=}')
+            
+        print (f'{data_list=}')
+        print(f'{len(data_list)=}')
+        gen_file = uplatnice_gen(data_list, qr_code_images) #! prilagodi ovu funciju
+        #! briše QR kodove nakon dodavanja na uplatnice
+        folder_path = 'onetouch/static/payment_slips/qr_code/'
+        # Provjeri da li je putanja zaista direktorijum
+        if os.path.isdir(folder_path):
+            # Prolazi kroz sve fajlove u direktorijumu
+            for filename in os.listdir(folder_path):
+                file_path = os.path.join(folder_path, filename)
+                # Provjeri da li je trenutni element fajl
+                if os.path.isfile(file_path):
+                    # Obriši fajl
+                    os.remove(file_path)
+            print("Svi fajlovi su uspješno obrisani.")
+        else:
+            print("Navedena putanja nije direktorijum.")
+        filename = f'static/payment_slips/uplatnice.pdf' #!
+        # return render_template('import_from_pdv.html', title='Import iz PDVa', df=df.values.tolist(), uplatilac=uplatilac)
+
     return render_template('debt_archive.html', 
                             records=records, 
                             debt=debt, 
                             teacher=teacher,
                             purpose_of_payment=purpose_of_payment,
                             legend=f"Pregled zadušenja: {debt.id}")
+    
+
+@transactions.route('/debt_archive_delete/<int:debt_id>', methods=['get', 'post'])
+def debt_archive_delete(debt_id):
+    records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
+    for record in records:
+        db.session.delete(record)
+        db.session.commit()
+    debt = StudentDebt.query.get_or_404(debt_id)
+    db.session.delete(debt)
+    db.session.commit()
+    return redirect(url_for('transactions.debts_archive_list'))
 
 
 @transactions.route('/payment_archive/<int:payment_id>', methods=['get', 'post'])
@@ -288,17 +395,20 @@ def payment_archive(payment_id):
     for unique_service_item_id in unique_service_item_ids:
         # Filtrirajte zapise samo za trenutni unique_service_item_id
         filtered_records = [record for record in records if record.service_item_id == unique_service_item_id]
-        
+        print(f'{filtered_records=}')
         # Sabiranje svih vrednosti student_debt_total za trenutni unique_service_item_id
         sum_amount = sum(record.student_debt_total for record in filtered_records)
         
         # Kreiranje record_data za trenutni unique_service_item_id
         record_data = {
             'service_item_id': unique_service_item_id,
-            'name': filtered_records[0].transaction_record_service_item.service_item_service.service_name + ' - ' + filtered_records[0].transaction_record_service_item.service_item_name,
             'sum_amount': sum_amount,
         }
-        
+        print(f'{filtered_records[0].service_item_id=}')
+        if filtered_records[0].transaction_record_service_item is not None:
+            record_data['name'] = filtered_records[0].transaction_record_service_item.service_item_service.service_name + ' - ' + filtered_records[0].transaction_record_service_item.service_item_name
+        else:
+            record_data['name'] = 'Greška'
         export_data.append(record_data)
 
         print(f'{record_data=}')

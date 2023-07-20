@@ -19,7 +19,7 @@
         <tr>
             <td>{{ record.id }}</td>
             <td>
-                {% if record.student_id|int == 0 %}
+                {% if record.transaction_record_student.id is not defined %}
                     <strong>Greška</strong>
                 {% else %}
                     {{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}
