@@ -57,7 +57,7 @@
     <tbody>
         {% for data in export_data %}
         <tr>
-            <td>{{ data.service_item_id }}</td>
+            <td>{{ "{:04d}".format(data.service_item_id) }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.sum_amount }}</td>
         </tr>

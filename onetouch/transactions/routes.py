@@ -8,7 +8,7 @@ from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord
-from onetouch.transactions.functions import uplatnice_gen
+from onetouch.transactions.functions import uplatnice_gen, export_payment_stats
 
 transactions = Blueprint('transactions', __name__)
 
@@ -410,7 +410,9 @@ def payment_archive(payment_id):
         else:
             record_data['name'] = 'Greška'
         export_data.append(record_data)
-
+        
+        gen_file = export_payment_stats(export_data)
+        print(f'{gen_file=}')
         print(f'{record_data=}')
     print(f'{export_data=}')
     return render_template('payment_archive.html', 

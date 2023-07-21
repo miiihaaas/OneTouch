@@ -28,6 +28,7 @@
             <th>Iznos</th>
             <th>Olakšica</th>
             <th>Iznos zaduženja</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -40,6 +41,7 @@
             <td id="installment_{{ record.transaction_record_student.id }}">{{ record.studetn_debt_installment_value }}</td>
             <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_discount}}</td>
             <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount}}</td>
+            <td><a class="btn btn-primary" href="">generišite uplatnicu</a></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -51,7 +53,7 @@
 <form action="" method="post">
     <div class="form-group">
         <button class="btn btn-info" id="save_button" name="save_button">Sačuvajte</button>
-        <button class="btn btn-info" type="submit" id="print_button" name="print_button">Štampa</button>
+        <button class="btn btn-info" type="submit" id="print_button" name="print_button">Generišite sve uplatnice</button>
     </div>
 </form>
 
