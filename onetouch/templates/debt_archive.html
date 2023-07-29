@@ -34,14 +34,14 @@
     <tbody>
         {% for record in records %}
         <tr>
-            <td>{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</td>
+            <td><a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a></td>
             <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
             <td>{{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_service_item.service_item_name }}</td>
             <td id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
             <td id="installment_{{ record.transaction_record_student.id }}">{{ record.studetn_debt_installment_value }}</td>
             <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_discount}}</td>
             <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount}}</td>
-            <td><a class="btn btn-primary" href="">generišite uplatnicu</a></td>
+            <td><a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite uplatnicu</a></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -50,12 +50,10 @@
     <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
     <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
 </div>
-<form action="" method="post">
-    <div class="form-group">
-        <button class="btn btn-info" id="save_button" name="save_button">Sačuvajte</button>
-        <button class="btn btn-info" type="submit" id="print_button" name="print_button">Generišite sve uplatnice</button>
-    </div>
-</form>
+<div class="form-group">
+    <button class="btn btn-info" id="save_button" name="save_button">Sačuvajte</button>
+    <a class="btn btn-primary" href="/static/payment_slips/uplatnice.pdf" target="_blank">gen sve</a>
+</div>
 
 {% endblock content%}
 
@@ -147,8 +145,6 @@
                     window.location.href = editDebtUrl;
                 }
             })
-
-
         })
     });
 </script>

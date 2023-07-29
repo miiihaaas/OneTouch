@@ -2,12 +2,22 @@ from datetime import datetime
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
-from onetouch.models import Teacher
+from onetouch.models import Teacher, User
 from onetouch.teachers.forms import RegisterTeacherModalForm, EditTeacherModalForm
 from flask_login import login_required, current_user
 
 
 teachers = Blueprint('teachers', __name__)
+
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+# Ova funkcija će proveriti da li je korisnik ulogovan pre nego što pristupi zaštićenoj ruti
+@teachers.before_request
+def require_login():
+    if request.endpoint and not current_user.is_authenticated:
+        return redirect(url_for('users.login'))
 
 
 @teachers.route('/teacher_list', methods=['GET', 'POST'])

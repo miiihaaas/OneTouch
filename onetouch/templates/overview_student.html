@@ -20,11 +20,14 @@
 </div>
 {% for service in unique_services_list %}
 <hr>
-    <legend>{{ service['service_name'] }}</legend>
+    <div class="btn-group" role="group">
+        <a class="btn btn-info" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
+        <a class="btn btn-primary" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{ service['service_name'] }}</a>
+    </div>
     <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
         <thead>
             <tr>
-                <th>ID record // ID usluge / Datum</th>
+                <th>Datum</th>
                 <th>Opis usluge</th>
                 <th>Zaduženje</th>
                 <th>Uplate</th>
@@ -36,12 +39,12 @@
             {% for record in data %}
             {% if record['service_item_id'] == service['id'] %}
             <tr>
-                <td>{{ record['id'] }} // {{ record['service_item_id'] }} / {{ record['date'].strftime('%d.%m.%Y.') }}</td>
+                <td>{{ record['date'].strftime('%d.%m.%Y.') }}</td>
                 <td>{{ record['description'] }}</td>
                 <td>{{ record['debt_amount'] }}</td>
                 <td>{{ record['payment_amount'] }}</td>
                 <td>{{ record['saldo'] }}</td>
-                <td>{% if record['debt_amount'] > 0 %} <button class="btn btn-primary">print</button> {% else %} <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn btn-primary">Izvod: {{ record['student_payment_id'] }}</a> {% endif %}</td>
+                <td>{% if record['debt_amount'] > 0 %} <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite uplatnicu</a> {% else %} <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn btn-primary">Izvod: {{ record['student_payment_id'] }}</a> {% endif %}</td>
             </tr>
             {% endif %}
             {% endfor %}

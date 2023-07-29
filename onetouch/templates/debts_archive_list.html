@@ -17,7 +17,8 @@
             <th>Razred</th>
             <th>Odeljenje</th>
             <th>Detalji usluge</th>
-            <th>buttons</th>
+            <th>Svrha uplate</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -27,6 +28,7 @@
             <td>{{ debt.debt_class }}</td>
             <td>{{ debt.debt_section }}</td>
             <td>{{ debt.student_debt_service_item.service_item_service.service_name }} - {{ debt.student_debt_service_item.service_item_name }}</td>
+            <td>{{ debt.purpose_of_payment }}</td>
             <td>
                 <a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}" class="btn btn-primary">Izmenite</a>
                 <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#confirmDeleteModal" data-debt-id="{{ debt.id }}">Izbrišite</a>

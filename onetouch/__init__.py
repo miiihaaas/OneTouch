@@ -1,8 +1,8 @@
-import os
+import os, logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from dotenv import load_dotenv
 from flask_migrate import Migrate
@@ -20,6 +20,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['FLASK_APP'] = 'run.py'
 
+
 db = SQLAlchemy(app)
 # migrate = Migrate(app, db, compare_type=True, render_as_batch=True) #da primeti izmene npr u dužini stringova
 bcrypt = Bcrypt(app)
@@ -34,6 +35,23 @@ app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') # https://www.youtube.com/
 app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASS') # https://www.youtube.com/watch?v=IolxqkL7cD8&ab_channel=CoreySchafer -- za 2 step verification: https://support.google.com/accounts/answer/185833
 mail = Mail(app)
 
+#logging
+app.logger.setLevel(logging.DEBUG)
+log_file_path = os.path.join(os.path.dirname(__file__), 'loggings.txt')
+file_handler = logging.FileHandler(log_file_path)
+file_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+app.logger.addHandler(file_handler)
+
+app.logger.debug("Ovo je testna DEBUG poruka.")
+app.logger.info("Ovo je testna INFO poruka.")
+app.logger.warning("Ovo je testna WARNING poruka.")
+app.logger.error("Ovo je testna ERROR poruka.")
+
+
+
+
 from onetouch.main.routes import main
 from onetouch.schools.routes import schools
 from onetouch.students.routes import students
@@ -43,6 +61,7 @@ from onetouch.transactions.routes import transactions
 from onetouch.overviews.routes import overviews
 from onetouch.users.routes import users
 
+
 app.register_blueprint(main)
 app.register_blueprint(schools)
 app.register_blueprint(students)
@@ -51,3 +70,6 @@ app.register_blueprint(teachers)
 app.register_blueprint(transactions)
 app.register_blueprint(overviews)
 app.register_blueprint(users)
+
+
+

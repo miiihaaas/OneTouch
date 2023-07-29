@@ -1,6 +1,7 @@
+import os
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
-from onetouch import db, bcrypt, mail
+from onetouch import db, bcrypt, mail, app
 from onetouch.users.forms import LoginForm
 from onetouch.models import User, School
 from flask_login import login_user, login_required, logout_user, current_user
@@ -9,6 +10,7 @@ from flask_mail import Message
 
 
 users = Blueprint('users', __name__)
+
 
 @users.route("/login", methods=['GET', 'POST'])
 def login():
@@ -21,7 +23,6 @@ def login():
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             print (user.user_name)
-            # name_vokativ = padezi(user.name)[5]
             flash(f'Dobro došli, {user.user_name}!', 'success')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:

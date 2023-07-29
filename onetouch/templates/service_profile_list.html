@@ -30,7 +30,9 @@
             <td>{{ service_profile.installment_number }}</td>
             <td>{{ service_profile.service_item_class }}</td>
             <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}"><img src="/static/img/edit_button.png" alt="Edit"></a>
-                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}"><img src="/static/img/delete_button.png" alt="Delete"></a></td>
+                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}"><img src="/static/img/delete_button.png" alt="Delete"></a>
+                {% if service_profile.archived %} arhivirano {% endif %}
+            </td>
         </tr>
         <!-- Modal Delete -->
         <div class="modal fade" id="DeleteModal{{service_profile.id}}" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
@@ -66,346 +68,348 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                <div class="modal-body">
-                <label for="input_password">neki opisni tekst {{service_profile}}</label>
-                <form action="" method="POST">
-                    {{ edit_form.hidden_tag() }}
-                    <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
-                        <input type="" value="{{service_profile.id}}" id="get_service_profile" name="get_service_profile" readonly>
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.supplier_id.label(class="form-control-label") }}
-                        {% if edit_form.supplier_id.errors %}
-                            {{ edit_form.supplier_id(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.supplier_id.errors %}
-                                <span>{{ error }}</span>
-                                {% endfor %}
+                    <div><!-- u ovom divu treba da forma objedini body i footer kako bi dugmići iz footera submitovali formu -->
+                        <form action="" method="POST">
+                            <div class="modal-body">
+                                <label for="input_password">neki opisni tekst {{service_profile}}</label>
+                                {{ edit_form.hidden_tag() }}
+                                <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
+                                    <input type="" value="{{service_profile.id}}" id="get_service_profile" name="get_service_profile" readonly>
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.supplier_id.label(class="form-control-label") }}
+                                    {% if edit_form.supplier_id.errors %}
+                                        {{ edit_form.supplier_id(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.supplier_id.errors %}
+                                            <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% set z = edit_form.supplier_id.process_data(service_profile.supplier_id) %}
+                                        {{ edit_form.supplier_id(class="form-select form-select-lg", id="supplier_id-" + service_profile.id|string) }}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    NAPRAVITI KONDICIONAL KADA SE PROMENI TIP USLUGE DA POLJE BUDE EDITABILNO ILI NE
+                                    {{ edit_form.service_id.label(class="form-control-label") }}
+                                    {% if edit_form.service_id.errors %}
+                                        {{ edit_form.service_id(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.service_id.errors %}
+                                            <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% set z = edit_form.service_id.process_data(service_profile.service_id) %}
+                                        {{ edit_form.service_id(class="form-select form-select-lg", type="date", id="service_id-" + service_profile.id|string) }}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.service_item_name.label(class="form-control-label") }} 
+                                    {% if edit_form.service_item_name.errors %}
+                                        {{ edit_form.service_item_name(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.service_item_name.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% set z = edit_form.service_item_name.process_data(service_profile.service_item_name) %}
+                                        {{ edit_form.service_item_name(class="form-control form-control-lg", id="service_item_name-" + service_profile.id|string) }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    napraviti da radi select meni za razrede (učitava iz liste izabrane razrede i preselektuje ih)
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.service_item_class.label(class="form-control-label") }}
+                                    {% if edit_form.service_item_class.errors %}
+                                        {{ edit_form.service_item_class(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.service_item_class.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                    <select name="classes-{{service_profile.id}}" id="classes-{{service_profile.id}}" class="form-control selectpicker" data-live-search="true" multiple>
+                                        {% for i in range(0,9) %}
+                                            {% if i|string in service_profile.service_item_class %}
+                                            <option value="{{i|string}}" selected>{{i|string}}</option>
+                                            {% else %}
+                                            <option value="{{i|string}}">{{i|string}}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.price.label(class="form-control-label") }} 
+                                    {% if edit_form.price.errors %}
+                                        {{ edit_form.price(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.price.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ edit_form.price(class="form-control form-control-lg", id="price-" + service_profile.id|string, value=service_profile.price) }}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_number.label(class="form-control-label") }}
+                                    {% if edit_form.installment_number.errors %}
+                                        {{ edit_form.installment_number(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_number.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% set z = edit_form.installment_number.process_data(service_profile.installment_number) %}
+                                        {{ edit_form.installment_number(class="form-select form-select-lg", id="installment_number-" + service_profile.id|string, onfocus="getIdOfClickedInput(event);") }}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_1.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_1.errors %}
+                                        {{ edit_form.installment_1(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_1.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 1 %}
+                                            {{ edit_form.installment_1.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_1.process_data(service_profile.installment_1) %}
+                                            {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_2.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_2.errors %}
+                                        {{ edit_form.installment_2(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_2.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 1 %}
+                                            {{ edit_form.installment_2.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_2.process_data(service_profile.installment_2) %}
+                                            {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_3.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_3.errors %}
+                                        {{ edit_form.installment_3(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_3.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 2 %}
+                                            {{ edit_form.installment_3.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_3.process_data(service_profile.installment_3) %}
+                                            {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_4.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_4.errors %}
+                                        {{ edit_form.installment_4(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_4.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 3 %}
+                                            {{ edit_form.installment_4.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_4.process_data(service_profile.installment_4) %}
+                                            {{ edit_form.installment_4(class="form-control form-control-lg", id="installment_4-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_4(class="form-control form-control-lg", id="installment_4-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_5.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_5.errors %}
+                                        {{ edit_form.installment_5(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_5.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 4 %}
+                                            {{ edit_form.installment_5.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_5.process_data(service_profile.installment_5) %}
+                                            {{ edit_form.installment_5(class="form-control form-control-lg", id="installment_5-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_5(class="form-control form-control-lg", id="installment_5-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_6.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_6.errors %}
+                                        {{ edit_form.installment_6(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_6.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 5 %}
+                                            {{ edit_form.installment_6.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_6.process_data(service_profile.installment_6) %}
+                                            {{ edit_form.installment_6(class="form-control form-control-lg", id="installment_6-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_6(class="form-control form-control-lg", id="installment_6-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_7.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_7.errors %}
+                                        {{ edit_form.installment_7(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_7.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 6 %}
+                                            {{ edit_form.installment_7.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_7.process_data(service_profile.installment_7) %}
+                                            {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div><div class="form-group">
+                                    {{ edit_form.installment_8.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_8.errors %}
+                                        {{ edit_form.installment_8(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_8.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 7 %}
+                                            {{ edit_form.installment_8.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_8.process_data(service_profile.installment_8) %}
+                                            {{ edit_form.installment_8(class="form-control form-control-lg", id="installment_8-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_8(class="form-control form-control-lg", id="installment_8-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_9.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_9.errors %}
+                                        {{ edit_form.installment_9(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_9.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 8 %}
+                                            {{ edit_form.installment_9.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_9.process_data(service_profile.installment_9) %}
+                                            {{ edit_form.installment_9(class="form-control form-control-lg", id="installment_9-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_9(class="form-control form-control-lg", id="installment_9-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_10.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_10.errors %}
+                                        {{ edit_form.installment_10(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_10.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 9 %}
+                                            {{ edit_form.installment_10.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_10.process_data(service_profile.installment_10) %}
+                                            {{ edit_form.installment_10(class="form-control form-control-lg", id="installment_10-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_10(class="form-control form-control-lg", id="installment_10-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_11.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_11.errors %}
+                                        {{ edit_form.installment_11(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_11.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 10 %}
+                                            {{ edit_form.installment_11.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_11.process_data(service_profile.installment_11) %}
+                                            {{ edit_form.installment_11(class="form-control form-control-lg", id="installment_11-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_11(class="form-control form-control-lg", id="installment_11-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.installment_12.label(class="form-control-label", style="display: none;") }}
+                                    {% if edit_form.installment_12.errors %}
+                                        {{ edit_form.installment_12(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.installment_12.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% if service_profile.installment_number|int > 11 %}
+                                            {{ edit_form.installment_12.label(class="form-control-label") }}
+                                            {% set z = edit_form.installment_12.process_data(service_profile.installment_12) %}
+                                            {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string) }}
+                                        {% else %}
+                                            {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string, type="hidden") }}
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-check form-switch">
+                                    {% set z = edit_form.archived.process_data(service_profile.archived) %}
+                                    {{ edit_form.archived(class="form-check-input", id="archived-"+ service_profile.id|string) }}
+                                    {{ edit_form.archived.label(class="form-check-label") }}
+                                </div>
                             </div>
-                        {% else %}
-                            {% set z = edit_form.supplier_id.process_data(service_profile.supplier_id) %}
-                            {{ edit_form.supplier_id(class="form-select form-select-lg", id="supplier_id-" + service_profile.id|string) }}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        NAPRAVITI KONDICIONAL KADA SE PROMENI TIP USLUGE DA POLJE BUDE EDITABILNO ILI NE
-                        {{ edit_form.service_id.label(class="form-control-label") }}
-                        {% if edit_form.service_id.errors %}
-                            {{ edit_form.service_id(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.service_id.errors %}
-                                <span>{{ error }}</span>
-                                {% endfor %}
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                                {{ edit_form.submit_edit(class="btn btn-info") }}
                             </div>
-                        {% else %}
-                            {% set z = edit_form.service_id.process_data(service_profile.service_id) %}
-                            {{ edit_form.service_id(class="form-select form-select-lg", type="date", id="service_id-" + service_profile.id|string) }}
-                        {% endif %}
+                        </form>
                     </div>
-                    <div class="form-group">
-                        {{ edit_form.service_item_name.label(class="form-control-label") }} 
-                        {% if edit_form.service_item_name.errors %}
-                            {{ edit_form.service_item_name(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.service_item_name.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% set z = edit_form.service_item_name.process_data(service_profile.service_item_name) %}
-                            {{ edit_form.service_item_name(class="form-control form-control-lg", id="service_item_name-" + service_profile.id|string) }}
-                        {% endif %}
-                    </div>
-                    <div>
-                        napraviti da radi select meni za razrede (učitava iz liste izabrane razrede i preselektuje ih)
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.service_item_class.label(class="form-control-label") }}
-                        {% if edit_form.service_item_class.errors %}
-                            {{ edit_form.service_item_class(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.service_item_class.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                        <select name="classes-{{service_profile.id}}" id="classes-{{service_profile.id}}" class="form-control selectpicker" data-live-search="true" multiple>
-                            {% for i in range(0,9) %}
-                                {% if i|string in service_profile.service_item_class %}
-                                <option value="{{i}}" selected>{{i}}</option>
-                                {% else %}
-                                <option value="{{i}}">{{i}}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.price.label(class="form-control-label") }} 
-                        {% if edit_form.price.errors %}
-                            {{ edit_form.price(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.price.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {{ edit_form.price(class="form-control form-control-lg", id="price-" + service_profile.id|string, value=service_profile.price) }}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_number.label(class="form-control-label") }}
-                        {% if edit_form.installment_number.errors %}
-                            {{ edit_form.installment_number(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_number.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% set z = edit_form.installment_number.process_data(service_profile.installment_number) %}
-                            {{ edit_form.installment_number(class="form-select form-select-lg", id="installment_number-" + service_profile.id|string, onfocus="getIdOfClickedInput(event);") }}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_1.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_1.errors %}
-                            {{ edit_form.installment_1(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_1.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 1 %}
-                                {{ edit_form.installment_1.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_1.process_data(service_profile.installment_1) %}
-                                {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_2.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_2.errors %}
-                            {{ edit_form.installment_2(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_2.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 1 %}
-                                {{ edit_form.installment_2.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_2.process_data(service_profile.installment_2) %}
-                                {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_3.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_3.errors %}
-                            {{ edit_form.installment_3(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_3.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 2 %}
-                                {{ edit_form.installment_3.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_3.process_data(service_profile.installment_3) %}
-                                {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_4.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_4.errors %}
-                            {{ edit_form.installment_4(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_4.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 3 %}
-                                {{ edit_form.installment_4.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_4.process_data(service_profile.installment_4) %}
-                                {{ edit_form.installment_4(class="form-control form-control-lg", id="installment_4-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_4(class="form-control form-control-lg", id="installment_4-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_5.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_5.errors %}
-                            {{ edit_form.installment_5(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_5.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 4 %}
-                                {{ edit_form.installment_5.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_5.process_data(service_profile.installment_5) %}
-                                {{ edit_form.installment_5(class="form-control form-control-lg", id="installment_5-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_5(class="form-control form-control-lg", id="installment_5-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_6.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_6.errors %}
-                            {{ edit_form.installment_6(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_6.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 5 %}
-                                {{ edit_form.installment_6.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_6.process_data(service_profile.installment_6) %}
-                                {{ edit_form.installment_6(class="form-control form-control-lg", id="installment_6-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_6(class="form-control form-control-lg", id="installment_6-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_7.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_7.errors %}
-                            {{ edit_form.installment_7(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_7.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 6 %}
-                                {{ edit_form.installment_7.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_7.process_data(service_profile.installment_7) %}
-                                {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div><div class="form-group">
-                        {{ edit_form.installment_8.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_8.errors %}
-                            {{ edit_form.installment_8(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_8.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 7 %}
-                                {{ edit_form.installment_8.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_8.process_data(service_profile.installment_8) %}
-                                {{ edit_form.installment_8(class="form-control form-control-lg", id="installment_8-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_8(class="form-control form-control-lg", id="installment_8-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_9.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_9.errors %}
-                            {{ edit_form.installment_9(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_9.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 8 %}
-                                {{ edit_form.installment_9.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_9.process_data(service_profile.installment_9) %}
-                                {{ edit_form.installment_9(class="form-control form-control-lg", id="installment_9-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_9(class="form-control form-control-lg", id="installment_9-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_10.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_10.errors %}
-                            {{ edit_form.installment_10(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_10.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 9 %}
-                                {{ edit_form.installment_10.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_10.process_data(service_profile.installment_10) %}
-                                {{ edit_form.installment_10(class="form-control form-control-lg", id="installment_10-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_10(class="form-control form-control-lg", id="installment_10-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_11.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_11.errors %}
-                            {{ edit_form.installment_11(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_11.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 10 %}
-                                {{ edit_form.installment_11.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_11.process_data(service_profile.installment_11) %}
-                                {{ edit_form.installment_11(class="form-control form-control-lg", id="installment_11-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_11(class="form-control form-control-lg", id="installment_11-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.installment_12.label(class="form-control-label", style="display: none;") }}
-                        {% if edit_form.installment_12.errors %}
-                            {{ edit_form.installment_12(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.installment_12.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            {% if service_profile.installment_number|int > 11 %}
-                                {{ edit_form.installment_12.label(class="form-control-label") }}
-                                {% set z = edit_form.installment_12.process_data(service_profile.installment_12) %}
-                                {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string) }}
-                            {% else %}
-                                {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string, type="hidden") }}
-                            {% endif %}
-                        {% endif %}
-                    </div>
-                    <div class="form-check form-switch">
-                        {% set z = edit_form.archived.process_data(service_profile.archived) %}
-                        {{ edit_form.archived(class="form-check-input", id="archived-"+ service_profile.id|string) }}
-                        {{ edit_form.archived.label(class="form-check-label") }}
-                    </div>
-                    </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                            {{ edit_form.submit_edit(class="btn btn-info") }}
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
         {% endfor %}

@@ -27,7 +27,7 @@
             <td>{{ payment.statment_nubmer }}</td>
             <td>{{ payment.total_payment_amount }}</td>
             <td>{{ payment.number_of_items }}</td>
-            <td><a href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">edit</a></td>
+            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled</a></td>
         </tr>
         {% endfor %}
     </tbody>

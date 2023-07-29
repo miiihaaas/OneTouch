@@ -2,10 +2,23 @@ import itertools, json
 from datetime import datetime, date
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
-from onetouch.models import Student, ServiceItem, Teacher, School, TransactionRecord
+from flask_login import login_required, current_user
+from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord
 
 
 overviews = Blueprint('overviews', __name__)
+
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+# Ova funkcija će proveriti da li je korisnik ulogovan pre nego što pristupi zaštićenoj ruti
+@overviews.before_request
+def require_login():
+    if request.endpoint and not current_user.is_authenticated:
+        return redirect(url_for('users.login'))
+
+
 
 @overviews.route("/overview_students", methods=['GET', 'POST'])
 def overview_students():
@@ -125,6 +138,7 @@ def overview_student(student_id):
         if record.service_item_id not in [item['id'] for item in unique_services_list]:
             service_data = {
                 'id': record.service_item_id,
+                'service_debt_id': record.student_debt_id,
                 'service_item_date': record.transaction_record_service_item.service_item_date,
                 'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
                 'date': record.transaction_record_student_debt.student_debt_date if record.student_debt_id else record.transaction_record_student_payment.payment_date,
@@ -133,7 +147,9 @@ def overview_student(student_id):
             if service_data['date'].date() >= start_date and service_data['date'].date() <= end_date:
                 unique_services_list.append(service_data)
         if record.student_debt_id:
-            description = record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name + ' / Rata ' + str(record.transaction_record_service_item.installment_number)
+            rata = sum(1 for item in data if item["service_item_id"] == record.service_item_id) + 1 #! služi da bi definisao broj rate
+            print(f'{rata=}')
+            description = record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name + ' / Rata ' + str(rata)
             date_ = record.transaction_record_student_debt.student_debt_date
         elif record.student_payment_id:
             description = record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name

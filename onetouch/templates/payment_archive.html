@@ -22,12 +22,12 @@
                 {% if record.transaction_record_student.id is not defined %}
                     <strong>Greška</strong>
                 {% else %}
-                    {{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}
+                    <a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a>
                 {% endif %}
             </td>
             <td>{{ record.reference_number }}</td>
-            <td contenteditable="true" class="edit-cell student-id">{{ record.student_id }}</td>
-            <td contenteditable="true" class="edit-cell service-id">{{ record.service_item_id }}</td>
+            <td contenteditable="true" class="edit-cell student-id">{{ "{:04d}".format(record.student_id) }}</td>
+            <td contenteditable="true" class="edit-cell service-id">{{ "{:03d}".format(record.service_item_id) }}</td>
             <td>
                 {% if record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
                     {{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}
@@ -66,7 +66,7 @@
 </table>
 
 <div class="col">
-    <button class="btn btn-primary">Izvoz podataka po ID usluge - pdf</button>
+    <a class="btn btn-primary" href="/static/payment_slips/export.pdf" target="_blank">Izvoz podataka</a>
 </div>
 {% endblock content%}
 

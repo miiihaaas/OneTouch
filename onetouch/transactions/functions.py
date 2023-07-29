@@ -1,3 +1,5 @@
+import requests, os, io, time
+from PIL import Image
 from fpdf import FPDF
 
 
@@ -9,25 +11,91 @@ def export_payment_stats(data):
             self.add_font('DejaVuSansCondensed', 'B', './onetouch/static/fonts/DejaVuSansCondensed-Bold.ttf', uni=True)
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font('DejaVuSansCondensed', 'B', 16)
+    pdf.set_font('DejaVuSansCondensed', 'B', 24)
     pdf.set_y(10)
+    pdf.cell(0, 10, f'Izvod podataka uplatnice: {data[0]["payment_id"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
+    pdf.cell(0, 10, '', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
     pdf.set_font('DejaVuSansCondensed', 'B', 14)
-    pdf.cell(0, 10, 'Neki izmenjen naslov', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
     pdf.cell(50, 10, 'ID usluge', new_y='LAST', align='C', border=1)
-    pdf.cell(70, 10, 'Detalji usluge', new_y='LAST', align='C', border=1)
-    pdf.cell(70, 10, 'Ukupan iznos', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
+    pdf.cell(90, 10, 'Detalji usluge', new_y='LAST', align='C', border=1)
+    pdf.cell(50, 10, 'Ukupan iznos', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
     pdf.set_font('DejaVuSansCondensed', '', 14)
     for record in data:
         pdf.cell(50, 10, f'{record["service_item_id"]:03d}', new_y='LAST', align='C', border=1)
-        pdf.cell(70, 10, f'{record["name"]}', new_y='LAST', align='C', border=1)
-        pdf.cell(70, 10, f'{record["sum_amount"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
+        pdf.cell(90, 10, f'{record["name"]}', new_y='LAST', align='C', border=1)
+        pdf.cell(50, 10, f'{record["sum_amount"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
 
     path = "onetouch/static/payment_slips/"
     file_name = f'export.pdf'
     pdf.output(path + file_name)
     return file_name
 
-def uplatnice_gen(data_list, qr_code_images):
+def uplatnice_gen(records, purpose_of_payment, school_info, school):
+    data_list = []
+    qr_code_images = []
+    
+    for i, record in enumerate(records):
+        if record.student_debt_total > 0:
+            new_data = {
+                'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
+                'svrha_uplate': purpose_of_payment,
+                'primalac': school_info,
+                'sifra_placanja': 189,
+                'valuta': 'RSD', #! proveri da li je zbog QR koda potrebno drugačije definisati valutu
+                'iznos': record.student_debt_total,
+                'racun_primaoca': school.school_bank_account,
+                'model': '', #! proveriti koji je model zbog QR koda 
+                'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
+            }
+            data_list.append(new_data)
+            
+            racun = school.school_bank_account
+            racun = racun.replace('-', '')  # Uklanja sve crtice iz računa
+            racun = racun[:3] + racun[3:].zfill(15)  # Dodaje nule posle prvih 3 cifre računa do ukupne dužine od 18 cifara
+            print(f'test računa za QR kod: {racun=}')
+            dug = new_data['iznos']
+            dug = "RSD" + str(dug).replace('.', ',')
+            qr_data = {
+                "K": "PR",
+                "V": "01",
+                "C": "1",
+                "R": racun,
+                "N": school_info,
+                "I": dug,
+                "P": new_data['uplatilac'],
+                "SF": new_data['sifra_placanja'],
+                "S": new_data['svrha_uplate'],
+                "RO": new_data['model'] + new_data['poziv_na_broj']
+            }
+            print(f'{qr_data=}')
+            #! dokumentacija: https://ips.nbs.rs/PDF/Smernice_Generator_Validator_latinica_feb2023.pdf
+            url = 'https://nbs.rs/QRcode/api/qr/v1/gen/250'
+            headers = { 'Content-Type': 'application/json' }
+            response = requests.post(url, headers=headers, json=qr_data)
+            print(f'{response=}')
+            if response.status_code == 500:
+                print(response.content)
+                print(response.headers)
+                response_data = response.json()
+                if 'error_message' in response_data:
+                    error_message = response_data['error_message']
+                    print(f"Error message: {error_message}")
+
+            if response.status_code == 200:
+                qr_code_image = Image.open(io.BytesIO(response.content))
+                qr_code_filename = f'qr_{i}.png'
+                qr_code_image.save(os.path.join('onetouch/static/payment_slips/qr_code/', qr_code_filename))
+                qr_code_filepath = os.path.join('onetouch/static/payment_slips/qr_code/', qr_code_filename)
+                with open(qr_code_filepath, 'wb') as file:
+                    file.write(response.content)
+                qr_code_images.append(qr_code_filename)
+            else:
+                pass
+            print(f'{qr_code_images=}')
+    time.sleep(3)
+    print (f'{data_list=}')
+    print(f'{len(data_list)=}')
+    # gen_file = uplatnice_gen(data_list, qr_code_images) #! prilagodi ovu funciju
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
@@ -150,4 +218,25 @@ def uplatnice_gen(data_list, qr_code_images):
     path = "onetouch/static/payment_slips/"
     file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
+    
+    
+    
+    #! briše QR kodove nakon dodavanja na uplatnice
+    folder_path = 'onetouch/static/payment_slips/qr_code/'
+    # Provjeri da li je putanja zaista direktorijum
+    if os.path.isdir(folder_path):
+        # Prolazi kroz sve fajlove u direktorijumu
+        for filename in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, filename)
+            # Provjeri da li je trenutni element fajl
+            if os.path.isfile(file_path) and os.path.exists(file_path):
+                # Obriši fajl
+                os.remove(file_path)
+                print(f"Fajl '{file_path}' je uspješno obrisan.")
+        print("Svi fajlovi su uspješno obrisani.")
+    else:
+        print("Navedena putanja nije direktorijum.")
+    filename = f'static/payment_slips/uplatnice.pdf' #!
+
+    
     return file_name
