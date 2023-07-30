@@ -41,7 +41,7 @@
             <td id="installment_{{ record.transaction_record_student.id }}">{{ record.studetn_debt_installment_value }}</td>
             <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_discount}}</td>
             <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount}}</td>
-            <td><a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite uplatnicu</a></td>
+            <td>{% if record.student_debt_amount > 0 %}<a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite uplatnicu</a>{% endif %}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -52,7 +52,7 @@
 </div>
 <div class="form-group">
     <button class="btn btn-info" id="save_button" name="save_button">Sačuvajte</button>
-    <a class="btn btn-primary" href="/static/payment_slips/uplatnice.pdf" target="_blank">gen sve</a>
+    <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">gen sve</a>
 </div>
 
 {% endblock content%}
@@ -133,7 +133,7 @@
             console.log('output: ', output)
             console.log(JSON.stringify(output));
             $.ajax({
-                url: '/submit_records',
+                url: 'submit_records',
                 method: 'POST',
                 data: JSON.stringify(output),
                 contentType: 'application/json',
