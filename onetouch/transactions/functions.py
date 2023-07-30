@@ -3,12 +3,20 @@ from PIL import Image
 from fpdf import FPDF
 
 
+current_file_path = os.path.abspath(__file__)
+print(f'{current_file_path=}')
+project_folder = os.path.dirname(os.path.dirname((current_file_path)))
+print(f'{project_folder=}')
+font_path = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed.ttf')
+font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed-Bold.ttf')
+
+
 def export_payment_stats(data):
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
-            self.add_font('DejaVuSansCondensed', '', './onetouch/static/fonts/DejaVuSansCondensed.ttf', uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', './onetouch/static/fonts/DejaVuSansCondensed-Bold.ttf', uni=True)
+            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     pdf = PDF()
     pdf.add_page()
     pdf.set_font('DejaVuSansCondensed', 'B', 24)
@@ -25,7 +33,7 @@ def export_payment_stats(data):
         pdf.cell(90, 10, f'{record["name"]}', new_y='LAST', align='C', border=1)
         pdf.cell(50, 10, f'{record["sum_amount"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
 
-    path = "onetouch/static/payment_slips/"
+    path = f"{project_folder}/static/payment_slips/"
     file_name = f'export.pdf'
     pdf.output(path + file_name)
     return file_name
@@ -84,8 +92,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
             if response.status_code == 200:
                 qr_code_image = Image.open(io.BytesIO(response.content))
                 qr_code_filename = f'qr_{i}.png'
-                qr_code_image.save(os.path.join('onetouch/static/payment_slips/qr_code/', qr_code_filename))
-                qr_code_filepath = os.path.join('onetouch/static/payment_slips/qr_code/', qr_code_filename)
+                qr_code_image.save(os.path.join(project_folder, 'static', 'payment_slips', 'qr_code', qr_code_filename))
+                qr_code_filepath = os.path.join(project_folder, 'static', 'payment_slips', 'qr_code', qr_code_filename)
                 with open(qr_code_filepath, 'wb') as file:
                     file.write(response.content)
                 qr_code_images.append(qr_code_filename)
@@ -96,11 +104,13 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
     print (f'{data_list=}')
     print(f'{len(data_list)=}')
     # gen_file = uplatnice_gen(data_list, qr_code_images) #! prilagodi ovu funciju
+
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
-            self.add_font('DejaVuSansCondensed', '', './onetouch/static/fonts/DejaVuSansCondensed.ttf', uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', './onetouch/static/fonts/DejaVuSansCondensed-Bold.ttf', uni=True)
+            print(f'{font_path=}')
+            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     pdf = PDF()
     # pdf.add_page()
     counter = 1
@@ -125,7 +135,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
         pdf.set_font('DejaVuSansCondensed', 'B', 16)
         pdf.set_y(y_qr)
         pdf.set_x(2*170/3)
-        pdf.image(f'onetouch/static/payment_slips/qr_code/{qr_code_images[i]}' , w=25)
+        pdf.image(f'{project_folder}/static/payment_slips/qr_code/{qr_code_images[i]}' , w=25)
         pdf.set_y(y+8)
         pdf.cell(2*190/3,8, f"NALOG ZA UPLATU", new_y='LAST', align='R', border=0)
         pdf.cell(190/3,8, f"IZVEŠTAJ O UPLATI", new_y='NEXT', new_x='LMARGIN', align='R', border=0)
@@ -215,14 +225,15 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
         pdf.line(10, 99, 200, 99)
         pdf.line(10, 198, 200, 198)
         counter += 1
-    path = "onetouch/static/payment_slips/"
+    # path = "onetouch/static/payment_slips/"
+    path = f'{project_folder}/static/payment_slips/'
     file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
     
     
     
     #! briše QR kodove nakon dodavanja na uplatnice
-    folder_path = 'onetouch/static/payment_slips/qr_code/'
+    folder_path = f'{project_folder}/static/payment_slips/qr_code/'
     # Provjeri da li je putanja zaista direktorijum
     if os.path.isdir(folder_path):
         # Prolazi kroz sve fajlove u direktorijumu
@@ -236,7 +247,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
         print("Svi fajlovi su uspješno obrisani.")
     else:
         print("Navedena putanja nije direktorijum.")
-    filename = f'static/payment_slips/uplatnice.pdf' #!
+    filename = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
 
     
     return file_name

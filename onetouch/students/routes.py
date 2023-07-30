@@ -12,9 +12,6 @@ import logging
 
 students = Blueprint('students', __name__)
 
-logger = logging.getLogger('students')
-logger.addHandler(file_handler)
-
 
 def load_user(user_id):
     return User.query.get(int(user_id))

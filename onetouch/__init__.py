@@ -45,13 +45,6 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 file_handler.setFormatter(formatter)
 app.logger.addHandler(file_handler)
 
-app.logger.debug("Ovo je testna DEBUG poruka.")
-app.logger.info("Ovo je testna INFO poruka.")
-app.logger.warning("Ovo je testna WARNING poruka.")
-app.logger.error("Ovo je testna ERROR poruka.")
-
-
-
 
 from onetouch.main.routes import main
 from onetouch.schools.routes import schools
