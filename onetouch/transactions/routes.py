@@ -440,7 +440,7 @@ def posting_payment():
             stavke.append(podaci)
         print(f'{stavke=}')
         flash('Uspešno je učitan XML fajl.', 'success')
-        return render_template('posting_payment.html', 
+        return render_template('posting_payment.html',
                                 title="Knjišenje uplata",
                                 legend="Knjiženje uplata",
                                 stavke=stavke,
