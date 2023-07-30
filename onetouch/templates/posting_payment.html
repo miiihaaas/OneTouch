@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<form method="POST" action="/posting_payment" enctype="multipart/form-data">
+<form method="POST" action="{{url_for('transactions.posting_payment')}}" enctype="multipart/form-data">
     <div class="row">
         <div class="col">
             <div class="form-group text-left">
