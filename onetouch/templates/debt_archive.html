@@ -133,7 +133,7 @@
             console.log('output: ', output)
             console.log(JSON.stringify(output));
             $.ajax({
-                url: 'submit_records',
+                url: '/submit_records',
                 method: 'POST',
                 data: JSON.stringify(output),
                 contentType: 'application/json',
