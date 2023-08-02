@@ -19,10 +19,14 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(user_mail=form.email.data).first()
+        if user:
+            print(f'korisnik sa mejlom {user.user_mail=} postoji u databazi')
+        else:
+            print(f'mejl {form.email.data} ne postoji u databazi')
         if user and bcrypt.check_password_hash(user.user_password, form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
-            print (user.user_name)
+            print(user.user_name)
             flash(f'Dobro došli, {user.user_name}!', 'success')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
