@@ -30,6 +30,7 @@ def login():
             flash(f'Dobro došli, {user.user_name}!', 'success')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
+            print('ali nije dobra šifra')
             flash(f'Korisničko ime ili lozinka nisu ispravni!', 'danger')
     return render_template('login.html', title='Login', form=form)
 
