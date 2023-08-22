@@ -106,6 +106,7 @@ class StudentPayment(db.Model):
     statment_nubmer = db.Column(db.Integer, nullable=False) #! izvlači iz XML fajla (<BrojIzvoda>108</BrojIzvoda>)
     total_payment_amount = db.Column(db.Float, nullable=False) #! izvlači iz XML fajla (<IznosPotrazuje>40824,00</IznosPotrazuje>)
     number_of_items = db.Column(db.Integer, nullable=False) #! izvlači iz XML fajla (for loop bi trebalo da uradi routes.py)
+    number_of_errors = db.Column(db.Integer, nullable=False)
     transaction_records = db.relationship('TransactionRecord', backref='transaction_record_student_payment', lazy=True)
 
 

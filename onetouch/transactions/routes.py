@@ -199,12 +199,11 @@ def submit_records():
     
     elif 'student_payment_id' in data: #! izmena pregleda izvoda (payment_archive/<int:>)
         print('izmena postojećeg izvoda')
+        transaction_records = TransactionRecord.query.all()
+        all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records if record.student_debt_id is not None]
         student_payment_id = int(data['student_payment_id'])
-        payment = StudentPayment.query.get_or_404(student_payment_id)
-        #! ideja je da se doda još jedan atribut za klasu StudentPayment u kome će se skladištiti podatak ukoliko ima greške u uplatnicama
-        #! ako ima greške onda se naznači nekako red sa greškom
-        #! db.session.commit()
         
+        number_of_errors = 0
         for i in range(len(data['records'])):
             record_id = data['records'][i]['record_id']
             student_id = data['records'][i]['student_id']
@@ -214,7 +213,22 @@ def submit_records():
             print(f'{record_id=}, {student_id=}, {service_item_id=},')
             record_for_edit.student_id = student_id
             record_for_edit.service_item_id = service_item_id
+            
+            reference_number = f"{student_id:04d}-{service_item_id:03d}"
+            if reference_number in all_reference_numbers:
+                print(f'{reference_number=} {all_reference_numbers=}')
+                print('validan poziv na broj! dodaj kod za ažuriranje podatka u db!')
+            else:
+                print('nije validan poziv na broj! dodaj kod za ažuriranje podataka u db!')
+                number_of_errors += 1
+            print(f'broj grešaka: {number_of_errors}')
             db.session.commit()
+            
+        payment = StudentPayment.query.get_or_404(student_payment_id)
+        #! ideja je da se doda još jedan atribut za klasu StudentPayment u kome će se skladištiti podatak ukoliko ima greške u uplatnicama
+        #! ako ima greške onda se naznači nekako red sa greškom
+        payment.number_of_errors = number_of_errors
+        db.session.commit()
         return str(student_payment_id)
         
     
@@ -396,7 +410,7 @@ def posting_payment():
                                                 statment_nubmer=int(broj_izvoda_element)).first() #todo: podesiti filtere
         # spisak svih izvoda koji postoje u data bazi
         transaction_records = TransactionRecord.query.all()
-        all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records]
+        all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records  if record.student_debt_id is not None]
         print(f'{all_reference_numbers=}')
         
         print(f'{existing_payments=}')
