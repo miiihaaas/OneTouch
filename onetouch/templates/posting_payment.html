@@ -39,7 +39,7 @@
                 <td>{{ item['RacunZaduzenja'] }}</td>
                 <td><textarea name="uplatilac" class="form-control" readonly>{{ item['NazivZaduzenja'] }}</textarea></td>
                 <td><input name="iznos" type="text" class="form-control" value="{{ item['Iznos'] }}" readonly></td>
-                <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input" value="{{ item['PozivOdobrenja'] }}" readonly></td>
+                <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input" value="{{ item['PozivOdobrenja'] }}" readonly>{{ item['Validnost'] }}</td>
                 <td><textarea name="svrha_uplate" class="form-control" readonly>{{ item['SvrhaDoznake'] }}</textarea></td>
             </tr>
             {% endfor %}
@@ -65,55 +65,6 @@
         });
         if ($('#data').length) {
             submitBtnSaveData.prop('disabled', false)
-        }
-        // Validacija vrednosti input polja prilikom učitavanja stranice
-        $('.poziv-odobrenja-input').each(function() {
-            validateInput($(this));
-        });
-        // // Omogući uređivanje kada se klikne na input
-        // $('.poziv-odobrenja-input').on('click', function() {
-        //     $(this).prop('readonly', false);
-        // });
-        
-        // // Onemogući uređivanje kada se klikne izvan inputa ili na novo polje
-        // $(document).on('click', function(event) {
-        //     var clickedElement = $(event.target);
-        //     var inputFields = $('.poziv-odobrenja-input');
-            
-        //     if (!clickedElement.closest('.poziv-odobrenja-input').length) {
-        //         inputFields.prop('readonly', true);
-        //     }
-            
-        //     if (clickedElement.is('.poziv-odobrenja-input')) {
-        //         inputFields.not(clickedElement).prop('readonly', true);
-        //         clickedElement.prop('readonly', false);
-        //     }
-        // });
-        // // Validacija vrednosti input polja pri promeni vrednosti
-        // var inputFields = $('.poziv-odobrenja-input');
-        // inputFields.on('input', function() {
-        //     console.log('validizacija input elementa koji se trenutno edituje')
-        //     validateInput($(this));
-        // });
-        
-        // Funkcija za validaciju vrednosti input polja
-        function validateInput(input) {
-            var value = input.val().trim();
-            var isValid = false;
-            
-            // Provera validnosti vrednosti
-            if (/^\d{7}$/.test(value)) {
-                isValid = true;
-            } else if (/^\d{4}-\d{3}$/.test(value)) {
-                isValid = true;
-            }
-            
-            // Dodavanje ili uklanjanje klase za prikaz validnosti
-            if (isValid) {
-                input.removeClass('invalid-input');
-            } else {
-                input.addClass('invalid-input');
-            }
         }
     });
 </script>

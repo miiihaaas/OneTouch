@@ -31,6 +31,10 @@ def login():
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
             print('ali nije dobra šifra')
+            print('spisak svih mejlova')
+            users = User.query.all()
+            for korisnik in users:
+                print(f'{korisnik.user_mail=}')
             flash(f'Korisničko ime ili lozinka nisu ispravni!', 'danger')
     return render_template('login.html', title='Login', form=form)
 

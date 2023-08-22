@@ -394,6 +394,11 @@ def posting_payment():
         existing_payments = StudentPayment.query.filter_by(
                                                 payment_date=datetime.strptime(datum_izvoda_element, '%d.%m.%Y'), #todo: podesiti filtere datetime.strptime(datum_izvoda_element, '%d.%m.%Y')
                                                 statment_nubmer=int(broj_izvoda_element)).first() #todo: podesiti filtere
+        # spisak svih izvoda koji postoje u data bazi
+        transaction_records = TransactionRecord.query.all()
+        all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records]
+        print(f'{all_reference_numbers=}')
+        
         print(f'{existing_payments=}')
         if existing_payments:
             print('postoji vec uplata u bazi')
@@ -437,8 +442,30 @@ def posting_payment():
             podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
             podaci['TipSloga'] = stavka.find('TipSloga').text
 
+            #! provera da li je poziv na broj validan
+            if len(podaci['PozivOdobrenja']) == 7:
+                # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+                formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
+                if formated_poziv_odobrenja in all_reference_numbers:
+                    podaci['Validnost'] = True
+                else:
+                    podaci['Validnost'] = False
+            elif len(podaci['PozivOdobrenja']) == 8:
+                # proverava da li je forma '0001-001'
+                if podaci['PozivOdobrenja'] in all_reference_numbers:
+                    podaci['Validnost'] = True
+                else:
+                    podaci['Validnost'] = False
+            else:
+                # nije dobar poziv na broj
+                podaci['Validnost'] = False
+            
+            print(f'pre appenda: {podaci=}')
             stavke.append(podaci)
         print(f'{stavke=}')
+        
+        
+        
         flash('Uspešno je učitan XML fajl.', 'success')
         return render_template('posting_payment.html',
                                 title="Knjišenje uplata",
