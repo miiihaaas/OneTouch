@@ -57,6 +57,14 @@ title { display: block; font-size: 24px; font-weight: 700; color: #999; text-sha
 .dis-flex { display: flex; }
 .align-top { align-items: flex-start; }
 .m-1 { margin: 0 20px 0 0 !important; }
+.leftcolacc .homelink { font-size: 12px; text-transform: uppercase; color: #333; font-weight: 700; padding-left: 20px; line-height: 34px; }
+.leftcolacc .homelink:hover { text-decoration: none; color: #009dde; }
+.leftcolacc h2 { margin-top: 0 }
+.leftcolacc .accordion-button { background-image: none; }
+.leftcolacc .accordion-button:hover { background: transparent !important; }
+.leftcolacc .nav-link { color: #333; }
+.leftcolacc .nav-link:focus, .leftcolacc .nav-link:hover { color: #009dde !important; }
+.leftcolacc .accordion-button:not(.collapsed) { background-color: transparent; box-shadow: none; }
 #accordionZero { flex: 2; }
 .accordion-item { border-radius: 5px !important; border: 0; background: #f5f5f5; }
 .accordion-button { background-image: linear-gradient(#ccc, #999); color: #333 !important; text-transform: uppercase; font-weight: 700; font-size: 12px; padding: 10px 20px; border-radius: 5px !important; }
