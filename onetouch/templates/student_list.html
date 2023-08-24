@@ -185,9 +185,25 @@
                             {{ edit_form.parent_email(class="form-control form-control-lg", value=student.parent_email) }}
                         {% endif %}
                     </div>
+                    <div class="form-check form-switch">
+                        {% if student.send_mail %}
+                            <input class="form-check-input" id="send_mail" name="send_mail" type="checkbox" checked>
+                        {% else %}
+                            <input class="form-check-input" id="send_mail" name="send_mail" type="checkbox">
+                        {% endif %}
+                        {{ edit_form.send_mail.label(class="form-control-label") }}
+                    </div>
+                    <div class="form-check form-switch">
+                        {% if student.print_payment %}
+                            <input class="form-check-input" id="print_payment" name="print_payment" type="checkbox" checked>
+                        {% else %}
+                            <input class="form-check-input" id="print_payment" name="print_payment" type="checkbox">
+                        {% endif %}
+                        {{ edit_form.print_payment.label(class="form-control-label") }}
+                    </div>
                     </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                            <button type="radio" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                             {{ edit_form.submit_edit(class="btn btn-info") }}
                         </div>
                     </div>
