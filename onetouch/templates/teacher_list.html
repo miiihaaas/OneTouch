@@ -82,69 +82,84 @@
                         </button>
                     </div>
                 <div class="modal-body">
-                <label for="input_password">neki opisni tekst {{teacher}}</label>
                 <form action="" method="POST">
                     {{ edit_form.hidden_tag() }}
-                    <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
-                        <input value="{{teacher.id}}" id="get_teacher" name="get_teacher">
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.teacher_name.label(class="form-control-label") }}
-                        {% if edit_form.teacher_name.errors %}
-                            {{ edit_form.teacher_name(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.teacher_name.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ edit_form.teacher_name.label(class="form-control-label") }}
+                                {% if edit_form.teacher_name.errors %}
+                                    {{ edit_form.teacher_name(class="form-control form-control-lg is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in edit_form.teacher_name.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ edit_form.teacher_name(class="form-control form-control-lg", value=teacher.teacher_name) }}
+                                {% endif %}
                             </div>
-                        {% else %}
-                            {{ edit_form.teacher_name(class="form-control form-control-lg", value=teacher.teacher_name) }}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.teacher_surname.label(class="form-control-label") }}
-                        {% if edit_form.teacher_surname.errors %}
-                            {{ edit_form.teacher_surname(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.teacher_surname.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ edit_form.teacher_surname.label(class="form-control-label") }}
+                                {% if edit_form.teacher_surname.errors %}
+                                    {{ edit_form.teacher_surname(class="form-control form-control-lg is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in edit_form.teacher_surname.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ edit_form.teacher_surname(class="form-control form-control-lg", value=teacher.teacher_surname) }}
+                                {% endif %}
                             </div>
-                        {% else %}
-                            {{ edit_form.teacher_surname(class="form-control form-control-lg", value=teacher.teacher_surname) }}
-                        {% endif %}
+                        </div>
                     </div>
-                    <div class="form-group">
-                        {{ edit_form.teacher_class.label(class="form-control-label") }}
-                        {% if edit_form.teacher_class.errors %}
-                            {{ edit_form.teacher_class(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.teacher_class.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ edit_form.teacher_class.label(class="form-control-label") }}
+                                {% if edit_form.teacher_class.errors %}
+                                    {{ edit_form.teacher_class(class="form-control form-control-lg is-invalid") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in edit_form.teacher_class.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {% set z = edit_form.teacher_class.process_data(teacher.teacher_class) %}
+                                    {{ edit_form.teacher_class(class="form-select form-select-lg", value=teacher.teacher_class) }}
+                                {% endif %}
                             </div>
-                        {% else %}
-                            {% set z = edit_form.teacher_class.process_data(teacher.teacher_class) %}
-                            {{ edit_form.teacher_class(class="form-select form-select-lg", value=teacher.teacher_class) }}
-                        {% endif %}
-                    </div>
-                    <div class="form-group">
-                        {{ edit_form.teacher_section.label(class="form-control-label") }}
-                        {% if edit_form.teacher_section.errors %}
-                            {{ edit_form.teacher_section(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.teacher_section.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                {{ edit_form.teacher_section.label(class="form-control-label") }}
+                                {% if edit_form.teacher_section.errors %}
+                                {{ edit_form.teacher_section(class="form-control form-control-lg is-invalid") }}
+                                <div class="invalid-feedback">
+                                        {% for error in edit_form.teacher_section.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {% set z = edit_form.teacher_section.process_data(teacher.teacher_section) %}
+                                    {{ edit_form.teacher_section(class="form-select form-select-lg", selected=teacher.teacher_section) }}
+                                {% endif %}
                             </div>
-                        {% else %}
-                            {% set z = edit_form.teacher_section.process_data(teacher.teacher_section) %}
-                            {{ edit_form.teacher_section(class="form-select form-select-lg", selected=teacher.teacher_section) }}
-                        {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="tescher_id" class="form-control-label">ID odeljenskog starešine</label>
+                                <input type="text" class="form-control" value="{{teacher.id}}" readonly>
+                            </div>
+                        </div>
                     </div>
+                    
                     </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                             {{ edit_form.submit_edit(class="btn btn-info") }}
                         </div>
                     </div>

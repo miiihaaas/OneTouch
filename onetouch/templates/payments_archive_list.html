@@ -27,7 +27,11 @@
             <td>{{ payment.statment_nubmer }}</td>
             <td>{{ payment.total_payment_amount }}</td>
             <td>{{ payment.number_of_items }}</td>
-            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled</a>{{ payment.number_of_errors }}</td>
+            {% if payment.number_of_errors %}
+            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled <span class="badge bg-danger">{{ payment.number_of_errors }}</span> </a></td>
+            {% else %}
+            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled <span class="badge bg-success">{{ payment.number_of_errors }}</span> </a></td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>

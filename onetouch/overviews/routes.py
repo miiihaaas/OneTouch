@@ -78,6 +78,8 @@ def overview_students():
                 existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
 
             else:
+                # print(f'{record.student_id=} {record.transaction_record_student.student_name=} {record.transaction_record_student.student_surname=} {record.transaction_record_student.student_class=} {record.transaction_record_student.student_section}')
+                print(f'{record=}')
                 new_record = {
                     'student_id': record.student_id,
                     'student_name': record.transaction_record_student.student_name,

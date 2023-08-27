@@ -142,23 +142,7 @@ def service_profile_list():
                 print(f'{field}: {error}')
     
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        print('testiranje bs4:')
-        print(f'get id je: {request.form.get("get_service_profile")}')
         service_profile = ServiceItem.query.get(request.form.get('get_service_profile'))
-        classes_key = f'classes-{service_profile.id}'
-
-        if classes_key in request.form:
-            # Pretvorite zahtev u BeautifulSoup objekat
-            soup = BeautifulSoup(request.form[classes_key], 'html.parser')
-            # Izdvojite sve selektovane opcije
-            selected_options = soup.find_all('option', selected=True)
-            # Izvadite vrednosti selektovanih opcija
-            selected_values = [option['value'] for option in selected_options]
-
-            print(f'Selektovane vrednosti: {selected_values}')
-        else:
-            print(f'Polje {classes_key} nije pronađeno u zahtevu.')
-        
         print('validation, edit from, service profile')
         print(f"klasa je: classes-{service_profile.id}") #todo: probaj 'beautifulsoup4'
         class_list = request.form.getlist(f"classes-{service_profile.id}")
@@ -170,7 +154,7 @@ def service_profile_list():
         service_profile.service_item_date = date.today()
         service_profile.supplier_id = edit_form.supplier_id.data
         service_profile.service_id = edit_form.service_id.data
-        service_profile.service_item_class = "1, 5" #!class_list_string
+        service_profile.service_item_class = class_list_string
         service_profile.price = edit_form.price.data
         service_profile.installment_number = edit_form.installment_number.data
         service_profile.installment_1 = edit_form.installment_1.data

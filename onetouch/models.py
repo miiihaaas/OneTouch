@@ -126,6 +126,7 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     purpose_of_payment = db.Column(db.String(255), nullable=True)
     payer = db.Column(db.String(255), nullable=True)
     reference_number = db.Column(db.String(100), nullable=True)
+    payment_error = db.Column(db.Boolean, nullable=True, default=False)
 
 with app.app_context():
     db.create_all()

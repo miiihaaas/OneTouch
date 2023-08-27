@@ -218,9 +218,12 @@ def submit_records():
             if reference_number in all_reference_numbers:
                 print(f'{reference_number=} {all_reference_numbers=}')
                 print('validan poziv na broj! dodaj kod za ažuriranje podatka u db!')
+                record_for_edit.payment_error = False
             else:
                 print('nije validan poziv na broj! dodaj kod za ažuriranje podataka u db!')
+                print(f'poziv na broj: {reference_number=} ne postoji u listi poziva na broj: {all_reference_numbers=}')
                 number_of_errors += 1
+                record_for_edit.payment_error = True
             print(f'broj grešaka: {number_of_errors}')
             db.session.commit()
             
@@ -280,7 +283,10 @@ def single_payment_slip(record_id):
     school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
     records.append(record)
     print(f'{records=}')
-    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school)
+    #! promenjiva single koja indikuje da se generiše samo jedna uplatnica 'uplatnica.pdf'
+    single = True
+    send = False
+    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
     file_path = f'static/payment_slips/{file_name}'
     print(f'{file_path=}')
     return send_file(file_path, as_attachment=False)
@@ -298,7 +304,9 @@ def debt_archive(debt_id):
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
     print(f'{records=}')
     
-    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school)
+    single=False
+    send = False
+    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
 
     return render_template('debt_archive.html', 
                             records=records, 
@@ -306,7 +314,24 @@ def debt_archive(debt_id):
                             teacher=teacher,
                             purpose_of_payment=purpose_of_payment,
                             legend=f"Pregled zadušenja: {debt.id}")
-    
+
+
+@transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
+def send_single_payment_slip(record_id):
+    flash('Uspešno ste poslali mejl roditelju - worki in progres', 'success')
+    debt_id = TransactionRecord.query.get_or_404(record_id).student_debt_id
+    debt = StudentDebt.query.get_or_404(debt_id)
+    purpose_of_payment = debt.purpose_of_payment
+    school = School.query.first()
+    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+    records =[]
+    record = TransactionRecord.query.get_or_404(record_id)
+    records.append(record)
+    send = True
+    single=True
+    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+    return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
 
 @transactions.route('/debt_archive_delete/<int:debt_id>', methods=['get', 'post'])
 def debt_archive_delete(debt_id):

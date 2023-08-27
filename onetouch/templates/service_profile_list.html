@@ -63,7 +63,7 @@
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="EditModalLabel">Detalji usluge</h5>
+                        <h2 class="modal-title" id="EditModalLabel">Detalji usluge</h2>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -71,12 +71,14 @@
                     <div><!-- u ovom divu treba da forma objedini body i footer kako bi dugmići iz footera submitovali formu -->
                         <form action="" method="POST">
                             <div class="modal-body">
-                                <label for="input_password">neki opisni tekst {{service_profile}}</label>
+                                <legend>Izmena usluge: {{service_profile.service_item_service.service_name}} - {{service_profile.service_item_name}}</legend>
                                 {{ edit_form.hidden_tag() }}
-                                <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
-                                    <input type="" value="{{service_profile.id}}" id="get_service_profile" name="get_service_profile" readonly>
+                                <div class="form-group">
+                                    <label class="form-control-label" for="get_service_profile">ID usluge</label>
+                                    <input class="form-control form-control-lg" type="" value="{{service_profile.id}}" id="get_service_profile" name="get_service_profile" readonly>
                                 </div>
                                 <div class="form-group">
+                                    NAPRAVITI KONDICIONAL KADA SE PROMENI DOBAVLJAČ DA SE DONJI DUGMIĆI RESETUJU (KAO PRI REGISTRACIJI), DA SE 'TIP USLUGE' IZMENI NA OSNOVU DOBAVLJAČA I OSTALI DA BUDU READONLY
                                     {{ edit_form.supplier_id.label(class="form-control-label") }}
                                     {% if edit_form.supplier_id.errors %}
                                         {{ edit_form.supplier_id(class="form-control form-control-lg is-invalid") }}
@@ -91,7 +93,7 @@
                                     {% endif %}
                                 </div>
                                 <div class="form-group">
-                                    NAPRAVITI KONDICIONAL KADA SE PROMENI TIP USLUGE DA POLJE BUDE EDITABILNO ILI NE
+                                    NAPRAVITI KONDICIONAL KADA SE PROMENI TIP USLUGE DA SE DONJA POLJA RESETUJU (KAO KOD REGISTRACIJE)
                                     {{ edit_form.service_id.label(class="form-control-label") }}
                                     {% if edit_form.service_id.errors %}
                                         {{ edit_form.service_id(class="form-control form-control-lg is-invalid") }}
@@ -119,7 +121,7 @@
                                         {{ edit_form.service_item_name(class="form-control form-control-lg", id="service_item_name-" + service_profile.id|string) }}
                                     {% endif %}
                                 </div>
-                                <div>
+                                <div class="bg-danger">
                                     napraviti da radi select meni za razrede (učitava iz liste izabrane razrede i preselektuje ih)
                                 </div>
                                 <div class="form-group">
@@ -132,7 +134,7 @@
                                             {% endfor %}
                                         </div>
                                     {% else %}
-                                    <select name="classes-{{service_profile.id}}" id="classes-{{service_profile.id}}" class="form-control selectpicker" data-live-search="true" multiple>
+                                    <select name="classes-{{service_profile.id}}" id="classes-{{service_profile.id}}" class="js-example-basic-multiple" name="states[]" multiple="multiple" style="width: 100%;">
                                         {% for i in range(0,9) %}
                                             {% if i|string in service_profile.service_item_class %}
                                             <option value="{{i|string}}" selected>{{i|string}}</option>
@@ -479,17 +481,11 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <select name="classes" id="classes" class="form-control selectpicker" data-live-search="true" multiple>
-                        <option value="0">0</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                    </select>
+                <select name="classes" id="classes" class="js-example-basic-multiple" name="states[]" multiple="multiple" style="width: 100%;">
+                    {% for i in range(0,9) %}
+                        <option value="{{i|string}}">{{i|string}}</option>
+                    {% endfor %}
+                </select>
                 {% endif %}
             </div>
             <div class="form-group">
@@ -920,6 +916,11 @@
             }
         });
 }
+</script>
+<script>
+    $(document).ready(function() {
+        $('.js-example-basic-multiple').select2();
+    });
 </script>
 
 {% endblock %}

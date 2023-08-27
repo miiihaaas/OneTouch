@@ -33,13 +33,15 @@ def student_list():
     edit_form = EditStudentModalForm()
     register_form = RegisterStudentModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        student = Student.query.get(request.form.get('get_student'))
+        student = Student.query.get(request.form.get('student_id'))
         
         student.student_name = edit_form.student_name.data.capitalize()
         student.student_surname = edit_form.student_surname.data.capitalize()
         student.student_class = edit_form.student_class.data
         student.student_section = edit_form.student_section.data
         student.parent_email = edit_form.parent_email.data
+        student.send_mail = edit_form.send_mail.data
+        student.print_payment = edit_form.print_payment.data
         db.session.commit()
         return redirect(url_for('students.student_list'))
     elif request.method == 'GET': # and request.form.get('get_student') != None:
@@ -57,7 +59,9 @@ def student_list():
                         student_surname=register_form.student_surname.data.capitalize(),
                         student_class=str(register_form.student_class.data),
                         student_section=register_form.student_section.data,
-                        parent_email=register_form.parent_email.data)
+                        parent_email=register_form.parent_email.data,
+                        send_mail=0,
+                        print_payment=0)
         print(student.student_name, student.student_surname, student.student_class)
         db.session.add(student)
         db.session.commit()

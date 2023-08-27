@@ -34,11 +34,12 @@
                         </button>
                     </div>
                 <div class="modal-body">
-                <label for="input_password">neki opisni tekst {{service}}</label>
+                <legend>Izmena usluge: {{service.service_name}}</legend>
                 <form action="" method="POST">
                     {{ edit_form.hidden_tag() }}
                     <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
-                        <input value="{{service.id}}" id="get_service" name="get_service">
+                        <label for="service_id" class="form-control-label">ID usluge</label>
+                        <input class="form-control form-control-lg" value="{{service.id}}" id="service_id" name="service_id" readonly>
                     </div>
                     <div class="form-group">
                         {{ edit_form.service_name.label(class="form-control-label") }} 

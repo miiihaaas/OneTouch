@@ -38,12 +38,13 @@ def export_payment_stats(data):
     pdf.output(path + file_name)
     return file_name
 
-def uplatnice_gen(records, purpose_of_payment, school_info, school):
+def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send):
     data_list = []
     qr_code_images = []
     
     for i, record in enumerate(records):
-        if record.student_debt_total > 0:
+        if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
+            #! ako je čekirano da se šalje roditelju, onda ne treba da generiše uplatnicu zajedno sa ostalim uplatnicama, ali treba da generiše posebno uplatnicu koju će poslati mejlom
             new_data = {
                 'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
                 'svrha_uplate': purpose_of_payment,
@@ -54,6 +55,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
                 'racun_primaoca': school.school_bank_account,
                 'model': '', #! proveriti koji je model zbog QR koda 
                 'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
+                'generisanje_uplatnice': not record.transaction_record_student.send_mail
             }
             data_list.append(new_data)
             
@@ -116,6 +118,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
     counter = 1
     for i, uplatnica in enumerate(data_list):
         print(f'{uplatnica=}')
+        if not uplatnica['generisanje_uplatnice']:
+            continue
         if counter % 3 == 1:
             pdf.add_page()
             y = 0
@@ -227,8 +231,17 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
         counter += 1
     # path = "onetouch/static/payment_slips/"
     path = f'{project_folder}/static/payment_slips/'
-    file_name = f'uplatnice.pdf'
+    #! if blok koji menja file_name.
+    #! ukoliko je generisanje uplatnica za više đaka (gen sve) da se čuva na 'uplatnice.pdf', 
+    #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
+    if single:
+        file_name = f'uplatnica.pdf'
+        if send:
+            print('napraviti kod koji će da šalje mejl')
+    else:
+        file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
+    
     
     
     
@@ -244,7 +257,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school):
                 # Obriši fajl
                 os.remove(file_path)
                 print(f"Fajl '{file_path}' je uspješno obrisan.")
-        print("Svi fajlovi su uspješno obrisani.")
+        print("Svi QR kodovi su uspješno obrisani.")
     else:
         print("Navedena putanja nije direktorijum.")
     filename = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
