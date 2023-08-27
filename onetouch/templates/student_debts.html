@@ -21,7 +21,7 @@
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="service_item" class="form-control-label">Usluga</label>
-    <select name="service_item" id="service_item" class="form-select form-select-lg" disabled>
+    <select name="service_item" id="service_item" class="form-select form-select-lg js-example-basic-single" disabled>
         <option value="0">Selektujte uslugu</option>
     </select>
 </div>
@@ -73,7 +73,7 @@
     </tbody>
 </table>
 <div class="form-group">
-    <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
+    <label for="purpose_of_payment" class="form-control-label" title="max 35 karaktera">Svrha uplate ----- "max 35 karaktera" pocrveneti ceo input element ukoliko ima više od 35 karaktera. deaktiviraj dugme 'sačuvajte' ukoliko ima više od 35 karaktera</label>
     <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
 </div>
 <div class="form-group">
@@ -466,6 +466,14 @@
         buttonSave.prop('disabled', true);
         buttonPrint.prop('disabled', false);
     })
+</script>
+<script>
+    $(document).ready(function() {
+        // Inicijalizujte Select2 komponentu
+        $('.js-example-basic-single').select2({
+            theme: "classic"
+        });
+    });
 </script>
 
 {% endblock %}

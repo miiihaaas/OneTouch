@@ -472,7 +472,10 @@
                 {% endif %}
             </div>
             <div class="form-group">
-                {{ register_form.service_item_class.label(class="form-control-label") }}
+                {{ register_form.service_item_class.label(class="form-control-label", title="Pritisnite dugme CTRL da bi ste selektovali više razreda") }}
+                <button type="button" class="btn btn-secondary" data-toggle="tooltip" data-placement="right" title="Pritisnite dugme CTRL da bi ste selektovali više razreda">
+                    Pomoć
+                </button>
                 {% if register_form.service_item_class.errors %}
                     {{ register_form.service_item_class(class="form-control form-control-lg is-invalid") }}
                     <div class="invalid-feedback">
@@ -812,41 +815,7 @@
     });
 </script>
 
-<script>
-    // skripta za selektovanje više razreda iz padajučeg menija u register formi
-    $(document).ready(function(){
-        $('.selectpicker').selectpicker();
-        
-        $('#classes').change(function(){
-            $('#hidden_classes').val($('#classes').val());
-        });
-        
-        $('#multiple_select_form').on('submit', function(event){
-            event.preventDefault();
-            if($('#classes').val() != '')
-            {
-                var form_data = $(this).serialize();
-                $.ajax({
-                    url:"/ajax_add",
-                    method:"POST",
-                    data:form_data,
-                    success:function(data)
-                    {
-                    //console.log(data);
-                    $('#hidden_classes').val('');
-                    $('.selectpicker').selectpicker('val', '');
-                    alert(data);
-                    }
-                })
-            }
-            else
-            {
-            alert("Please select framework");
-            return false;
-            }
-        });
-    });
-</script>
+
 <script>
     // menja broj input polja za rate na osnovu izabranog broja rata u register formi
     const installmentNumber = document.getElementById("installment_number");

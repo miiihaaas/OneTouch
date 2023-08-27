@@ -74,7 +74,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 "I": dug,
                 "P": new_data['uplatilac'],
                 "SF": new_data['sifra_placanja'],
-                "S": new_data['svrha_uplate'],
+                "S": new_data['svrha_uplate'] if len(new_data['svrha_uplate']) < 36 else new_data['svrha_uplate'][:35], #! za generisanje QR koda maksimalno može da bude 35 karaktera
                 "RO": new_data['model'] + new_data['poziv_na_broj']
             }
             print(f'{qr_data=}')

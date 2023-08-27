@@ -153,7 +153,9 @@ def submit_records():
             student_debt_installment_number = int(data['installment'])
             print(f'{student_debt_installment_number=}')
             student_debt_amount = data['records'][i]['amount']
+            print(f'prečekiranje pred dodele vrednosti za "studetn_debt_installment_value": {service_item_id=}; {ServiceItem.query.get_or_404(service_item_id)}')
             studetn_debt_installment_value = getattr(ServiceItem.query.get_or_404(service_item_id), f'installment_{student_debt_installment_number}')
+            print(f'{studetn_debt_installment_value=}')
             student_debt_discount = data['records'][i]['discount']
             print(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
             print(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
