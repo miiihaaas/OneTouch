@@ -61,4 +61,22 @@
     document.getElementById("start-date").addEventListener("change", handleDateChange);
     document.getElementById("end-date").addEventListener("change", handleDateChange);
 </script>
+<script>
+        const rows = document.querySelectorAll('#data tbody tr');
+    
+        rows.forEach(row => {
+        const tds = row.querySelectorAll('td');
+        let containsZero = false;
+    
+        tds.forEach(td => {
+            if (td.textContent.includes('(0)')) {
+            containsZero = true;
+            }
+        });
+    
+        if (!containsZero) {
+            row.style.backgroundColor = 'rgba(255,0,0,0.1)';
+        }
+        });
+</script>
 {% endblock %}

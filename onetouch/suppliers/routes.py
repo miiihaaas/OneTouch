@@ -182,6 +182,9 @@ def service_profile_list():
         class_list_string = ', '.join(class_list)
         print(f'classes string: {class_list_string}')
         
+        if register_form.installment_number.data == '1':
+            register_form.installment_1.data = register_form.price.data
+        
         service_profile = ServiceItem(service_item_name=register_form.service_item_name.data,
                                         service_item_date=date.today(),
                                         supplier_id=register_form.supplier_id.data,
