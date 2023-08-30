@@ -16,7 +16,7 @@
             <th>Datum izvoda</th>
             <th>Broj izvoda</th>
             <th>Iznos potražuje</th>
-            <th>Broj uplatnica</th>
+            <th>Broj uplatnica (Grešaka)</th>
             <th>buttons</th>
         </tr>
     </thead>
@@ -26,12 +26,8 @@
             <td>{{ payment.payment_date.strftime('%d.%m.%Y.') }}</td>
             <td>{{ payment.statment_nubmer }}</td>
             <td>{{ payment.total_payment_amount }}</td>
-            <td>{{ payment.number_of_items }}</td>
-            {% if payment.number_of_errors %}
-            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled <span class="badge bg-danger">{{ payment.number_of_errors }}</span> </a></td>
-            {% else %}
-            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled <span class="badge bg-success">{{ payment.number_of_errors }}</span> </a></td>
-            {% endif %}
+            <td>{{ payment.number_of_items }} ({{ payment.number_of_errors }})</td>
+            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled </a></td>
         </tr>
         {% endfor %}
     </tbody>
