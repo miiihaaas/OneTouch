@@ -3,7 +3,7 @@
 <!-- ovo su učitelji: {{teachers}} -->
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
-    <select name="classes" id="classes" class="form-select form-select-lg">
+    <select name="classes" id="classes" class="form-select">
         <option value="0">Selektujte razred</option>
         {% for i in range(1,9) %}
         <option value="{{i}}">{{i}}</option>
@@ -12,7 +12,7 @@
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="section" class="form-control-label">Odeljenje</label>
-    <select name="section" id="section" class="form-select form-select-lg" disabled>
+    <select name="section" id="section" class="form-select" disabled>
         <option value="">Selektujte odeljenje</option>
         {% for i in range(1,15) %}
         <option value="{{i}}">{{i}}</option>
@@ -21,13 +21,13 @@
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="service_item" class="form-control-label">Usluga</label>
-    <select name="service_item" id="service_item" class="form-select form-select-lg js-example-basic-single" disabled>
+    <select name="service_item" id="service_item" class="form-select js-example-basic-single" disabled>
         <option value="0">Selektujte uslugu</option>
     </select>
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="installment" class="form-control-label">Rata</label>
-    <select name="installment" id="installment" class="form-select form-select-lg" disabled>
+    <select name="installment" id="installment" class="form-select" disabled>
         <option value="">Selektujte ratu</option>
         {% for service in services %}
             <option value="">work in progress</option>
@@ -36,11 +36,11 @@
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="installment_value">Iznos</label>
-    <input name="installment_value" id="installment_value" type="text" class="form-control form-control-lg" value="---" readonly>
+    <input name="installment_value" id="installment_value" type="text" class="form-control" value="---" readonly>
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="today_date" class="form-control-label">Datum</label>
-    <input type="date" id="today_date" class="form-control form-control-lg" readonly>
+    <input type="date" id="today_date" class="form-control" readonly>
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
