@@ -46,6 +46,7 @@ body.softveru a.btn.btn-info { margin-top: 40px !important; }
 
 header { background-color: #104e97; padding-bottom: 40px; }
 .bg-steel { background-color: #104e97; }
+nav#sidebar { min-width: 300px; }
 main.container:not(.login-screen) { margin:-40px 20px 20px 0; background-color: #fff; box-shadow: 0 0 10px #00000030; border-radius: 5px; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }
 title { display: block; font-size: 24px; font-weight: 700; color: #999; text-shadow: 1px 1px 1px #fff; background-color: #eee; padding: 10px; margin: 0 -20px 20px -20px; }
 .navbar>.container, .navbar>.container-fluid, .navbar>.container-lg, .navbar>.container-md, .navbar>.container-sm, .navbar>.container-xl, .navbar>.container-xxl { justify-content: space-between; }
@@ -57,6 +58,7 @@ title { display: block; font-size: 24px; font-weight: 700; color: #999; text-sha
 .dis-flex { display: flex; }
 .align-top { align-items: flex-start; }
 .m-1 { margin: 0 20px 0 0 !important; }
+.m0 { margin: 0 !important; }
 .leftcolacc .homelink { font-size: 12px; text-transform: uppercase; color: #333; font-weight: 700; padding-left: 20px; line-height: 34px; }
 .leftcolacc .homelink:hover { text-decoration: none; color: #009dde; }
 .leftcolacc h2 { margin-top: 0 }
@@ -124,6 +126,9 @@ form > div.form-group { text-align: center; }
 .btn.btn-danger:hover { background-image: linear-gradient(#990000, #990000) !important; }
 .btn.btn-secondary, .btn.btn-danger { margin: 0 0 0 0 !important; }
 .form-check-input:checked { background-color: #009cdd; border-color: #009cdd; }
+.select2-container--open { z-index: 1111; }
+.select2-selection.select2-selection--multiple { padding: 5px 5px 10px 5px !important; border-color: #ccc !important }
+.bg-danger { background-color: rgba(255,0,0,0.2) !important;  }
 @media (min-width: 992px) {
 	/*body:not(.Korisnici) .btn-info { width: 100%}*/
 	body.Fakture table#data .btn.btn-info { width: 100%; }

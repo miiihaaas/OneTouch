@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="row form-group">
+<div class="row form-group align-items-end">
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
@@ -39,15 +39,15 @@
             {% endif %}
         </select>
     </div>
-    <div class="col">
+    <div class="col form-group">
         <label for="start-date" class="form-label">Početni datum:</label>
-        <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
+        <input class="form-control" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
     </div>
-    <div class="col">
+    <div class="col form-group">
         <label for="end-date" class="form-label">Krajnji datum:</label>
-        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
+        <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
     </div>
-    <div class="col">
+    <div class="col form-group">
         <a class="btn btn-danger" href="/overview_students">Reset filtera</a>
     </div>
     <hr>
