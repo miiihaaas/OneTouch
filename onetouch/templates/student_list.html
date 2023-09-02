@@ -73,8 +73,8 @@
             <td>{{ student.student_class }}</td>
             <td>{{ student.student_section }}</td>
             <td>{{ student.parent_email }}</td>
-            <td><button type="button" class="btn btn-info" data-toggle="modal" data-target="#EditModal" onclick="editStudent('{{student.id}}', '{{student.student_name}}', '{{student.student_surname}}', '{{student.student_class}}', '{{student.student_section}}', '{{student.parent_email}}', '{{student.send_mail}}', '{{student.print_payment}}')">edit</button>
-                <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#DeleteModal{{student.id}}">delete</a></td>
+            <td><button type="button" class="btn-x btn-info-x i-btn" title="Izmeni" data-toggle="modal" data-target="#EditModal" onclick="editStudent('{{student.id}}', '{{student.student_name}}', '{{student.student_surname}}', '{{student.student_class}}', '{{student.student_section}}', '{{student.parent_email}}', '{{student.send_mail}}', '{{student.print_payment}}')"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></button>
+                <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{student.id}}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
         </tr>
         
         <!-- Modal Delete -->

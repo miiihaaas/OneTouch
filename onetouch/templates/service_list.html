@@ -21,7 +21,7 @@
                 {{ service.service_name }} 
             {% endif %}</td>
             <td>{{ service.service_supplier.supplier_name }}</td>
-            <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{service.id}}">edit</a> {% if service.archived %} arhivirana {% endif %}</td>
+            <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{service.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if service.archived %} <i class="fa-regular fa-file-zipper awesomearchive"></i> {% endif %}</td>
         </tr>
         <!-- Modal Edit -->
         <div class="modal fade" id="EditModal{{service.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">

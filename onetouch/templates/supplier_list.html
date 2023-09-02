@@ -15,7 +15,7 @@
         <tr class="odd">
             <td>{{ supplier.id }}</td>
             <td>{{ supplier.supplier_name }}</td>
-            <td><a href="#" class="btn btn-info" data-toggle="modal" data-target="#EditModal{{supplier.id}}">edit</a> {% if supplier.archived %} arhiviran {% endif %}</td>
+            <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{supplier.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if supplier.archived %} arhiviran {% endif %}</td>
         </tr>
         <!-- Modal Edit -->
         <div class="modal fade" id="EditModal{{supplier.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">

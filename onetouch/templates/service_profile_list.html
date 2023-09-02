@@ -29,8 +29,8 @@
             <td>{{ service_profile.price }}</td>
             <td>{{ service_profile.installment_number }}</td>
             <td>{{ service_profile.service_item_class }}</td>
-            <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}"><img src="/static/img/edit_button.png" alt="Edit"></a>
-                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}"><img src="/static/img/delete_button.png" alt="Delete"></a>
+            <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
+                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
                 {% if service_profile.archived %} arhivirano {% endif %}
             </td>
         </tr>

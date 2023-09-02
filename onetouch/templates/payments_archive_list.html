@@ -27,7 +27,7 @@
             <td>{{ payment.statment_nubmer }}</td>
             <td>{{ payment.total_payment_amount }}</td>
             <td>{{ payment.number_of_items }} ({{ payment.number_of_errors }})</td>
-            <td><a class="btn btn-primary" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}">Pregled </a></td>
+            <td><a class="btn-x btn-primary-x" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}"title="Pregled"><i class="fa fa-magnifying-glass awesomeedit"></i></a></td>
         </tr>
         {% endfor %}
     </tbody>

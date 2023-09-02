@@ -38,7 +38,9 @@ main.login-screen i { color: #bbb; }
 .login-screen label.form-control-label { color: #bbb; font-style: italic; font-size: 14px; }
 #email:before {content: '\f0e0' !important; position: absolute; font-family: "Font Awesome 6 Free"; }
 .btn { border: none; background-color: #009dde; background-image: linear-gradient(#009dde, #104e97); border-radius: 5px; color: #fff; text-transform: uppercase; font-weight: 500; font-size: 12px; padding: 10px 20px; }
-.btn:hover { color: #fff; background: #104e97 !important; border-color: transparent; }
+.btn:hover, .btn-s:hover { color: #fff; background: #104e97 !important; border-color: transparent; }
+.btn-s { border: none; background-color: #009dde; background-image: linear-gradient(#009dde, #104e97); border-radius: 5px; color: #fff; text-transform: uppercase; font-weight: 500; font-size: 12px;
+    padding: 2px 7px; }
 main.login-screen .content-section a { text-decoration: none; color: #104e97; font-weight: 500; }
 body.Početna .two-inputs-in-row { display: flex; justify-content: space-between; align-items: baseline; }
 body.Početna .two-inputs-in-row h2 { color: #940052; font-size: 1.2rem; }
@@ -134,6 +136,13 @@ span.select2-selection__arrow { border-left: 0 !important; background-color: tra
 .select2-container--classic .select2-selection--single .select2-selection__arrow b { border-color: #000 transparent transparent transparent !important; border-width: 6px 6px 0 6px !important; left: 0 !important; margin-top: 3px !important; }
 .select2-container--classic .select2-selection--single .select2-selection__arrow b:after { content: ''; border-color: #ffffff transparent transparent transparent; border-style: solid; border-width: 6px 6px 0 6px; margin-left: -6px; margin-top: -7px; position: absolute; }
 span.select2.select2-container.select2-container--classic { width: 100% !important; }
+.awesomeedit { color: #0d6efd }
+.awesomedelete { color: #ff0000; }
+.i-btn { border: 0 !important; }
+/*.awesomedelete:hover { color: #cc0000; }*/
+.awesomeedit, .awesomedelete { font-size: 20px; padding-right: 10px; opacity: 0.5; }
+.awesomeedit:hover, .awesomedelete:hover { opacity: 1; }
+.awesomearchive { font-size: 20px; color: #555; }
 @media (min-width: 992px) {
 	/*body:not(.Korisnici) .btn-info { width: 100%}*/
 	body.Fakture table#data .btn.btn-info { width: 100%; }
