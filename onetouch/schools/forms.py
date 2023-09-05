@@ -5,10 +5,10 @@ from onetouch.models import School
 
 
 class EditSchoolForm(FlaskForm):
-    school_name = StringField('Naziv škole')
-    school_address = StringField('Adresa')
-    school_zip_code = StringField('Poštanski broj')
-    school_city = StringField('Grad')
-    school_municipality = StringField('Opština')
-    school_bank_account = StringField('Broj bankovnog računa')
-    submit = SubmitField('Sačuvajte')
+    school_name = StringField('Naziv škole', validators = [DataRequired()])
+    school_address = StringField('Adresa', validators = [DataRequired()])
+    school_zip_code = StringField('Poštanski broj', validators = [DataRequired()])
+    school_city = StringField('Grad', validators = [DataRequired()])
+    school_municipality = StringField('Opština', validators = [DataRequired()])
+    school_bank_account = StringField('Broj bankovnog računa', validators = [DataRequired()])
+    submit = SubmitField('Sačuvajte', validators = [DataRequired()])

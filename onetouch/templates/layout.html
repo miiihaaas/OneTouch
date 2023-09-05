@@ -43,10 +43,8 @@
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
               {% if current_user.is_authenticated %}
-                <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Početna</a>
                 <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Odjavite se</a>
               {% else %}
-                <a class="nav-item nav-link" href="{{ url_for('main.about') }}">O softveru</a>
                 <a class="nav-item nav-link" href="{{ url_for('users.login') }}"> Prijavite se</a>
               {% endif %}
             </div>

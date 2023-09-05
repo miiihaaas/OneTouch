@@ -92,12 +92,11 @@
             // Postavljanje slušaoca događaja za klik na td elementu za količinu
             $(this).find('td:nth-child(6)').on('click', function() {
             var currentValue = $(this).text().trim();
-            var inputElement = $('<input class="form-control form-control-lg">').attr({
-                'type': 'text',
-                'value': currentValue
-            });
+            console.log('trenutna vrednost: ', currentValue)
+            var inputElement = $('<input class="form-control form-control-lg" type="number" value="' + currentValue + '">');
 
-            $(this).html(inputElement);
+            $(this).html(inputElement.attr({ "value": currentValue }));
+            // inputElement.attr({ "value": currentValue })
             inputElement.focus();
 
             // Postavljanje slušaoca događaja blur na input elementu
@@ -112,10 +111,7 @@
             // Postavljanje slušaoca događaja za klik na td elementu za olakšice
             $(this).find('td:nth-child(8)').on('click', function() {
             var currentValue = $(this).text().trim();
-            var inputElement = $('<input class="form-control form-control-lg">').attr({
-                'type': 'text',
-                'value': currentValue
-            });
+            var inputElement = $('<input class="form-control form-control-lg" type="number" step="0.01" pattern="^\d+(\.\d{1,2})?$" value="' + currentValue + '">');
 
             $(this).html(inputElement);
             inputElement.focus();
@@ -344,11 +340,11 @@
                             console.log('vrednost rate-- posle izmene rednog broja rate: ', cell.innerText);
 
                             const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
-                            const selectedInstallmentText = selectFieldInstallment.find('option:selected').text();
+                            const selectedInstallmentText = selectFieldInstallment.find('option:selected').text(); // ovde treba dodati if form da ako ima samo jena rata da const bude "" (prazan string)
 
 
 
-                            inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / '+ selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
+                            inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / ' + selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
                             inputFieldPurposeOfPayment.prop('disabled', false);
                             inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
                             buttonSave.prop('disabled', false);

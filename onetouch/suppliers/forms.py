@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, BooleanField, SelectField, DecimalField, DateField
-from wtforms.validators import DataRequired, Optional
+from wtforms.validators import DataRequired, Optional, ValidationError
 from onetouch import db
 from onetouch.models import Supplier
 
@@ -8,12 +8,22 @@ from onetouch.models import Supplier
 class RegisterSupplierModalForm(FlaskForm):
     supplier_name = StringField('Naziv dobavljača', validators=[DataRequired()])
     submit_register = SubmitField('Registrujte dobavljača')
+    
+    def validate_supplier_name(self, supplier_name):
+        supplier = Supplier.query.filter_by(supplier_name=supplier_name.data).first()
+        if supplier:
+            raise ValidationError('Već postoji dobavljač sa istim imenom.')
 
 
 class EditSupplierModalForm(FlaskForm):
     supplier_name = StringField('Naziv dobavljača', validators=[DataRequired()])
     archived = BooleanField('Dobavljač arhiviran')
     submit_edit = SubmitField('Sačuvajte')
+    
+    def validate_supplier_name(self, supplier_name):
+        supplier = Supplier.query.filter_by(supplier_name=supplier_name.data).first()
+        if supplier:
+            raise ValidationError('Već postoji dobavljač sa istim imenom.')
     
 
 class RegisterServiceModalForm(FlaskForm):
