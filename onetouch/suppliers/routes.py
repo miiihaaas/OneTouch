@@ -27,7 +27,7 @@ def supplier_list():
     edit_form = EditSupplierModalForm()
     register_form = RegisterSupplierModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        supplier = Supplier.query.get(request.form.get('get_supplier'))
+        supplier = Supplier.query.get(request.form.get('supplier_id'))
         
         supplier.supplier_name = edit_form.supplier_name.data
         supplier.archived = edit_form.archived.data
@@ -35,7 +35,7 @@ def supplier_list():
         flash(f'Izmene profila dobavljača "{supplier.supplier_name}" su sačuvane.', 'success')
         return redirect(url_for('suppliers.supplier_list'))
     elif request.method == 'GET': 
-        supplier = Supplier.query.get(request.form.get('get_supplier'))
+        supplier = Supplier.query.get(request.form.get('supplier_id'))
         #
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
@@ -68,8 +68,8 @@ def service_list():
     register_form.supplier_id.choices = suppliers_chices
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
         print('edit form triggered.')
-        service = Service.query.get(request.form.get('get_service'))
-        print(request.form.get('get_service'))
+        service = Service.query.get(request.form.get('service_id'))
+        print(request.form.get('service_id'))
         print(service)
         
         service.service_name = edit_form.service_name.data

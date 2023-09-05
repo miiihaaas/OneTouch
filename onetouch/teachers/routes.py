@@ -38,8 +38,8 @@ def teacher_list():
         db.session.commit()
         return redirect(url_for('teachers.teacher_list'))
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        print('edit form validation')
-        teacher = Teacher.query.get(request.form.get('get_teacher'))
+        print(f'edit form validation: {request.form.get("teacher_id")=}')
+        teacher = Teacher.query.get(request.form.get('teacher_id'))
         
         teacher.teacher_name = edit_form.teacher_name.data.capitalize()
         teacher.teacher_surname = edit_form.teacher_surname.data.capitalize()
@@ -47,9 +47,9 @@ def teacher_list():
         teacher.teacher_section = edit_form.teacher_section.data
         db.session.commit()
         return redirect(url_for('teachers.teacher_list'))
-    elif request.method == 'GET' and request.form.get('get_teacher') != None:
-        print(f'get: {request.form.get("get_teacher")}')
-        teacher = Teacher.query.get(request.form.get('get_teacher'))
+    elif request.method == 'GET' and request.form.get('teacher_id') != None:
+        print(f'get: {request.form.get("teacher_id")}')
+        teacher = Teacher.query.get(request.form.get('teacher_id'))
         
         #edit_form.teacher_name.data = teacher.teacher_name
     return render_template('teacher_list.html', title='Razredne starešine', 

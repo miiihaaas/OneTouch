@@ -2,7 +2,7 @@ import json
 import requests, os, io
 import xml.etree.ElementTree as ET
 from PIL import Image
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import  render_template, url_for, flash, redirect, request, send_file
 from flask import Blueprint
 from flask_login import login_required, current_user
@@ -249,7 +249,9 @@ def debts_archive_list():
         end_date = date.today().isoformat()
     print(f'{start_date=}, {end_date=}')
     debts = StudentDebt.query.filter(
-        StudentDebt.student_debt_date.between(start_date, end_date)).all()
+            (StudentDebt.student_debt_date >= start_date) &
+            (StudentDebt.student_debt_date <= (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat()) #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
+        ).all()
     print(f'{debts=}')
     return render_template('debts_archive_list.html', 
                             debts=debts,
@@ -265,7 +267,7 @@ def payments_archive_list():
         start_date = date.today().replace(day=1, month=1).isoformat()
         end_date = date.today().isoformat()
     payments = StudentPayment.query.filter(
-        StudentPayment.payment_date.between(start_date, end_date)).all()
+        StudentPayment.payment_date.between(start_date, (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat())).all() #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
     print(f'{payments=}')
     return render_template('payments_archive_list.html', 
                             payments=payments,

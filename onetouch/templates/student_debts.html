@@ -4,8 +4,8 @@
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
     <select name="classes" id="classes" class="form-select">
-        <option value="0">Selektujte razred</option>
-        {% for i in range(1,9) %}
+        <option value="">Selektujte razred</option>
+        {% for i in range(0,9) %}
         <option value="{{i}}">{{i}}</option>
         {% endfor %}
     </select>
@@ -193,7 +193,7 @@
         // Dropdown: RAZRED
         selectFieldClasses.on('change', function() {
             const newValue = selectFieldClasses.val();
-            if(selectFieldClasses.val() === "0") {
+            if(selectFieldClasses.val() === "") {
                 console.log('selectkovani razred: ', selectFieldClasses.val());
                 selectFieldSection.prop('disabled', true);
                 selectFieldSection.prop('value', "");

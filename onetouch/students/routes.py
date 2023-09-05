@@ -43,6 +43,7 @@ def student_list():
         student.send_mail = edit_form.send_mail.data
         student.print_payment = edit_form.print_payment.data
         db.session.commit()
+        flash(f'Podaci o učeniku "{student.student_name} {student.student_surname}" su ažurirani.', 'success')
         return redirect(url_for('students.student_list'))
     elif request.method == 'GET': # and request.form.get('get_student') != None:
         print(f'get: {request.form.get("get_student")}')
@@ -66,6 +67,7 @@ def student_list():
         db.session.add(student)
         db.session.commit()
         print("inputi su validni")
+        flash(f'Učenik "{student.student_name} {student.student_surname}" je registrovan.', 'success')
         return redirect(url_for('students.student_list'))
     return render_template('student_list.html', 
                             title='Učenici', 
@@ -84,6 +86,7 @@ def class_plus_one():
     for student in students:
         student.student_class = int(student.student_class) + 1
         db.session.commit()
+    flash('Učenici su uspešno promijenjeni u razred +1', 'success')
     return redirect(url_for('students.student_list'))
 
 
@@ -108,6 +111,7 @@ def delete_student(student_id):
             print('student nema zaduženje, brišem ga iz baze')
             db.session.delete(student)
         db.session.commit()
+        flash(f'Profil učenika "{student.student_name} {student.student_surname}" je obrisan.', 'success')
         return redirect(url_for("students.student_list"))
 
 
