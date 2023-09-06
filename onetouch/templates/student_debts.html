@@ -60,7 +60,7 @@
         {% for student in students %}
         <tr class="odd">
             <td>{{ student.student_name }} {{ student.student_surname }}</td>
-            <td>{{ student.student_class }}</td>
+            <td contenteditable="true">{{ student.student_class }}</td>
             <td>{{ student.student_section }}</td>
             <td id="poziv_na_broj_{{ student.id }}"></td>
             <td id="usluga_{{ student.id }}"></td>
@@ -91,54 +91,54 @@
         $('#data tbody tr').each(function() {
             // Postavljanje slušaoca događaja za klik na td elementu za količinu
             $(this).find('td:nth-child(6)').on('click', function() {
-            var currentValue = $(this).text().trim();
-            console.log('trenutna vrednost: ', currentValue)
-            var inputElement = $('<input class="form-control" type="number" value="' + currentValue + '">');
+                var currentValue = $(this).text().trim();
+                console.log('trenutna vrednost: ', currentValue)
+                var inputElement = $('<input class="form-control" type="number" value="0" max="500">');
 
-            // Dodajte event slušaoca za input element
-            inputElement.on('input', function() {
-                var input = $(this);
-                var newValue = input.val().trim();
-                // Koristite regex da zadržite samo cifre
-                newValue = newValue.replace(/\D/g, '');
-                input.val(newValue);
-                
-                // Postavite kursor na kraju broja
-                var inputLength = input.val().length;
-                input[0].setSelectionRange(inputLength, inputLength);
-            });
-
-
+                // Dodajte event slušaoca za input element
+                inputElement.on('input', function() {
+                    var input = $(this);
+                    var newValue = input.val().trim();
+                    // Koristite regex da zadržite samo cifre
+                    newValue = newValue.replace(/\D/g, '');
+                    input.val(newValue);
+                    
+                    // Postavite kursor na kraju broja
+                    var inputLength = input.val().length;
+                    input[0].setSelectionRange(inputLength, inputLength);
+                });
 
 
-            $(this).html(inputElement.attr({ "value": currentValue }));
-            // inputElement.attr({ "value": currentValue })
-            inputElement.focus();
 
-            // Postavljanje slušaoca događaja blur na input elementu
-            inputElement.on('blur', function() {
-                var newValue = $(this).val().trim();
-                $(this).parent().text(newValue);
 
-                recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
-            });
+                $(this).html(inputElement.attr({ "value": currentValue }));
+                // inputElement.attr({ "value": currentValue })
+                inputElement.focus();
+
+                // Postavljanje slušaoca događaja blur na input elementu
+                inputElement.on('blur', function() {
+                    var newValue = $(this).val().trim();
+                    $(this).parent().text(newValue);
+
+                    recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
+                });
             });
 
             // Postavljanje slušaoca događaja za klik na td elementu za olakšice
             $(this).find('td:nth-child(8)').on('click', function() {
-            var currentValue = $(this).text().trim();
-            var inputElement = $('<input class="form-control form-control-lg" type="number" step="0.01" pattern="^\d+(\.\d{1,2})?$" value="' + currentValue + '">');
+                var currentValue = $(this).text().trim();
+                var inputElement = $('<input class="form-control form-control-lg" type="number" step="0.01" pattern="^\d+(\.\d{1,2})?$" value="' + currentValue + '">');
 
-            $(this).html(inputElement);
-            inputElement.focus();
+                $(this).html(inputElement);
+                inputElement.focus();
 
-            // Postavljanje slušaoca događaja blur na input elementu
-            inputElement.on('blur', function() {
-                var newValue = $(this).val().trim();
-                $(this).parent().text(newValue);
+                // Postavljanje slušaoca događaja blur na input elementu
+                inputElement.on('blur', function() {
+                    var newValue = $(this).val().trim();
+                    $(this).parent().text(newValue);
 
-                recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
-            });
+                    recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
+                });
             });
         });
 

@@ -72,7 +72,16 @@
             <td>{{ student.student_surname }}</td>
             <td>{{ student.student_class }}</td>
             <td>{{ student.student_section }}</td>
-            <td>{{ student.parent_email }}</td>
+            <td>
+                {% if student.parent_email %}
+                    {% if student.send_mail %}
+                        šalje | 
+                    {% else %}
+                        ne šalje | 
+                    {% endif %}
+                {% endif %}
+                {{ student.parent_email }}
+            </td>
             <td><button type="button" class="btn-x btn-info-x i-btn" title="Izmeni" data-toggle="modal" data-target="#EditModal" onclick="editStudent('{{student.id}}', '{{student.student_name}}', '{{student.student_surname}}', '{{student.student_class}}', '{{student.student_section}}', '{{student.parent_email}}', '{{student.send_mail}}', '{{student.print_payment}}')"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></button>
                 <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{student.id}}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
         </tr>
@@ -190,16 +199,12 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ edit_form.parent_email(class="form-control form-control-lg") }}
+                    {{ edit_form.parent_email(class="form-control form-control-lg", placeholder="xx@xx.xx") }}
                 {% endif %}
             </div>
             <div class="form-check form-switch">
                 <input class="form-check-input" id="send_mail" name="send_mail" type="checkbox">
                 {{ edit_form.send_mail.label(class="form-control-label") }}
-            </div>
-            <div class="form-check form-switch">
-                <input class="form-check-input" id="print_payment" name="print_payment" type="checkbox">
-                {{ edit_form.print_payment.label(class="form-control-label") }}
             </div>
             </div>
                 <div class="modal-footer">
@@ -278,16 +283,16 @@
                 {% endif %}
             </div>
             <div class="form-group">
-                {{ edit_form.parent_email.label(class="form-control-label") }}
-                {% if edit_form.parent_email.errors %}
-                    {{ edit_form.parent_email(class="form-control form-control-lg is-invalid") }}
+                {{ register_form.parent_email.label(class="form-control-label") }}
+                {% if register_form.parent_email.errors %}
+                    {{ register_form.parent_email(class="form-control form-control-lg is-invalid") }}
                     <div class="invalid-feedback">
-                        {% for error in edit_form.parent_email.errors %}
+                        {% for error in register_form.parent_email.errors %}
                             <span>{{ error }}</span>
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ edit_form.parent_email(class="form-control form-control-lg") }}
+                    {{ register_form.parent_email(class="form-control form-control-lg", placeholder="xx@xx.xx") }}
                 {% endif %}
             </div>
             </div>
@@ -310,35 +315,27 @@
         // Selektujte relevantne elemente
         var parentEmailInput = document.getElementById("parent_email");
         var sendMailCheckbox = document.getElementById("send_mail");
-        var printPaymentCheckbox = document.getElementById("print_payment");
 
+        function isValidEmail(email) {
+            // Regularni izraz za validaciju email adrese
+            var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+            return emailRegex.test(email);
+        }
         // Funkcija koja se izvršava prilikom promene u polju 'parent_email'
         function handleParentEmailChange() {
-            if (parentEmailInput.value.trim() === "") {
+            var email = parentEmailInput.value.trim();
+            
+            if (email === "" || !isValidEmail(email)) {
                 sendMailCheckbox.checked = false;
                 sendMailCheckbox.disabled = true;
-                printPaymentCheckbox.checked = false;
-                printPaymentCheckbox.disabled = true;
             } else {
                 sendMailCheckbox.disabled = false;
             }
         }
-
+        // Pozivamo funkciju handleParentEmailChange prilikom učitavanja stranice
+        handleParentEmailChange();
         // Dodajte event listener za promene u polju 'parent_email'
         parentEmailInput.addEventListener("input", handleParentEmailChange);
-
-        // Funkcija koja se izvršava prilikom promene u checkbox-u 'send_mail'
-        function handleSendMailChange() {
-            if (sendMailCheckbox.checked) {
-                printPaymentCheckbox.disabled = false;
-            } else {
-                printPaymentCheckbox.checked = false;
-                printPaymentCheckbox.disabled = true;
-            }
-        }
-
-        // Dodajte event listener za promene u checkbox-u 'send_mail'
-        sendMailCheckbox.addEventListener("change", handleSendMailChange);
     });
     function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
         console.log('pokrenuta je funkcija editStudent')

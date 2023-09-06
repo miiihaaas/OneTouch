@@ -36,6 +36,7 @@ def supplier_list():
         return redirect(url_for('suppliers.supplier_list'))
     elif request.method == 'GET': 
         supplier = Supplier.query.get(request.form.get('supplier_id'))
+        
         #
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
