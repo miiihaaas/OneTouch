@@ -99,7 +99,8 @@ def delete_student(student_id):
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         print ('nije dobar password')
-        abort(403)
+        flash(f'Pogrešna lozinka! nije obrisan profil učenika: {student.student_name} {student.student_surname}', 'danger')
+        return redirect(url_for('students.student_list'))
     else:
         # proveri da li je studeent zadužen nekom uslugom
         list_of_students_with_debts = TransactionRecord.query.filter_by(student_id=student.id).all()

@@ -70,6 +70,7 @@ def overview_students():
     export_data = []
     for record in filtered_records:
         if service_id == '0' or int(service_id) == record.service_item_id:
+            # print(f'debug mode: {record.student_id=}')
             if record.student_id in [student['student_id'] for student in export_data]:
                 existing_record = next((item for item in export_data if item["student_id"] == record.student_id), None)
                 # print(f'{existing_record=}')
@@ -177,7 +178,7 @@ def overview_student(student_id):
             data.append(test_data)
     # unique_services_list.sort()
     
-    print(f'{data=}')
+    # print(f'{data=}')
     data.sort(key=lambda x: x['service_item_id'])
     print(f'{data=}')
     print(f'{len(data)=}')

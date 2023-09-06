@@ -251,7 +251,8 @@ def delete_service_profile(service_profile_id):
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         print ('nije dobar password')
-        abort(403)
+        flash('Niste dobro uneli lozinku.', 'danger')
+        return redirect(url_for('suppliers.service_profile_list'))
     else:
         flash(f'Uspešno je obrisana usluga "{service_profile.service_item_name}".', 'success')
         db.session.delete(service_profile)

@@ -71,7 +71,8 @@ def delete_teacher(teacher_id):
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         print ('nije dobar password')
-        abort(403)
+        flash(f'Pogrešna lozinka! Nije obrisan profil odeljenskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'danger')
+        return redirect(url_for('teachers.teacher_list'))
     else:
         db.session.delete(teacher)
         db.session.commit()

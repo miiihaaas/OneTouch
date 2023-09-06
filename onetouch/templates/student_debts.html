@@ -4,7 +4,7 @@
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
     <select name="classes" id="classes" class="form-select">
-        <option value="">Selektujte razred</option>
+        <option value="s">Selektujte razred</option>
         {% for i in range(0,9) %}
         <option value="{{i}}">{{i}}</option>
         {% endfor %}
@@ -93,7 +93,23 @@
             $(this).find('td:nth-child(6)').on('click', function() {
             var currentValue = $(this).text().trim();
             console.log('trenutna vrednost: ', currentValue)
-            var inputElement = $('<input class="form-control form-control-lg" type="number" value="' + currentValue + '">');
+            var inputElement = $('<input class="form-control" type="number" value="' + currentValue + '">');
+
+            // Dodajte event slušaoca za input element
+            inputElement.on('input', function() {
+                var input = $(this);
+                var newValue = input.val().trim();
+                // Koristite regex da zadržite samo cifre
+                newValue = newValue.replace(/\D/g, '');
+                input.val(newValue);
+                
+                // Postavite kursor na kraju broja
+                var inputLength = input.val().length;
+                input[0].setSelectionRange(inputLength, inputLength);
+            });
+
+
+
 
             $(this).html(inputElement.attr({ "value": currentValue }));
             // inputElement.attr({ "value": currentValue })
@@ -189,7 +205,7 @@
         // Dropdown: RAZRED
         selectFieldClasses.on('change', function() {
             const newValue = selectFieldClasses.val();
-            if(selectFieldClasses.val() === "") {
+            if(selectFieldClasses.val() === "s") {
                 console.log('selectkovani razred: ', selectFieldClasses.val());
                 selectFieldSection.prop('disabled', true);
                 selectFieldSection.prop('value', "");
