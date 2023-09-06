@@ -456,7 +456,7 @@ def posting_payment():
         print(f'{iznos_potrazuje_element=}')
         print(f'{racun_skole=}, {racun_izvoda_element=}')
         if racun_izvoda_element != racun_skole:
-            error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element.text}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
+            error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
             print('racuni nisu isti')
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
@@ -476,8 +476,8 @@ def posting_payment():
             podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
             podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
             podaci['ModelPozivaOdobrenja'] = stavka.find('ModelPozivaOdobrenja').text
-            podaci['PozivOdobrenja'] = stavka.find('PozivOdobrenja').text
-            podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text
+            podaci['PozivOdobrenja'] = stavka.find('PozivOdobrenja').text if stavka.find('PozivOdobrenja').text else "-" #! ako nije None onda preuzmi vrednost iz xml, akoj je None onda mu dodeli "-"
+            podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text if stavka.find('SvrhaDoznake').text else "-" #! isti princip kao gornji red
             podaci['DatumValute'] = stavka.find('DatumValute').text
             podaci['PodatakZaReklamaciju'] = stavka.find('PodatakZaReklamaciju').text
             podaci['VremeUnosa'] = stavka.find('VremeUnosa').text
