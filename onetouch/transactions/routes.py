@@ -203,6 +203,7 @@ def submit_records():
         print('izmena postojećeg izvoda')
         transaction_records = TransactionRecord.query.all()
         all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records if record.student_debt_id is not None]
+        all_reference_numbers.append('0000-000')
         student_payment_id = int(data['student_payment_id'])
         
         number_of_errors = 0
@@ -354,7 +355,14 @@ def payment_archive(payment_id):
     payment = StudentPayment.query.get_or_404(payment_id)
     records = TransactionRecord.query.filter_by(student_payment_id=payment_id).all()
     students = Student.query.all()
-    students_data = []
+    students_data = [
+            {
+                'student_id': 0,
+                'student_name': "ignoisana",
+                'student_surname': "uplata",
+                
+            }
+        ]
     for student in students:
         student_data = {
             'student_id': student.id,
@@ -364,7 +372,11 @@ def payment_archive(payment_id):
         }
         students_data.append(student_data)
     services = ServiceItem.query.all()
-    services_data = []
+    services_data = [{
+            'service_id': 0,
+            'service_item_name': "",
+            'service_debt': "",
+        }]
     for service in services:
         service_data = {
             'service_id': service.id,

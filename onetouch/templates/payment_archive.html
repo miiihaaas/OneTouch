@@ -24,7 +24,9 @@
         {% endif %}
             <td>{{ record.id }}</td>
             <td>
-                {% if record.transaction_record_student.id is not defined %}
+                {% if record.student_id == 0 %}
+                    <strong>Ignorisana uplata</strong>
+                {% elif record.transaction_record_student.id is not defined %}
                     <strong>Greška</strong>
                 {% else %}
                     <a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a>
@@ -34,7 +36,9 @@
             <td contenteditable="true" class="edit-cell student-id">{{ "{:04d}".format(record.student_id) }}</td>
             <td contenteditable="true" class="edit-cell service-id">{{ "{:03d}".format(record.service_item_id) }}</td>
             <td>
-                {% if record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
+                {% if record.service_item_id == 0 %}
+                    <strong>Ignorisana uplata</strong>
+                {% elif record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
                     {{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}
                 {% else %}
                     <strong>Greška</strong>
@@ -62,7 +66,7 @@
     <tbody>
         {% for data in export_data %}
         <tr>
-            <td>{{ "{:04d}".format(data.service_item_id) }}</td>
+            <td>{{ "{:03d}".format(data.service_item_id) }}</td>
             <td>{{ data.name }}</td>
             <td>{{ data.sum_amount }}</td>
         </tr>
@@ -167,7 +171,7 @@
                 'records': records
             }
             $.ajax({
-                url: '/submit_records', //!!!!
+                url: '../submit_records', //!!!!
                 method: 'POST',
                 data: JSON.stringify(output),
                 contentType: 'application/json',
