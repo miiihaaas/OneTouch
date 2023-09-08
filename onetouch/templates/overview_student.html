@@ -15,7 +15,10 @@
     </div>
     <div class="col">
         <label for="end-date" class="form-label">Krajnji datum:</label>
-        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}">
+        <input class="form-control mb-2" type="date" id="end-date" name="end-date" value="{{ end_date }}">
+    </div>
+    <div class="col">
+        <button class="btn btn-primary mb-2" type="submit" id="print-report" name="print-report">Štampa pregleda</button>
     </div>
 </div>
 {% for service in unique_services_list %}

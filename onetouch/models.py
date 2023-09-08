@@ -44,6 +44,7 @@ class Service(db.Model):
 
 
 class ServiceItem(db.Model):
+    #! napraviti uslugu sa id=0 zbog ignorisanja uplatnica koje nisu đačke!!!!
     id = db.Column(db.Integer, primary_key=True)
     service_item_name = db.Column(db.String(255), nullable=False)
     service_item_date = db.Column(db.DateTime, nullable=False) #! neka ostane samo datum radi evidencije, ali ćemo dodati atribu arhivirano: true vs false
@@ -71,6 +72,7 @@ class ServiceItem(db.Model):
 
 
 class Student(db.Model):
+    #! napraviti učenika sa id=0 zbog ignorisanja uplatnica koje nisu đačke!!!! treba da bude 9 razred da se ne bi pojavljivao u spiskovima.
     id = db.Column(db.Integer, primary_key=True)
     student_name = db.Column(db.String(255), nullable=False)
     student_surname = db.Column(db.String(255), nullable=False)

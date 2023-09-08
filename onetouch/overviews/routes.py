@@ -4,6 +4,7 @@ from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord
+from onetouch.transactions.functions import gen_report_student
 
 
 overviews = Blueprint('overviews', __name__)
@@ -186,6 +187,7 @@ def overview_student(student_id):
     unique_services_list = sorted(unique_services_list, key=lambda x: x['id'])
     print(f'{unique_services_list=}')
 
+    report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
         
     return render_template('overview_student.html', 
                             title=f'Pregled stanja učenika: {student.student_name} {student.student_surname}', 

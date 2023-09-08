@@ -1,6 +1,7 @@
 import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
+from onetouch.models import School
 
 
 current_file_path = os.path.abspath(__file__)
@@ -264,3 +265,69 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
 
     
     return file_name
+
+
+def gen_report_student(data, unique_services_list, student, start_date, end_date):
+    school = School.query.first()
+    class PDF(FPDF):
+        def __init__(self, **kwargs):
+            super(PDF, self).__init__(**kwargs)
+            print(f'{font_path=}')
+            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+    
+        def header(self):
+            # Postavite font i veličinu teksta za zaglavlje
+            self.set_font('DejaVuSansCondensed', 'B', 12)
+            
+            # Dodajte informacije o školi
+            self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
+            self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
+            self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
+    
+    pdf = PDF()
+    pdf.add_page()
+    
+    pdf.set_font('DejaVuSansCondensed', 'B', 18)
+    pdf.cell(40, 8, '', 0, 1, 'R')
+    pdf.cell(0, 8, f'Pregled stanja učenika: {student.student_name} {student.student_surname}', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
+    pdf.cell(0, 8, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
+    pdf.cell(40, 8, '', 0, 1, 'R')
+    zaduzenje = 0
+    uplate = 0
+    for service in unique_services_list:
+        pdf.set_font('DejaVuSansCondensed', 'B', 16)
+        pdf.cell(0, 8, f'({service["id"]:03}) {service["service_name"]}', 0, 1, 'L')
+        pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+        pdf.set_font('DejaVuSansCondensed', 'B', 12)
+        pdf.cell(25, 8, 'Datum', 1, 0, 'C', 1)  # Dodajte border, 40 je širina ćelije
+        pdf.cell(85, 8, 'Opis usluge', 1, 0, 'C', 1)  # Dodajte border, 60 je širina ćelije
+        pdf.cell(25, 8, 'Zaduženje', 1, 0, 'C', 1)  # Dodajte border, 30 je širina ćelije
+        pdf.cell(25, 8, 'Uplate', 1, 0, 'C', 1)  # Dodajte border, 30 je širina ćelije
+        pdf.cell(25, 8, 'Saldo', 1, 1, 'C', 1)  # Dodajte border, 30 je širina ćelije i prelazi u novi red
+        pdf.set_fill_color(255, 255, 255)
+        for record in data:
+            if record['service_item_id'] == service['id']:
+                pdf.set_font('DejaVuSansCondensed', '', 12)
+                pdf.cell(25, 8, f'{record["date"].strftime("%d.%m.%Y.")}', 1, 0, 'C', 1)  # Dodajte border, 40 je širina ćelije
+                pdf.cell(85, 8, f'{record["description"]}', 1, 0, 'L', 1)  # Dodajte border, 40 je širina ćelije
+                pdf.cell(25, 8, f'{record["debt_amount"]:,.2f}', 1, 0, 'R', 1)  # Dodajte border, 40 je širina ćelije
+                pdf.cell(25, 8, f'{record["payment_amount"]:,.2f}', 1, 0, 'R', 1)  # Dodajte border, 40 je širina ćelije
+                pdf.cell(25, 8, f'{record["saldo"]:,.2f}', 1, 1, 'R', 1)  # Dodajte border, 40 je širina ćelije
+                zaduzenje += record['debt_amount']
+                uplate += record['payment_amount']
+        pdf.cell(40, 8, '', 0, 1, 'R')
+    saldo = zaduzenje - uplate
+    pdf.set_font('DejaVuSansCondensed', 'B', 16)
+    pdf.cell(40, 8, '', 0, 1, 'R')  # Uklonili smo border postavljanjem poslednjeg argumenta na 0
+    pdf.cell(40, 8, 'Zaduzenje:', 0, 0, 'R')
+    pdf.cell(40, 8, f'{zaduzenje:,.2f}', 0, 1, 'R')
+    pdf.cell(40, 8, 'Uplate:', 0, 0, 'R')
+    pdf.cell(40, 8, f'{uplate:,.2f}', 0, 1, 'R')
+    pdf.cell(40, 8, 'Saldo:', 0, 0, 'R')
+    pdf.cell(40, 8, f'{saldo:,.2f}', 0, 1, 'R')
+
+    print(f'{zaduzenje=} {uplate=} {saldo=}')
+    file_name = 'report_student.pdf'
+    path = f'{project_folder}/static/reports/'
+    pdf.output(path + file_name)

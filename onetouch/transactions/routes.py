@@ -214,8 +214,8 @@ def submit_records():
             record_for_edit = TransactionRecord.query.get_or_404(record_id)
             print(f'{record_for_edit=}')
             print(f'{record_id=}, {student_id=}, {service_item_id=},')
-            record_for_edit.student_id = student_id
-            record_for_edit.service_item_id = service_item_id
+            record_for_edit.student_id = student_id #if student_id in [record.student_id for record in transaction_records] else 0
+            record_for_edit.service_item_id = service_item_id #if service_item_id in [record.service_item_id for record in transaction_records] else 0
             
             reference_number = f"{student_id:04d}-{service_item_id:03d}"
             if reference_number in all_reference_numbers:

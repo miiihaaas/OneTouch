@@ -91,7 +91,7 @@
         if (student) {
             return student.student_name + ' ' + student.student_surname;
         }
-        return '';
+        return 'Ne postoji studentom sa tim ID';
     }
     // Dodajte funkciju za dobijanje naziva usluge na osnovu ID-a
     function get_service_name(serviceId) {
@@ -103,7 +103,7 @@
         if (service) {
             return service.service_debt + ' - ' +  service.service_item_name;
         }
-        return '';
+        return 'Ne postoji usluga sa tim ID';
     }
     $(document).ready(function () {
         // Kreiranje tabele
