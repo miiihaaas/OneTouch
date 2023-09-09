@@ -207,10 +207,17 @@ def submit_records():
         student_payment_id = int(data['student_payment_id'])
         
         number_of_errors = 0
+        student_ids = [student.id for student in Student.query.all()]
+        service_item_ids = [service_item.id for service_item in ServiceItem.query.all()]
         for i in range(len(data['records'])):
             record_id = data['records'][i]['record_id']
             student_id = data['records'][i]['student_id']
             service_item_id = data['records'][i]['service_item_id']
+            # payment_error = False
+            if (student_id not in student_ids) or (service_item_id not in service_item_ids):
+                student_id = 1
+                service_item_id = 0
+                # payment_error = True
             record_for_edit = TransactionRecord.query.get_or_404(record_id)
             print(f'{record_for_edit=}')
             print(f'{record_id=}, {student_id=}, {service_item_id=},')
