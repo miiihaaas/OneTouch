@@ -173,6 +173,7 @@ def submit_records():
                                             student_debt_total = student_debt_total)
             db.session.add(new_record)
             db.session.commit()
+        flash(f'Zaduženje {student_debt_id} je uspešno dodato!', 'success')
         return str(student_debt_id)
 
     elif 'student_debt_id' in data:
@@ -197,6 +198,7 @@ def submit_records():
             record_for_edit.student_debt_discount = student_debt_discount
             record_for_edit.student_debt_total = student_debt_total
             db.session.commit()
+        flash(f'Zaduženje {student_debt_id} je uspešno izmenjeno!', 'success')
         return str(student_debt_id)
     
     elif 'student_payment_id' in data: #! izmena pregleda izvoda (payment_archive/<int:>)
@@ -214,10 +216,13 @@ def submit_records():
             student_id = data['records'][i]['student_id']
             service_item_id = data['records'][i]['service_item_id']
             # payment_error = False
+            print(f'{student_ids=}')
+            print(f'{service_item_ids=}')
+            print(f'{student_id=}, {service_item_id=}')
             if (student_id not in student_ids) or (service_item_id not in service_item_ids):
                 student_id = 1
                 service_item_id = 0
-                # payment_error = True
+                print(f'promenjeni su student_id i service item id!!!')
             record_for_edit = TransactionRecord.query.get_or_404(record_id)
             print(f'{record_for_edit=}')
             print(f'{record_id=}, {student_id=}, {service_item_id=},')
@@ -242,6 +247,7 @@ def submit_records():
         #! ako ima greške onda se naznači nekako red sa greškom
         payment.number_of_errors = number_of_errors
         db.session.commit()
+        flash('Uspešno ste izmijenili uplate!','success')
         return str(student_payment_id)
         
     
@@ -538,7 +544,7 @@ def posting_payment():
                                 iznos_potrazuje_element=iznos_potrazuje_element,
                                 broj_pojavljivanja=broj_pojavljivanja)
     if request.method == 'POST' and ('submitBtnSaveData' in request.form):
-        print(f'pritisnuto je dugme sačuvajte irsknjićite uplate')
+        print(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
         # Dohvaćanje vrijednosti iz obrasca
         payment_date = datetime.strptime(request.form['payment_date'], '%d.%m.%Y')
         statment_nubmer = int(request.form['statment_nubmer'])
@@ -558,12 +564,11 @@ def posting_payment():
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
         # Spremanje podataka u bazu
-        new_payment = StudentPayment(
-            payment_date=payment_date,
-            statment_nubmer=statment_nubmer,
-            total_payment_amount=total_payment_amount,
-            number_of_items=number_of_items
-        )
+        new_payment = StudentPayment(payment_date=payment_date,
+                                        statment_nubmer=statment_nubmer,
+                                        total_payment_amount=total_payment_amount,
+                                        number_of_items=number_of_items
+                                    )
         db.session.add(new_payment)
         db.session.commit()
         # print('dodato u db - proveri')
@@ -585,9 +590,9 @@ def posting_payment():
                     'svrha_uplate': svrha_uplate[i]
                 })
         print(f'{records=}')
-        
-        student_ids = [student.id for student in Student.query.all()]
-        service_item_ids = [service_item.id for service_item in ServiceItem.query.all()]
+        number_of_errors = 0
+        student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
+        service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
         for record in records:
             payer = record['uplatilac']
             purpose_of_payment = record['svrha_uplate']
@@ -596,11 +601,16 @@ def posting_payment():
             service_item_id = record['poziv_na_broj'][-3:]
             student_debt_total = float(record['iznos'].replace(',', '.'))
             payment_error = False
-            if (student_id not in student_ids)  or (service_item_id not in service_item_ids):
+            print(f'{student_ids=}')
+            print(f'{service_item_ids=}')
+            print(f'{student_id=}')
+            print(f'{service_item_id=}')
+            if (student_id not in student_ids) or (service_item_id not in service_item_ids):
                 print(f'nije u listi student_ids: {student_id=}')
                 student_id = 1
                 service_item_id = 0
                 payment_error = True
+                number_of_errors += 1
             new_record = TransactionRecord(student_debt_id = None,
                                             student_payment_id = new_payment.id,
                                             student_id = student_id,
@@ -621,5 +631,6 @@ def posting_payment():
             print(f'{new_record.reference_number=}')
             db.session.add(new_record)
             db.session.commit()
-        
+        new_payment.number_of_errors = number_of_errors
+        db.session.commit()
     return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
