@@ -471,7 +471,7 @@ def posting_payment():
             error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
             print('racuni nisu isti')
             flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
+            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
 
         stavke = []
         for stavka in root.findall('Stavka'):
@@ -579,6 +579,8 @@ def posting_payment():
                 })
         print(f'{records=}')
         
+        student_ids = [student.id for student in Student.query.all()]
+        service_item_ids = [service_item.id for service_item in ServiceItem.query.all()]
         for record in records:
             payer = record['uplatilac']
             purpose_of_payment = record['svrha_uplate']
@@ -586,6 +588,12 @@ def posting_payment():
             student_id = record['poziv_na_broj'][:4]
             service_item_id = record['poziv_na_broj'][-3:]
             student_debt_total = float(record['iznos'].replace(',', '.'))
+            payment_error = False
+            if (student_id not in student_ids)  or (service_item_id not in service_item_ids):
+                print(f'nije u listi student_ids: {student_id=}')
+                student_id = 1
+                service_item_id = 0
+                payment_error = True
             new_record = TransactionRecord(student_debt_id = None,
                                             student_payment_id = new_payment.id,
                                             student_id = student_id,
@@ -597,7 +605,8 @@ def posting_payment():
                                             student_debt_total = student_debt_total,
                                             purpose_of_payment=purpose_of_payment,
                                             payer=payer,
-                                            reference_number=reference_number)
+                                            reference_number=reference_number,
+                                            payment_error=payment_error)
             print(f'{new_record.student_id=}')
             print(f'{new_record.service_item_id=}')
             print(f'{new_record.student_debt_total=}')
