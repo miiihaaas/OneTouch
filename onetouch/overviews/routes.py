@@ -139,7 +139,7 @@ def overview_student(student_id):
     unique_services_list = []
     # Prolazite kroz sve transakcije i grupirate ih prema vrsti (zaduženje ili uplata)
     for record in transaction_records:
-        if record.service_item_id not in [item['id'] for item in unique_services_list]:
+        if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total > 0:
             service_data = {
                 'id': record.service_item_id,
                 'service_debt_id': record.student_debt_id,
