@@ -4,7 +4,7 @@ from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord
-from onetouch.transactions.functions import gen_report_student
+from onetouch.transactions.functions import gen_report_student, gen_report_school
 
 
 overviews = Blueprint('overviews', __name__)
@@ -295,6 +295,7 @@ def overview_sections():
                         data.append(new_record)
     print(f'{data=}')
 
+    report_school = gen_report_school(data, unique_sections, start_date, end_date, options, service_id)
     
     return render_template('overview_sections.html',
                             title='Pregled škole po uslugama', 

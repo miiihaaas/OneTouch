@@ -309,11 +309,11 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
         for record in data:
             if record['service_item_id'] == service['id']:
                 pdf.set_font('DejaVuSansCondensed', '', 12)
-                pdf.cell(25, 8, f'{record["date"].strftime("%d.%m.%Y.")}', 1, 0, 'C', 1)  # Dodajte border, 40 je širina ćelije
-                pdf.cell(85, 8, f'{record["description"]}', 1, 0, 'L', 1)  # Dodajte border, 40 je širina ćelije
-                pdf.cell(25, 8, f'{record["debt_amount"]:,.2f}', 1, 0, 'R', 1)  # Dodajte border, 40 je širina ćelije
-                pdf.cell(25, 8, f'{record["payment_amount"]:,.2f}', 1, 0, 'R', 1)  # Dodajte border, 40 je širina ćelije
-                pdf.cell(25, 8, f'{record["saldo"]:,.2f}', 1, 1, 'R', 1)  # Dodajte border, 40 je širina ćelije
+                pdf.cell(25, 8, f'{record["date"].strftime("%d.%m.%Y.")}', 1, 0, 'C', 1)
+                pdf.cell(85, 8, f'{record["description"]} {"(izvod: " + str(record["student_payment_id"]) + ")" if record.get("payment_amount") else ""}', 1, 0, 'L', 1)
+                pdf.cell(25, 8, f'{record["debt_amount"]:,.2f}', 1, 0, 'R', 1)
+                pdf.cell(25, 8, f'{record["payment_amount"]:,.2f}', 1, 0, 'R', 1)
+                pdf.cell(25, 8, f'{record["saldo"]:,.2f}', 1, 1, 'R', 1)
                 zaduzenje += record['debt_amount']
                 uplate += record['payment_amount']
         pdf.cell(40, 8, '', 0, 1, 'R')
@@ -329,5 +329,63 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
 
     print(f'{zaduzenje=} {uplate=} {saldo=}')
     file_name = 'report_student.pdf'
+    path = f'{project_folder}/static/reports/'
+    pdf.output(path + file_name)
+
+
+def gen_report_school(data, unique_sections, start_date, end_date, options, service_id):
+    school = School.query.first()
+    class PDF(FPDF):
+        def __init__(self, **kwargs):
+            super(PDF, self).__init__(**kwargs)
+            print(f'{font_path=}')
+            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+    
+        def header(self):
+            # Postavite font i veličinu teksta za zaglavlje
+            self.set_font('DejaVuSansCondensed', 'B', 12)
+            
+            # Dodajte informacije o školi
+            self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
+            self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
+            self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
+    
+    pdf = PDF()
+    pdf.add_page()
+    
+    usluga = "Sve usluge"
+    for option in options:
+        if option['value'] == int(service_id):
+            usluga = option['label']
+            break
+    
+    pdf.set_font('DejaVuSansCondensed', 'B', 18)
+    pdf.cell(40, 8, '', 0, 1, 'R')
+    pdf.cell(0, 8, f'Pregled škole po uslugama', 0, 1, 'C')
+    pdf.cell(0, 8, '', 0, 1, 'R')
+    pdf.set_font('DejaVuSansCondensed', 'B', 12)
+    pdf.cell(20, 8, f'Usluga: ', 0, 0, 'R')
+    pdf.cell(40, 8, f'({int(service_id):03}) {usluga}', 0, 1, 'L')
+    pdf.cell(20, 8, f'Period: ', 0, 0, 'R')
+    pdf.cell(40, 8, f'od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')
+    pdf.cell(40, 8, '', 0, 1, 'R')
+    
+    pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+    pdf.set_font('DejaVuSansCondensed', 'B', 12)
+    pdf.cell(95, 8, f'Odeljenski starešina', 1, 0, 'L', 1)
+    pdf.cell(30, 8, f'Zaduženje', 1, 0, 'C', 1)
+    pdf.cell(30, 8, f'Uplate', 1, 0, 'C', 1)
+    pdf.cell(30, 8, f'Saldo', 1, 1, 'C', 1)
+    pdf.set_fill_color(255, 255, 255)
+    for record in data:
+        pdf.set_font('DejaVuSansCondensed', 'B', 12)
+        pdf.cell(95, 8, f"({record['class'] }/{ record['section']}) {record['teacher']}", 1, 0, 'L', 1)
+        pdf.cell(30, 8, f"{record['student_debt']:,.2f}", 1, 0, 'R', 1)
+        pdf.cell(30, 8, f"{record['student_payment']:,.2f}", 1, 0, 'R', 1)
+        pdf.cell(30, 8, f"{record['saldo']:,.2f}", 1, 1, 'R', 1)
+
+    
+    file_name = 'report_school.pdf'
     path = f'{project_folder}/static/reports/'
     pdf.output(path + file_name)

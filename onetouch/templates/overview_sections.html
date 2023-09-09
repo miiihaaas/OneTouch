@@ -1,25 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="row form-group">
-    <div class="col form-group">
-        <label for="searchRazred">Pretraga po razredu:</label>
-        <select id="searchRazred" class="form-select">
-            <option value="">Svi razredi</option>
-            {% for class in range(9) %}
-                <option value="{{ class }}">{{ class }}</option>
-            {% endfor %}
-        </select>
-    </div>    
-    <div class="col form-group">
-        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
-        <select id="searchOdeljenje" class="form-select">
-            <option value="">Sva odeljenja</option>
-            {% for section in range(16) %}
-                <option value="{{ section }}">{{ section }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col form-group">
+    <div class="col-md-3 form-group">
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
             {% if service_id == "0" %}
@@ -39,6 +21,24 @@
             {% endif %}
         </select>
     </div>
+    <div class="col form-group">
+        <label for="searchRazred">Pretraga po razredu:</label>
+        <select id="searchRazred" class="form-select">
+            <option value="">Svi razredi</option>
+            {% for class in range(9) %}
+                <option value="{{ class }}">{{ class }}</option>
+            {% endfor %}
+        </select>
+    </div>    
+    <div class="col form-group">
+        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
+        <select id="searchOdeljenje" class="form-select">
+            <option value="">Sva odeljenja</option>
+            {% for section in range(16) %}
+                <option value="{{ section }}">{{ section }}</option>
+            {% endfor %}
+        </select>
+    </div>
     <div class="col">
         <label for="start-date" class="form-label">Početni datum:</label>
         <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
@@ -47,8 +47,11 @@
         <label for="end-date" class="form-label">Krajnji datum:</label>
         <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
     </div>
-    <div class="col">
-        <a id="resetButton" class="btn btn-danger" href="./overview_sections.html">Reset filtera</a>
+    <div class="col-md-1 mt-1">
+        <a id="resetButton" class="btn btn-danger" href="./overview_sections">Reset filtera</a>
+    </div>
+    <div class="col-md-1  mt-1">
+        <a id="resetButton" class="btn btn-promary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank">Štampa pregleda</a>
     </div>
     <hr>
 </div>
