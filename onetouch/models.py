@@ -118,8 +118,8 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     id = db.Column(db.Integer, primary_key=True)
     student_debt_id = db.Column(db.Integer, db.ForeignKey('student_debt.id'), nullable=False)
     student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
-    service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=True)
+    service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=True)
     student_debt_installment_number = db.Column(db.Integer, nullable=True)
     student_debt_amount = db.Column(db.Integer) #! ovde treba da bude vrednost ako je na komaad od 0 - 31 tj 0 ili 1 ako nije na komad
     studetn_debt_installment_value = db.Column(db.Float)

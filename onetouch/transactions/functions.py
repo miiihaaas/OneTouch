@@ -370,7 +370,8 @@ def gen_report_school(data, unique_sections, start_date, end_date, options, serv
     pdf.cell(20, 8, f'Period: ', 0, 0, 'R')
     pdf.cell(40, 8, f'od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')
     pdf.cell(40, 8, '', 0, 1, 'R')
-    
+    zaduzenje = 0
+    uplate = 0
     pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
     pdf.set_font('DejaVuSansCondensed', 'B', 12)
     pdf.cell(95, 8, f'Odeljenski starešina', 1, 0, 'L', 1)
@@ -384,7 +385,17 @@ def gen_report_school(data, unique_sections, start_date, end_date, options, serv
         pdf.cell(30, 8, f"{record['student_debt']:,.2f}", 1, 0, 'R', 1)
         pdf.cell(30, 8, f"{record['student_payment']:,.2f}", 1, 0, 'R', 1)
         pdf.cell(30, 8, f"{record['saldo']:,.2f}", 1, 1, 'R', 1)
-
+        zaduzenje += record['student_debt']
+        uplate += record['student_payment']
+    saldo = zaduzenje - uplate
+    pdf.set_font('DejaVuSansCondensed', 'B', 16)
+    pdf.cell(40, 8, '', 0, 1, 'R')  # Uklonili smo border postavljanjem poslednjeg argumenta na 0
+    pdf.cell(40, 8, 'Zaduzenje:', 0, 0, 'R')
+    pdf.cell(40, 8, f'{zaduzenje:,.2f}', 0, 1, 'R')
+    pdf.cell(40, 8, 'Uplate:', 0, 0, 'R')
+    pdf.cell(40, 8, f'{uplate:,.2f}', 0, 1, 'R')
+    pdf.cell(40, 8, 'Saldo:', 0, 0, 'R')
+    pdf.cell(40, 8, f'{saldo:,.2f}', 0, 1, 'R')
     
     file_name = 'report_school.pdf'
     path = f'{project_folder}/static/reports/'
