@@ -16,7 +16,6 @@
     </thead>
     <tbody>
         {% for record in records %}
-        test {{ record.payment_error }}
         {% if record.payment_error %}
         <tr class="bg-danger">
         {% else %}
@@ -26,7 +25,7 @@
             <td>
                 {% if record.student_id == 0 %}
                     <strong>Ignorisana uplata</strong>
-                {% elif record.transaction_record_student.id is not defined %}
+                {% elif record.student_id == 1 %}
                     <strong>Greška</strong>
                 {% else %}
                     <a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a>
@@ -36,7 +35,9 @@
             <td contenteditable="true" class="edit-cell student-id">{{ "{:04d}".format(record.student_id) }}</td>
             <td contenteditable="true" class="edit-cell service-id">{{ "{:03d}".format(record.service_item_id) }}</td>
             <td>
-                {% if record.service_item_id == 0 %}
+                {% if record.student_id == 1 %}
+                    <strong>Greška</strong>
+                {% elif record.service_item_id == 0 %}
                     <strong>Ignorisana uplata</strong>
                 {% elif record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
                     {{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}
