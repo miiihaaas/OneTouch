@@ -253,11 +253,17 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         sender_email = 'noreply@uplatnice.online'
         recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
         subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
-        body = f'''Poštovanje, 
-U prilogu možete naći uplatnicu.
-Pozdrav,
-{school.school_name}
-{school.school_address}
+        body = f'''
+<html>
+<head></head>
+<body>
+<p>Poštovanje,</p>
+<p>U prilogu možete naći uplatnicu.</p>
+<p>Pozdrav,<br>
+{school.school_name}<br>
+{school.school_address}</p>
+</body>
+</html>
 '''
         
         message = Message(subject, sender=sender_email, recipients=[recipient_email])
@@ -269,7 +275,6 @@ Pozdrav,
         
         try:
             mail.send(message)
-            flash('Mejl je poslat.', 'success')
             return redirect(url_for('main.home'))
         except Exception as e:
             flash('Greska prilikom slanja mejla: ' + str(e), 'danger')

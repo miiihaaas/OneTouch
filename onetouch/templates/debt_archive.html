@@ -64,7 +64,7 @@
 <div class="form-group">
     <button class="btn btn-info" id="save_button" name="save_button">Sačuvajte</button>
     <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
-    <a class="btn btn-secondary" href="" target="">Pošaljite uplatnice roditeljima</a>
+    <a class="btn btn-secondary" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a>
 </div>
 
 {% endblock content%}

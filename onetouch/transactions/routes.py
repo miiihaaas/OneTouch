@@ -337,9 +337,23 @@ def debt_archive(debt_id):
                             legend=f"Pregled zadušenja: {debt.id}")
 
 
+@transactions.route('/send_payment_slips/<int:debt_id>', methods=['get', 'post'])
+def send_payment_slips(debt_id):
+    debt = StudentDebt.query.get_or_404(debt_id)
+    purpose_of_payment = debt.purpose_of_payment
+    school = School.query.first()
+    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+
+    records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
+    single=False
+    send = True
+    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+    flash('Uspešno ste poslali mejlove roditeljima.', 'success')
+    return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+
 @transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
 def send_single_payment_slip(record_id):
-    flash('Uspešno ste poslali mejl roditelju - worki in progres', 'success')
     debt_id = TransactionRecord.query.get_or_404(record_id).student_debt_id
     debt = StudentDebt.query.get_or_404(debt_id)
     purpose_of_payment = debt.purpose_of_payment
@@ -351,7 +365,25 @@ def send_single_payment_slip(record_id):
     send = True
     single=True
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+    flash('Uspešno ste poslali mejl roditelju.', 'success')
     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+
+# @transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
+# def send_single_payment_slip(record_id):
+#     debt_id = TransactionRecord.query.get_or_404(record_id).student_debt_id
+#     debt = StudentDebt.query.get_or_404(debt_id)
+#     purpose_of_payment = debt.purpose_of_payment
+#     school = School.query.first()
+#     school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+#     records =[]
+#     record = TransactionRecord.query.get_or_404(record_id)
+#     records.append(record)
+#     send = True
+#     single=True
+#     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+#     flash('Uspešno ste poslali mejl roditelju.', 'success')
+#     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 
 @transactions.route('/debt_archive_delete/<int:debt_id>', methods=['get', 'post'])
