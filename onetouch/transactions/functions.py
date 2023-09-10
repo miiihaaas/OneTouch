@@ -125,6 +125,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         print(f'{uplatnica=}')
         if not uplatnica['generisanje_uplatnice'] and single:
             pass #! ovo bi trebalo da preskoči elif i da nastavi u redu if counter % 3 == 1...
+        elif uplatnica['generisanje_uplatnice'] and not single:
+            pass
         elif not uplatnica['generisanje_uplatnice']:
             continue #! završava se ovde iteracija for loopa i počinje sledeća iteracija; donji kod neće biti aktiviran
         if counter % 3 == 1:
@@ -267,7 +269,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
 '''
         
         message = Message(subject, sender=sender_email, recipients=[recipient_email])
-        message.body = body
+        message.html = body
         
         # Dodajte generirani PDF kao prilog mejlu
         with app.open_resource(path + file_name) as attachment:
