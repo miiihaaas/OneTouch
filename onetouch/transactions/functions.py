@@ -284,6 +284,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             if send:
                 send_mail(uplatnica, path, file_name)
             pdf = PDF()
+            if counter % 3 != 1:
+                pdf.add_page()
 
     file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
