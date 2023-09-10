@@ -257,7 +257,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
 U prilogu možete naći uplatnicu.
 Pozdrav,
 {school.school_name}
-{school.address}
+{school.school_address}
 '''
         
         message = Message(subject, sender=sender_email, recipients=[recipient_email])
