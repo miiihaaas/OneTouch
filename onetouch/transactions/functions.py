@@ -3,7 +3,7 @@ from PIL import Image
 from fpdf import FPDF
 from flask import flash, redirect, url_for
 from flask_mail import Message
-from onetouch.models import School
+from onetouch.models import School, Student
 from onetouch import mail, app
 
 
@@ -45,7 +45,8 @@ def export_payment_stats(data):
 def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send):
     data_list = []
     qr_code_images = []
-    
+    print('debug generisanja uplatnice kod aktivne opcije slanja na mejl')
+    print(f'{records=}')
     for i, record in enumerate(records):
         if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
             #! ako je čekirano da se šalje roditelju, onda ne treba da generiše uplatnicu zajedno sa ostalim uplatnicama, ali treba da generiše posebno uplatnicu koju će poslati mejlom
@@ -106,7 +107,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             else:
                 pass
             print(f'{qr_code_images=}')
-    time.sleep(3)
+    time.sleep(2)
     print (f'{data_list=}')
     print(f'{len(data_list)=}')
     # gen_file = uplatnice_gen(data_list, qr_code_images) #! prilagodi ovu funciju
@@ -122,8 +123,10 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     counter = 1
     for i, uplatnica in enumerate(data_list):
         print(f'{uplatnica=}')
-        if not uplatnica['generisanje_uplatnice']:
-            continue
+        if not uplatnica['generisanje_uplatnice'] and single:
+            pass #! ovo bi trebalo da preskoči elif i da nastavi u redu if counter % 3 == 1...
+        elif not uplatnica['generisanje_uplatnice']:
+            continue #! završava se ovde iteracija for loopa i počinje sledeća iteracija; donji kod neće biti aktiviran
         if counter % 3 == 1:
             pdf.add_page()
             y = 0
@@ -245,10 +248,17 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     pdf.output(path + file_name)
     if send:
         print('napraviti kod koji će da šalje mejl')
+        # student = Student.query.get_or_404(student_id)
+        school = School.query.first()
         sender_email = 'noreply@uplatnice.online'
         recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
-        subject = 'Test slanja mejla klikom na dugme "Pošaljite upl" iz aplikacije'
-        body = 'Ovo je poruka koja se salje klikom na dugme "Pošaljite upl" iz aplikacije'
+        subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
+        body = f'''Poštovanje, 
+U prilogu možete naći uplatnicu.
+Pozdrav,
+{school.school_name}
+{school.address}
+'''
         
         message = Message(subject, sender=sender_email, recipients=[recipient_email])
         message.body = body
