@@ -1,7 +1,10 @@
 import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
+from flask import flash, redirect, url_for
+from flask_mail import Message
 from onetouch.models import School
+from onetouch import mail, app
 
 
 current_file_path = os.path.abspath(__file__)
@@ -237,11 +240,30 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
     if single:
         file_name = f'uplatnica.pdf'
-        if send:
-            print('napraviti kod koji će da šalje mejl')
     else:
         file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
+    if send:
+        print('napraviti kod koji će da šalje mejl')
+        sender_email = 'noreply@uplatnice.online'
+        recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
+        subject = 'Test slanja mejla klikom na dugme "Pošaljite upl" iz aplikacije'
+        body = 'Ovo je poruka koja se salje klikom na dugme "Pošaljite upl" iz aplikacije'
+        
+        message = Message(subject, sender=sender_email, recipients=[recipient_email])
+        message.body = body
+        
+        # Dodajte generirani PDF kao prilog mejlu
+        with app.open_resource(path + file_name) as attachment:
+            message.attach(file_name, 'application/pdf', attachment.read())
+        
+        try:
+            mail.send(message)
+            flash('Mejl je poslat.', 'success')
+            return redirect(url_for('main.home'))
+        except Exception as e:
+            flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
+            return redirect(url_for('main.home'))
     
     
     
