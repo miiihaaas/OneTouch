@@ -283,6 +283,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             pdf.output(path + file_name)
             if send:
                 send_mail(uplatnica, path, file_name)
+            pdf = PDF()
 
     file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
