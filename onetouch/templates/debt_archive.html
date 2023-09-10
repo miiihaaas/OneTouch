@@ -62,9 +62,13 @@
     <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
 </div>
 <div class="form-group">
-    <button class="btn btn-info" id="save_button" name="save_button">Sačuvajte</button>
+    <button class="btn btn-primary loading" id="save_button" name="save_button">Sačuvajte</button>
     <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
-    <a class="btn btn-secondary" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a>
+    <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a>
+</div>
+<div class="loading-overlay">
+    <div class="spinner"></div>
+    <div>   Molim Vas sačekajte...</div>
 </div>
 
 {% endblock content%}

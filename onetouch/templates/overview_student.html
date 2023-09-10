@@ -24,8 +24,8 @@
 {% for service in unique_services_list %}
 <hr>
 <div class="btn-group" role="group">
-    <a class="btn btn-info" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
-    <a class="btn btn-primary" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{ service['service_name'] }}</a>
+    <a class="btn btn-info loading" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
+    <a class="btn btn-primary loading" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{ service['service_name'] }}</a>
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
     <thead>
@@ -72,6 +72,10 @@
         <p>Uplate: <span id="uplateFilterSum"></span></p>
         <p>Saldo: <span id="saldoFilterSum"></span></p>
     </div>
+</div>
+<div class="loading-overlay">
+    <div class="spinner"></div>
+    <div>   Molim Vas sačekajte...</div>
 </div>
 
 {% endblock content%}

@@ -9,7 +9,7 @@
             </div>
             <div class="form-group text-left">
                 <button type="submit" class="btn btn-primary" name="submitBtnImportData" id="submitBtnImportData" disabled>Uvezite izvod</button>
-                <button type="submit" class="btn btn-primary" name="submitBtnSaveData" id="submitBtnSaveData" disabled>Sačuvajte i rasknjižite uplate</button>
+                <button type="submit" class="btn btn-primary loading" name="submitBtnSaveData" id="submitBtnSaveData" disabled>Sačuvajte i rasknjižite uplate</button>
             </div>
         </div>
         <div class="col">
@@ -47,6 +47,10 @@
     </table>
     {% endif %}
 </form>
+<div class="loading-overlay">
+    <div class="spinner"></div>
+    <div>   Molim Vas sačekajte...</div>
+</div>
 {% endblock content%}
 
 {% block scripts %}

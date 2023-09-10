@@ -30,7 +30,7 @@
             <td>{{ debt.student_debt_service_item.service_item_service.service_name }} - {{ debt.student_debt_service_item.service_item_name }}</td>
             <td>{{ debt.purpose_of_payment }}</td>
             <td>
-                <a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}" class="btn-x btn-primary-x" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
+                <a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}" class="btn-x btn-primary-x" title="Izmeni"><i class="fa fa-edit awesomeedit loading" aria-hidden="true"></i></a>
                 <a href="" class="btn-x btn-danger-x" data-toggle="modal" data-target="#confirmDeleteModal" data-debt-id="{{ debt.id }}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
             </td>
         </tr>
@@ -56,6 +56,10 @@
             </div>
         </div>
     </div>
+</div>
+<div class="loading-overlay">
+    <div class="spinner"></div>
+    <div>   Molim Vas sačekajte...</div>
 </div>
 {% endblock content%}
 
