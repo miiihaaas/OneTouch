@@ -325,7 +325,7 @@ def debt_archive(debt_id):
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
     print(f'{records=}')
     
-    single=False
+    single = False
     send = False
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
 
@@ -345,7 +345,7 @@ def send_payment_slips(debt_id):
     school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
 
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-    single=False
+    single = True
     send = True
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
     flash('Uspešno ste poslali mejlove roditeljima.', 'success')
@@ -362,8 +362,8 @@ def send_single_payment_slip(record_id):
     records =[]
     record = TransactionRecord.query.get_or_404(record_id)
     records.append(record)
+    single = True
     send = True
-    single=True
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
     flash('Uspešno ste poslali mejl roditelju.', 'success')
     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))

@@ -15,6 +15,39 @@ font_path = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed
 font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed-Bold.ttf')
 
 
+def send_mail(uplatnica, path, file_name):
+    school = School.query.first()
+    sender_email = 'noreply@uplatnice.online'
+    recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
+    subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
+    body = f'''
+<html>
+<head></head>
+<body>
+<p>Poštovanje,</p>
+<p>U prilogu možete naći uplatnicu.</p>
+<p>Pozdrav,<br>
+{school.school_name}<br>
+{school.school_address}</p>
+</body>
+</html>
+'''
+        
+    message = Message(subject, sender=sender_email, recipients=[recipient_email])
+    message.html = body
+    
+    # Dodajte generirani PDF kao prilog mejlu
+    with app.open_resource(path + file_name) as attachment:
+        message.attach(file_name, 'application/pdf', attachment.read())
+    
+    try:
+        mail.send(message)
+        return redirect(url_for('main.home'))
+    except Exception as e:
+        flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
+        return redirect(url_for('main.home'))
+
+
 def export_payment_stats(data):
     class PDF(FPDF):
         def __init__(self, **kwargs):
@@ -47,6 +80,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     qr_code_images = []
     print('debug generisanja uplatnice kod aktivne opcije slanja na mejl')
     print(f'{records=}')
+    path = f'{project_folder}/static/payment_slips/'
+    
     for i, record in enumerate(records):
         if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
             #! ako je čekirano da se šalje roditelju, onda ne treba da generiše uplatnicu zajedno sa ostalim uplatnicama, ali treba da generiše posebno uplatnicu koju će poslati mejlom
@@ -238,53 +273,21 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         pdf.line(10, 99, 200, 99)
         pdf.line(10, 198, 200, 198)
         counter += 1
-    # path = "onetouch/static/payment_slips/"
-    path = f'{project_folder}/static/payment_slips/'
-    #! if blok koji menja file_name.
-    #! ukoliko je generisanje uplatnica za više đaka (gen sve) da se čuva na 'uplatnice.pdf', 
-    #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
-    if single:
-        file_name = f'uplatnica.pdf'
-    else:
-        file_name = f'uplatnice.pdf'
+
+
+        #! if blok koji menja file_name.
+        #! ukoliko je generisanje uplatnica za više đaka (gen sve) da se čuva na 'uplatnice.pdf', 
+        #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
+        if single:
+            file_name = f'uplatnica.pdf'
+            pdf.output(path + file_name)
+            if send:
+                send_mail(uplatnica, path, file_name)
+
+    file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
-    if send:
-        print('napraviti kod koji će da šalje mejl')
-        # student = Student.query.get_or_404(student_id)
-        school = School.query.first()
-        sender_email = 'noreply@uplatnice.online'
-        recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
-        subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
-        body = f'''
-<html>
-<head></head>
-<body>
-<p>Poštovanje,</p>
-<p>U prilogu možete naći uplatnicu.</p>
-<p>Pozdrav,<br>
-{school.school_name}<br>
-{school.school_address}</p>
-</body>
-</html>
-'''
-        
-        message = Message(subject, sender=sender_email, recipients=[recipient_email])
-        message.html = body
-        
-        # Dodajte generirani PDF kao prilog mejlu
-        with app.open_resource(path + file_name) as attachment:
-            message.attach(file_name, 'application/pdf', attachment.read())
-        
-        try:
-            mail.send(message)
-            return redirect(url_for('main.home'))
-        except Exception as e:
-            flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
-            return redirect(url_for('main.home'))
-    
-    
-    
-    
+
+
     #! briše QR kodove nakon dodavanja na uplatnice
     folder_path = f'{project_folder}/static/payment_slips/qr_code/'
     # Provjeri da li je putanja zaista direktorijum
