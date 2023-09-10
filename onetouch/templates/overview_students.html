@@ -62,7 +62,7 @@
             <th>Zaduženje</th>
             <th>Uplate</th>
             <th>Saldo</th>
-            <th>Kartica stanja</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -75,7 +75,7 @@
             <td>{{ student['student_debt'] }}</td>
             <td>{{ student['student_payment'] }}</td>
             <td>{{ student['saldo'] }}</td>
-            <td><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn btn primary">pregled</a></td>
+            <td><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a></td>
         </tr>
         {% endfor %}
     </tbody>

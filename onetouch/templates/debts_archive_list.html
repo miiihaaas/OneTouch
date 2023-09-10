@@ -31,7 +31,7 @@
             <td>{{ debt.purpose_of_payment }}</td>
             <td>
                 <a href="{{url_for('transactions.debt_archive', debt_id=debt.id)}}" class="btn-x btn-primary-x" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
-                <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#confirmDeleteModal" data-debt-id="{{ debt.id }}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
+                <a href="" class="btn-x btn-danger-x" data-toggle="modal" data-target="#confirmDeleteModal" data-debt-id="{{ debt.id }}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
             </td>
         </tr>
         {% endfor %}
@@ -48,7 +48,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                Da li ste sigurni da želite da izbrišete nalog? Sva zaduženja učenika će biti obrisana.
+                Da li ste sigurni da želite da izbrišete nalog? Sva zaduženja učenika će biti izbrisana.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Odustani</button>
@@ -68,7 +68,7 @@
             }
         });
         // Osluškivanje klika na link "Izbrišite" u tabeli
-        $('a.btn-danger').on('click', function () {
+        $('a.btn-danger-x').on('click', function () {
             var debtId = $(this).data('debt-id'); // Uzimanje vrednosti atributa 'data-debt-id'
             $('#debtIdPlaceholder').text(debtId); // Postavljanje vrednosti u modalu
 

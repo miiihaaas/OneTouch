@@ -436,7 +436,7 @@
                     var studentId = studentIdCell.id.split('_')[3];
                     
                     var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
-                    var olaksica = parseInt(olaksicaCell.textContent);
+                    var olaksica = parseFloat(olaksicaCell.textContent);
                     
                     console.log('Student ID:', studentId);
                     console.log('Količina:', quantity);
