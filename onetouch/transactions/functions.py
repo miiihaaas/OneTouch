@@ -297,10 +297,17 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
         if single:
             print('if blok koji određuje da li je single')
+            print(f'{uplatnica["uplatilac"]=}')
             file_name = f'uplatnica.pdf'
             pdf.output(path + file_name)
-            if send:
+            if uplatnica['slanje_mejla_roditelju']:
+                print(f'poslat je mejl za {uplatnica["uplatilac"]}')
                 send_mail(uplatnica, path, file_name)
+                pdf = PDF()
+                if counter % 3 != 1:
+                    pdf.add_page()
+            else:
+                print(f'NIJE poslat mejl za {uplatnica["uplatilac"]}')
                 pdf = PDF()
                 if counter % 3 != 1:
                     pdf.add_page()
