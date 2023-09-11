@@ -305,15 +305,16 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 send_mail(uplatnica, path, file_name)
                 pdf = PDF()
                 if counter % 3 != 1:
+                # if counter % 3 != 1:
                     pdf.add_page()
             elif send:
                 print(f'NIJE poslat mejl za {uplatnica["uplatilac"]}')
                 pdf = PDF()
                 if counter % 3 != 1:
                     pdf.add_page()
-
-    file_name = f'uplatnice.pdf'
-    pdf.output(path + file_name)
+    if not single:
+        file_name = f'uplatnice.pdf'
+        pdf.output(path + file_name)
 
 
     #! briše QR kodove nakon dodavanja na uplatnice
