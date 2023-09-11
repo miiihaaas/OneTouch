@@ -17,6 +17,9 @@ font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondens
 
 def send_mail(uplatnica, path, file_name):
     school = School.query.first()
+    student = Student.query.get_or_404(uplatnica['student_id'])
+    parent_email = student.parent_email
+    print(f'Poslao bi mejl roditelju na: {parent_email}')
     sender_email = 'noreply@uplatnice.online'
     recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
@@ -24,9 +27,9 @@ def send_mail(uplatnica, path, file_name):
 <html>
 <head></head>
 <body>
-<p>Poštovanje,</p>
-<p>U prilogu možete naći uplatnicu.</p>
-<p>Pozdrav,<br>
+<p>Poštovani,<br></p>
+<p>Šaljemo Vam nalog za uplatu koji možete naći u prilogu ovog mejla.<br></p>
+<p>S poštovanjem,<br>
 {school.school_name}<br>
 {school.school_address}</p>
 </body>
@@ -86,6 +89,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
             #! ako je čekirano da se šalje roditelju, onda ne treba da generiše uplatnicu zajedno sa ostalim uplatnicama, ali treba da generiše posebno uplatnicu koju će poslati mejlom
             new_data = {
+                'student_id': record.transaction_record_student.id,
                 'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
                 'svrha_uplate': purpose_of_payment,
                 'primalac': school_info,

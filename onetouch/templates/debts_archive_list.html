@@ -77,7 +77,7 @@
             $('#debtIdPlaceholder').text(debtId); // Postavljanje vrednosti u modalu
 
             // Postavljanje linka za brisanje u dugme "Izbriši" u modalu
-            var deleteLink = '/debt_archive_delete/' + debtId;
+            var deleteLink = './debt_archive_delete/' + debtId;
             console.log('link za brisanje iz tabele: ', deleteLink)
             $('#confirmDeleteButton').attr('data-delete-link', deleteLink);
         });
