@@ -99,7 +99,7 @@ def service_list():
                             services=services,
                             edit_form=edit_form,
                             register_form=register_form)
-    
+
 
 
 # @suppliers.route('/service/<int:service_id>/delete', methods=['POST'])
@@ -117,7 +117,7 @@ def service_list():
 #         db.session.delete(service)
 #         db.session.commit()
 #         return redirect(url_for("suppliers.service_list"))
-    
+
 
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
 @login_required

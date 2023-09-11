@@ -22,22 +22,3 @@ def home():
 @main.route("/about")
 def about():
     return render_template('about.html', title='O softveru')
-
-
-@main.route('/send_mail', methods=['POST', 'GET'])
-def send_mail():
-    sender_email = 'noreply@uplatnice.online'
-    recipient_email = 'miiihaaas@gmail.com'
-    subject = 'Test slanja mejla klikom na link iz aplikacije'
-    body = 'Ovo je poruka koja se salje klikom na link iz aplikacije'
-    
-    message = Message(subject, sender=sender_email, recipients=[recipient_email])
-    message.body = body
-    
-    try:
-        mail.send(message)
-        flash('Mejl je poslat', 'success')
-        return redirect(url_for('main.home'))
-    except Exception as e:
-        flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
-        return redirect(url_for('main.home'))

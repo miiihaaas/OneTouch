@@ -395,6 +395,7 @@ def debt_archive_delete(debt_id):
     debt = StudentDebt.query.get_or_404(debt_id)
     db.session.delete(debt)
     db.session.commit()
+    flash('Uplata {debt_id} je uspešno obrisana, kao i sva zaduženja učenika iz te uplate.', 'success')
     return redirect(url_for('transactions.debts_archive_list'))
 
 

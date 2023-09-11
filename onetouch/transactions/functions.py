@@ -18,6 +18,8 @@ font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondens
 def send_mail(uplatnica, path, file_name):
     school = School.query.first()
     student = Student.query.get_or_404(uplatnica['student_id'])
+    if student.parent_email == None or student.send_mail == False:
+        return 
     parent_email = student.parent_email
     print(f'Poslao bi mejl roditelju na: {parent_email}')
     sender_email = 'noreply@uplatnice.online'
@@ -45,10 +47,10 @@ def send_mail(uplatnica, path, file_name):
     
     try:
         mail.send(message)
-        return redirect(url_for('main.home'))
+        # return redirect(url_for('main.home'))
     except Exception as e:
         flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
-        return redirect(url_for('main.home'))
+        # return redirect(url_for('main.home'))
 
 
 def export_payment_stats(data):
