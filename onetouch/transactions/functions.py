@@ -300,7 +300,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             print(f'{uplatnica["uplatilac"]=}')
             file_name = f'uplatnica.pdf'
             pdf.output(path + file_name)
-            if uplatnica['slanje_mejla_roditelju']:
+            if uplatnica['slanje_mejla_roditelju'] and send:
                 print(f'poslat je mejl za {uplatnica["uplatilac"]}')
                 send_mail(uplatnica, path, file_name)
                 pdf = PDF()
@@ -308,9 +308,9 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                     pdf.add_page()
             else:
                 print(f'NIJE poslat mejl za {uplatnica["uplatilac"]}')
-                pdf = PDF()
-                if counter % 3 != 1:
-                    pdf.add_page()
+                # pdf = PDF()
+                # if counter % 3 != 1:
+                #     pdf.add_page()
 
     file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)
