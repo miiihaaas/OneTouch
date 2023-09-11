@@ -101,7 +101,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 'racun_primaoca': school.school_bank_account,
                 'model': '', #! proveriti koji je model zbog QR koda 
                 'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
-                'generisanje_uplatnice': not record.transaction_record_student.send_mail
+                'slanje_mejla_roditelju': record.transaction_record_student.send_mail
             }
             data_list.append(new_data)
             
@@ -164,24 +164,35 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     counter = 1
     for i, uplatnica in enumerate(data_list):
         print(f'{uplatnica=}')
-        if not uplatnica['generisanje_uplatnice'] and single:
+        print(f'ulazni parametrii funkcije: {single=} {send=}')
+        if not uplatnica['slanje_mejla_roditelju'] and not single:
+            print('generisati sve uplatnice, OSIM onih koje se šalju roditelju na mejl!')
             pass #! ovo bi trebalo da preskoči elif i da nastavi u redu if counter % 3 == 1...
-        elif uplatnica['generisanje_uplatnice'] and not single:
+        elif single:
+            print('odabrano da se generiše samo jedna uplatnica')
             pass
-        elif not uplatnica['generisanje_uplatnice']:
-            continue #! završava se ovde iteracija for loopa i počinje sledeća iteracija; donji kod neće biti aktiviran
+        else:
+            continue
+        # elif uplatnica['slanje_mejla_roditelju'] and not single:
+        #     pass
+        # elif not uplatnica['slanje_mejla_roditelju']:
+        #     continue #! završava se ovde iteracija for loopa i počinje sledeća iteracija; donji kod neće biti aktiviran
+        print(f'izašao iz IF petlje, red pred if petlju koja određuje u kojoj trećini će se generisati uplatnica')
         if counter % 3 == 1:
+            print(f'prva trećina')
             pdf.add_page()
             y = 0
             y_qr = 50
             pdf.line(210/3, 10, 210/3, 237/3)
             pdf.line(2*210/3, 10, 2*210/3, 237/3)
         elif counter % 3 == 2:
+            print(f'druga trećina')
             y = 99
             y_qr = 149
             pdf.line(210/3, 110, 210/3, 99+237/3)
             pdf.line(2*210/3, 110, 2*210/3, 99+237/3)
         elif counter % 3 == 0:
+            print(f'treća trećina')
             y = 198
             y_qr = 248
             pdf.line(210/3, 210, 210/3, 198+237/3)
@@ -285,13 +296,14 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         #! ukoliko je generisanje uplatnica za više đaka (gen sve) da se čuva na 'uplatnice.pdf', 
         #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
         if single:
+            print('if blok koji određuje da li je single')
             file_name = f'uplatnica.pdf'
             pdf.output(path + file_name)
             if send:
                 send_mail(uplatnica, path, file_name)
-            pdf = PDF()
-            if counter % 3 != 1:
-                pdf.add_page()
+                pdf = PDF()
+                if counter % 3 != 1:
+                    pdf.add_page()
 
     file_name = f'uplatnice.pdf'
     pdf.output(path + file_name)

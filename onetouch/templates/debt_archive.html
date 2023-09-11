@@ -46,7 +46,7 @@
                     {% if record.transaction_record_student.send_mail %}
                     <div class="btn-group">
                         <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite upl</a>
-                        <a class="btn btn-secondary" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}">Pošaljite upl</a>
+                        <a class="btn btn-secondary loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}">Pošaljite upl</a>
                     </div>
                     {% else %}
                     <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite upl</a>
