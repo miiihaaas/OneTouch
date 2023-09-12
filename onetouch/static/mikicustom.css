@@ -143,6 +143,10 @@ span.select2.select2-container.select2-container--classic { width: 100% !importa
 .awesomeedit, .awesomedelete { font-size: 20px; padding-right: 10px; opacity: 0.5; }
 .awesomeedit:hover, .awesomedelete:hover { opacity: 1; }
 .awesomearchive { font-size: 20px; color: #555; }
+.active-link { color: #009dde !important; }
+.activemail:before { color: #009dde; }
+.nonactivemail { color: #ccc; }
+.disabled-input { background-color: #ffeeee !important; border-color: #ffaaaa !important; }
 @media (min-width: 992px) {
 	/*body:not(.Korisnici) .btn-info { width: 100%}*/
 	body.Fakture table#data .btn.btn-info { width: 100%; }

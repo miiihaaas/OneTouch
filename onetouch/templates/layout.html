@@ -107,12 +107,12 @@
               </h2>
               <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('students.student_list') }}">Učenici</a>
-                  <a class="nav-item nav-link" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
-                  <a class="nav-item nav-link" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
-                  <a class="nav-item nav-link" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
-                  <a class="nav-item nav-link" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
-                  <a class="nav-item nav-link" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
+                  <a class="nav-item nav-link" href="{{ url_for('students.student_list') }}" id="student_list">Učenici</a>
+                  <a class="nav-item nav-link" href="{{ url_for('teachers.teacher_list') }}" id="teacher_list">Odeljenske starešine</a>
+                  <a class="nav-item nav-link" href="{{ url_for('schools.school_profile') }}" id="school">Podaci škole</a>
+                  <a class="nav-item nav-link" href="{{ url_for('suppliers.supplier_list') }}" id="supplier_list">Dobavljači</a>
+                  <a class="nav-item nav-link" href="{{ url_for('suppliers.service_list') }}" id="service_list">Tip usluge</a>
+                  <a class="nav-item nav-link" href="{{ url_for('suppliers.service_profile_list') }}" id="service_profile_list">Detalji usluge</a>
                 </div>
               </div>
             </div>
@@ -124,8 +124,8 @@
               </h2>
               <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Zaduživanje učenika</a>
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.posting_payment') }}">Knjiženje uplata</a>
+                  <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}" id="student_debts">Zaduživanje učenika</a>
+                  <a class="nav-item nav-link" href="{{ url_for('transactions.posting_payment') }}" id="posting_payment">Knjiženje uplata</a>
                 </div>
               </div>
             </div>
@@ -137,8 +137,8 @@
               </h2>
               <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('overviews.overview_students') }}">Učenik</a>
-                  <a class="nav-item nav-link" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
+                  <a class="nav-item nav-link" href="{{ url_for('overviews.overview_students') }}" id="overview_students">Učenik</a>
+                  <a class="nav-item nav-link" href="{{ url_for('overviews.overview_sections') }}" id="overview_sections">Škola</a>
                 </div>
               </div>
             </div>
@@ -150,8 +150,8 @@
               </h2>
               <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
+                  <a class="nav-item nav-link" href="{{ url_for('transactions.debts_archive_list') }}" id="debts_archive_list">Arhiva naloga</a>
+                  <a class="nav-item nav-link" href="{{ url_for('transactions.payments_archive_list') }}" id="payments_archive_list">Arhiva izvoda</a>
                 </div>
               </div>
             </div>
@@ -216,5 +216,36 @@
         });
     });
   </script>
+  <script>
+		$(document).ready(function(){
+			// Get the current URL
+			var url = window.location.href;
+
+			// Define a mapping of keywords/identifiers to sections and link IDs
+			var mapping = {
+				"student_list": { section: '#collapseOne', link: '#student_list' },
+				"teacher_list": { section: '#collapseOne', link: '#teacher_list' },
+        "school": { section: '#collapseOne', link: '#school' },
+        "supplier_list": { section: '#collapseOne', link: '#supplier_list' },
+        "service_list": { section: '#collapseOne', link: '#service_list' },
+        "service_profile_list": { section: '#collapseOne', link: '#service_profile_list' },
+				"student_debts": { section: '#collapseTwo', link: '#student_debts' },
+        "posting_payment": { section: '#collapseTwo', link: '#posting_payment' },
+				"overview_students": { section: '#collapseThree', link: '#overview_students' },
+        "overview_sections": { section: '#collapseThree', link: '#overview_sections' },
+        "debts_archive_list": { section: '#collapseFour', link: '#debts_archive_list' },
+        "payments_archive_list": { section: '#collapseFour', link: '#payments_archive_list' }
+			};
+
+			// Check if the URL contains a keyword/identifier from the mapping
+			for (var key in mapping) {
+				if (url.indexOf(key) > -1) {
+					$(mapping[key].section).addClass('show');
+					$(mapping[key].link).addClass('active-link');
+					break; // Exit the loop once a match is found
+				}
+			}
+		});
+	</script>
   </body>
 </html>
