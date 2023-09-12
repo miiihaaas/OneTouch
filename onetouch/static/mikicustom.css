@@ -147,6 +147,9 @@ span.select2.select2-container.select2-container--classic { width: 100% !importa
 .activemail:before { color: #009dde; }
 .nonactivemail { color: #ccc; }
 .disabled-input { background-color: #ffeeee !important; border-color: #ffaaaa !important; }
+span.select2-container--disabled { background-color: #e9ecef; }
+.False { border-color: #ffaaaa !important; background-color: #ffeeee !important; }
+.negativna-vrednost { background-color: rgb(161, 226, 161); }
 @media (min-width: 992px) {
 	/*body:not(.Korisnici) .btn-info { width: 100%}*/
 	body.Fakture table#data .btn.btn-info { width: 100%; }

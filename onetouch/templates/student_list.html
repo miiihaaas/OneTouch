@@ -75,9 +75,9 @@
             <td>
                 {% if student.parent_email %}
                     {% if student.send_mail %}
-                        <i class="fa fa-envelope activemail"></i> | 
+                        <i class="fa fa-envelope activemail" title="Šalje se email"></i> | 
                     {% else %}
-                    <i class="fa fa-envelope nonactivemail"></i> | 
+                    <i class="fa fa-envelope nonactivemail" title="Ne šalje se email"></i> | 
                     {% endif %}
                 {% endif %}
                 {{ student.parent_email }}

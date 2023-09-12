@@ -31,7 +31,7 @@
             <td>{{ service_profile.service_item_class }}</td>
             <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
                 <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
-                {% if service_profile.archived %} arhivirano {% endif %}
+                {% if service_profile.archived %} <i class="fa-regular fa-file-zipper awesomearchive"></i> {% endif %}
             </td>
         </tr>
         <!-- Modal Delete -->
