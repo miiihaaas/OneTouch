@@ -504,19 +504,21 @@
 <script>
     var textInput = document.getElementById('purpose_of_payment');
     var errorMessage = document.getElementById('errorMessage');
-    var submitButton = document.getElementById('save_button');
+
     textInput.addEventListener('input', function () {
-    var inputValue = textInput.value;
-    if (inputValue.length > 35) {
-        errorMessage.textContent = 'Unos ne sme biti veći od 35 karaktera.';
-        textInput.classList.add('disabled-input');
-        submitButton.disabled = true;
-    } else {
-        errorMessage.textContent = '';
-        textInput.classList.remove('disabled-input');
-        submitButton.disabled = false;
-    }
+        var inputValue = textInput.value;
+        
+        if (inputValue.length > 35) {
+            errorMessage.textContent = 'Unos ne sme biti veći od 35 karaktera.';
+            textInput.classList.add('disabled-input');
+            buttonSave.prop('disabled', true);
+        } else {
+            errorMessage.textContent = '';
+            textInput.classList.remove('disabled-input');
+            buttonSave.prop('disabled', false);
+        }
     });
+
 </script>
 
 {% endblock %}

@@ -147,9 +147,11 @@ span.select2.select2-container.select2-container--classic { width: 100% !importa
 .activemail:before { color: #009dde; }
 .nonactivemail { color: #ccc; }
 .disabled-input { background-color: #ffeeee !important; border-color: #ffaaaa !important; }
-span.select2-container--disabled { background-color: #e9ecef; }
+.select2-container--disabled { background-color: #e9ecef; border-radius: 6px; top: -1px; }
+.select2-container--disabled .select2-selection--single .select2-selection__arrow b:after { content: ''; border-color: #e9ecef transparent transparent transparent !important; }
+.select2-container--disabled .select2-selection--single { border-radius: 5px !important; border-color: #d5d4d4 !important; }
 .False { border-color: #ffaaaa !important; background-color: #ffeeee !important; }
-.negativna-vrednost { background-color: rgb(161, 226, 161); }
+.negativna-vrednost { background-color: #dbedd6 !important; }
 @media (min-width: 992px) {
 	/*body:not(.Korisnici) .btn-info { width: 100%}*/
 	body.Fakture table#data .btn.btn-info { width: 100%; }
