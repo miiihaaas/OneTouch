@@ -128,22 +128,31 @@
                 });
             });
 
-            // Postavljanje slušaoca događaja za klik na td elementu za olakšice
+            /// Postavljanje slušaoca događaja za klik na td elementu za olakšice
             $(this).find('td:nth-child(8)').on('click', function() {
                 var currentValue = $(this).text().trim();
-                var inputElement = $('<input class="form-control form-control-lg" type="number" step="0.01" pattern="^\d+(\.\d{1,2})?$" value="' + currentValue + '">');
+                var inputElement = $('<input class="form-control form-control-lg" type="number" step="0.01" value="' + currentValue + '">');
 
                 $(this).html(inputElement);
                 inputElement.focus();
 
                 // Postavljanje slušaoca događaja blur na input elementu
                 inputElement.on('blur', function() {
-                    var newValue = $(this).val().trim();
-                    $(this).parent().text(newValue);
+                    var newValue = parseFloat($(this).val());
+
+                    // Provera da li je unet broj sa najviše 2 decimale
+                    if (!isNaN(newValue)) {
+                        var roundedValue = parseFloat(newValue.toFixed(2));
+                        $(this).parent().text(roundedValue);
+                    } else {
+                        // Neispravan unos, vraćamo prethodnu vrednost
+                        $(this).parent().text(currentValue);
+                    }
 
                     recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
                 });
             });
+
         });
 
         // Funkcija za ponovno izračunavanje rezultata
@@ -440,7 +449,7 @@
                     var studentId = studentIdCell.id.split('_')[3];
                     
                     var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
-                    var olaksica = parseFloat(olaksicaCell.textContent);
+                    var olaksica = parseFloat(olaksicaCell.textContent.trim()).toFixed(2);
                     
                     console.log('Student ID:', studentId);
                     console.log('Količina:', quantity);
