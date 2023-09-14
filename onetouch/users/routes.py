@@ -25,6 +25,8 @@ def login():
             print(user.user_name)
             flash(f'Dobro došli, {user.user_name}!', 'success')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
+        else:
+            flash('Neispravni podaci za prijavu.', 'danger')
     return render_template('login.html', title='Login', form=form)
 
 
@@ -69,7 +71,7 @@ def reset_token(token):
         form = ResetPasswordForm()
         if form.validate_on_submit():
             hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            user.password = hashed_password
+            user.user_password = hashed_password
             db.session.commit()
             flash(f'Vaša lozinka je ažurirana!', 'success')
             return redirect(url_for('users.login'))
