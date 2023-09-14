@@ -155,7 +155,7 @@
                                             {% endfor %}
                                         </div>
                                     {% else %}
-                                        {{ edit_form.price(class="form-control form-control-lg", id="price-" + service_profile.id|string, value=service_profile.price) }}
+                                        {{ edit_form.price(class="form-control form-control-lg fixed-input", id="price-" + service_profile.id|string, value=service_profile.price) }}
                                     {% endif %}
                                 </div>
                                 <div class="form-group">
@@ -185,9 +185,9 @@
                                         {% if service_profile.installment_number|int > 1 %}
                                             {{ edit_form.installment_1.label(class="form-control-label") }}
                                             {% set z = edit_form.installment_1.process_data(service_profile.installment_1) %}
-                                            {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string) }}
+                                            {{ edit_form.installment_1(class="form-control form-control-lg calculation-input", id="installment_1-" + service_profile.id|string) }}
                                         {% else %}
-                                            {{ edit_form.installment_1(class="form-control form-control-lg", id="installment_1-" + service_profile.id|string, type="hidden") }}
+                                            {{ edit_form.installment_1(class="form-control form-control-lg calculation-input", id="installment_1-" + service_profile.id|string, type="hidden") }}
                                         {% endif %}
                                     {% endif %}
                                 </div>
@@ -204,9 +204,9 @@
                                         {% if service_profile.installment_number|int > 1 %}
                                             {{ edit_form.installment_2.label(class="form-control-label") }}
                                             {% set z = edit_form.installment_2.process_data(service_profile.installment_2) %}
-                                            {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string) }}
+                                            {{ edit_form.installment_2(class="form-control form-control-lg calculation-input", id="installment_2-" + service_profile.id|string) }}
                                         {% else %}
-                                            {{ edit_form.installment_2(class="form-control form-control-lg", id="installment_2-" + service_profile.id|string, type="hidden") }}
+                                            {{ edit_form.installment_2(class="form-control form-control-lg calculation-input", id="installment_2-" + service_profile.id|string, type="hidden") }}
                                         {% endif %}
                                     {% endif %}
                                 </div>
@@ -223,9 +223,9 @@
                                         {% if service_profile.installment_number|int > 2 %}
                                             {{ edit_form.installment_3.label(class="form-control-label") }}
                                             {% set z = edit_form.installment_3.process_data(service_profile.installment_3) %}
-                                            {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string) }}
+                                            {{ edit_form.installment_3(class="form-control form-control-lg calculation-input", id="installment_3-" + service_profile.id|string) }}
                                         {% else %}
-                                            {{ edit_form.installment_3(class="form-control form-control-lg", id="installment_3-" + service_profile.id|string, type="hidden") }}
+                                            {{ edit_form.installment_3(class="form-control form-control-lg calculation-input", id="installment_3-" + service_profile.id|string, type="hidden") }}
                                         {% endif %}
                                     {% endif %}
                                 </div>
@@ -299,9 +299,9 @@
                                         {% if service_profile.installment_number|int > 6 %}
                                             {{ edit_form.installment_7.label(class="form-control-label") }}
                                             {% set z = edit_form.installment_7.process_data(service_profile.installment_7) %}
-                                            {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string) }}
+                                            {{ edit_form.installment_7(class="form-control form-control-lg calculation-input", id="installment_7-" + service_profile.id|string) }}
                                         {% else %}
-                                            {{ edit_form.installment_7(class="form-control form-control-lg", id="installment_7-" + service_profile.id|string, type="hidden") }}
+                                            {{ edit_form.installment_7(class="form-control form-control-lg calculation-input", id="installment_7-" + service_profile.id|string, type="hidden") }}
                                         {% endif %}
                                     {% endif %}
                                 </div><div class="form-group">
@@ -398,6 +398,9 @@
                                             {{ edit_form.installment_12(class="form-control form-control-lg", id="installment_12-" + service_profile.id|string, type="hidden") }}
                                         {% endif %}
                                     {% endif %}
+                                </div>
+                                <div>
+                                    <input type="text" id="result-input" readonly>
                                 </div>
                                 <div class="form-check form-switch">
                                     {% set z = edit_form.archived.process_data(service_profile.archived) %}
@@ -890,6 +893,38 @@
     $(document).ready(function() {
         $('.js-example-basic-multiple').select2();
     });
+</script>
+<script>
+    const inputFields = document.querySelectorAll('.calculation-input');
+    const resultField = document.getElementById('result-input');
+    const fixedNumberInput = document.querySelector('.fixed-input');
+
+    inputFields.forEach(input => {
+        input.addEventListener('input', updateResult);
+    });
+
+    fixedNumberInput.addEventListener('input', compareValues);
+
+    function updateResult() {
+        let total = 0;
+        inputFields.forEach(input => {
+            const numericValue = parseFloat(input.value) || 0;
+            total += numericValue;
+        });
+        resultField.value = total;
+        compareValues();
+    }
+
+    function compareValues() {
+        const fixedNumberValue = parseFloat(fixedNumberInput.value) || 0;
+        const resultFieldValue = parseFloat(resultField.value) || 0;
+
+        if (fixedNumberValue !== resultFieldValue) {
+            resultField.classList.add('error-result');
+        } else {
+            resultField.classList.remove('error-result');
+        }
+    }
 </script>
 
 {% endblock %}

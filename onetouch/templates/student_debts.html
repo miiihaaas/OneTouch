@@ -75,10 +75,10 @@
 <div class="form-group">
     <label for="purpose_of_payment" class="form-control-label" title="max 35 karaktera">Svrha uplate ----- "max 35 karaktera" pocrveneti ceo input element ukoliko ima više od 35 karaktera. deaktiviraj dugme 'sačuvajte' ukoliko ima više od 35 karaktera</label>
     <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
-    <div id="errorMessage" style="color: red;"></div>
+    <p id="errorMessage" style="display: none;">Uneli ste previse karaktera.</p>
 </div>
 <div class="form-group">
-    <button class="btn btn-info loading" id="save_button" disabled>Sačuvajte</button>
+    <button class="btn btn-info loading disable-button" id="save_button" disabled>Sačuvajte</button>
 </div>
 <div class="loading-overlay">
     <div class="spinner"></div>
@@ -501,7 +501,7 @@
         });
     });
 </script>
-<script>
+<!-- <script>
     var textInput = document.getElementById('purpose_of_payment');
     var errorMessage = document.getElementById('errorMessage');
 
@@ -519,6 +519,26 @@
         }
     });
 
-</script>
+</script> -->
+<script> 
+// <Mihailo probaj da nađeš rešenje da nadjačaš ovu skriptu u odnosu na druge...> 
+		document.addEventListener("DOMContentLoaded", function() {
+			const inputField = document.getElementById("purpose_of_payment");
+			const errorMessage = document.getElementById("errorMessage");
+			const myButton = document.querySelector(".disable-button");
+
+			inputField.addEventListener("input", function() {
+				if (inputField.value.length > 35) {
+					inputField.classList.add("error-result");
+					errorMessage.style.display = "block";
+					myButton.disabled = true; // Disable the button
+				} else {
+					inputField.classList.remove("error-result");
+					errorMessage.style.display = "none";
+					myButton.disabled = false; // Enable the button
+				}
+			});
+		});
+	</script>
 
 {% endblock %}
