@@ -7,7 +7,7 @@
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
-            <option value="">Svi raredi</option>
+            <option value="">Svi razredi</option>
             {% for class in range(9) %}
                 <option value="{{ class }}">{{ class }}</option>
             {% endfor %}
@@ -33,7 +33,7 @@
             <th>Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
-            <th>Aktivnosti</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -58,12 +58,12 @@
                         </button>
                     </div>
                 <div class="modal-body">
-                <label for="input_password">Da bi ste obrisali profil razrednog starešine "{{ teacher.teacher_name }} {{ teacher.teacher_surname }}" potrebno je potvrditi svojom lozinkom:</label>
+                <label for="input_password">Da bi ste obrisali profil odeljenskog starešine "{{ teacher.teacher_name }} {{ teacher.teacher_surname }}" potrebno je potvrditi svojom lozinkom:</label>
                 </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                         <form action="{{ url_for('teachers.delete_teacher', teacher_id=teacher.id) }}" method="post">
-                            <input class="btn btn-danger" type="submit" value="Obrišite profil razrednog starešine">
+                            <input class="btn btn-danger" type="submit" value="Obrišite profil odeljenskog starešine">
                             <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
                         </form>
                     </div>
@@ -76,7 +76,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="EditModalLabel">Detalji razrednog starešine</h5>
+                        <h5 class="modal-title" id="EditModalLabel">Detalji odeljenskog starešine</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -175,13 +175,13 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="RegisterModalLabel">Registracija novog razrednog starešine</h5>
+                <h5 class="modal-title" id="RegisterModalLabel">Registracija novog odeljenskog starešine</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
         <div class="modal-body">
-        <label for="input_password">Popunite podatke profila razrednog starešine</label>
+        <label for="input_password">Popunite podatke profila odeljenskog starešine</label>
         <form action="" method="POST">
             {{ register_form.hidden_tag() }}
             <div class="form-group">

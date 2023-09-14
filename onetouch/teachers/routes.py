@@ -36,6 +36,7 @@ def teacher_list():
                         teacher_section=register_form.teacher_section.data)
         db.session.add(teacher)
         db.session.commit()
+        flash(f'Dodat novi profil odeljanskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'success')
         return redirect(url_for('teachers.teacher_list'))
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
         print(f'edit form validation: {request.form.get("teacher_id")=}')
@@ -46,14 +47,15 @@ def teacher_list():
         teacher.teacher_class = edit_form.teacher_class.data
         teacher.teacher_section = edit_form.teacher_section.data
         db.session.commit()
+        flash(f'Izmenjen je profil odeljanskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'success')
         return redirect(url_for('teachers.teacher_list'))
     elif request.method == 'GET' and request.form.get('teacher_id') != None:
         print(f'get: {request.form.get("teacher_id")}')
         teacher = Teacher.query.get(request.form.get('teacher_id'))
         
         #edit_form.teacher_name.data = teacher.teacher_name
-    return render_template('teacher_list.html', title='Razredne starešine', 
-                            legend='Razredne starešine', 
+    return render_template('teacher_list.html', title='Odeljenske starešine', 
+                            legend='Odeljenske starešine', 
                             teachers=teachers, 
                             edit_form=edit_form, 
                             register_form=register_form,
@@ -76,4 +78,5 @@ def delete_teacher(teacher_id):
     else:
         db.session.delete(teacher)
         db.session.commit()
+        flash(f'Obrisan je profil odeljenskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'success')
         return redirect(url_for("teachers.teacher_list"))

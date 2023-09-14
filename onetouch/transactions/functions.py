@@ -391,7 +391,7 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
     saldo = zaduzenje - uplate
     pdf.set_font('DejaVuSansCondensed', 'B', 16)
     pdf.cell(40, 8, '', 0, 1, 'R')  # Uklonili smo border postavljanjem poslednjeg argumenta na 0
-    pdf.cell(40, 8, 'Zaduzenje:', 0, 0, 'R')
+    pdf.cell(40, 8, 'Zaduženje:', 0, 0, 'R')
     pdf.cell(40, 8, f'{zaduzenje:,.2f}', 0, 1, 'R')
     pdf.cell(40, 8, 'Uplate:', 0, 0, 'R')
     pdf.cell(40, 8, f'{uplate:,.2f}', 0, 1, 'R')

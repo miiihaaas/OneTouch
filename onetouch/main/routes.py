@@ -15,7 +15,7 @@ def home():
         pass
     else:
         flash('Morate da budete prijavljeni da biste pristupili ovoj stranici.', 'info')
-        return redirect(url_for('main.login'))
+        return redirect(url_for('users.login'))
     return render_template('home.html', title="Početna", legend="Početna")
 
 

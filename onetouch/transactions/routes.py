@@ -122,7 +122,7 @@ def submit_records():
         
         if existing_debt:
             print(f'Već postoji ovo zaduženje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.')
-            flash(f'Već postoji ovo zadušenje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.', 'info')
+            flash(f'Već postoji ovo zaduženje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.', 'info')
             return str(existing_debt.id)
         
         if len(data['records']) == 0:
@@ -177,7 +177,7 @@ def submit_records():
         return str(student_debt_id)
 
     elif 'student_debt_id' in data:
-        print('izmena postojećeg zadušenja')
+        print('izmena postojećeg zaduženja')
         student_debt_id = int(data['student_debt_id'])
         purpose_of_payment = data['purpose_of_payment']
         print(f'{student_debt_id=}, {purpose_of_payment=}')
@@ -334,7 +334,8 @@ def debt_archive(debt_id):
                             debt=debt, 
                             teacher=teacher,
                             purpose_of_payment=purpose_of_payment,
-                            legend=f"Pregled zadušenja: {debt.id}")
+                            legend=f"Pregled zaduženja: {debt.id}",
+                            title="Pregled zaduženja")
 
 
 @transactions.route('/send_payment_slips/<int:debt_id>', methods=['get', 'post'])
