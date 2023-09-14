@@ -23,7 +23,7 @@ def require_login():
 
 @suppliers.route('/supplier_list', methods=['GET', 'POST'])
 def supplier_list():
-    suppliers = Supplier.query.all()
+    suppliers = Supplier.query.filter(Supplier.id != 0).all()
     edit_form = EditSupplierModalForm()
     register_form = RegisterSupplierModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
@@ -58,11 +58,12 @@ def supplier_list():
 
 @suppliers.route('/service_list', methods=['GET', 'POST'])
 def service_list():
-    services=Service.query.all()
+    services=Service.query.filter(Service.id != 0).all()
     edit_form = EditServiceModalForm()
     edit_form.reset()
     suppliers_chices_not_archived = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).all()]
-    suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
+    # suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
+    suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False, Supplier.id != 0).all()]
     edit_form.supplier_id.choices = suppliers_chices_not_archived
     register_form = RegisterServiceModalForm()
     register_form.reset()
@@ -122,12 +123,14 @@ def service_list():
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
 @login_required
 def service_profile_list():
-    service_profiles = ServiceItem.query.all()
+    # service_profiles = ServiceItem.query.all()
+    service_profiles = ServiceItem.query.filter(ServiceItem.id != 0).all() #! svi koji nemaju id=0 koji je rezervisan za grešku
+
     register_form = RegisterServiceProfileModalForm()
     edit_form = EditServiceProfileModalForm()
     
-    register_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
-    register_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in db.session.query(Service.id, Service.service_name).filter(Service.archived == False).all()] # '/get_services' - ajax ažurira dinamičnu listu
+    register_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False, Supplier.id != 0).all()]
+    register_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in db.session.query(Service.id, Service.service_name).filter(Service.archived == False, Service.id != 0).all()] # '/get_services' - ajax ažurira dinamičnu listu
     
         
     edit_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
@@ -226,7 +229,7 @@ def service_profile_list():
 @suppliers.route('/get_services', methods=['POST'])
 def get_services():
     supplier_id = request.form.get('supplier_id', 0, type=int)
-    services = Service.query.filter_by(supplier_id=supplier_id, archived=False).all()
+    services = Service.query.filter_by(supplier_id=supplier_id, archived=False).filter(Service.id != 0).all()
     print(f'services: {[s.archived for s in services]}')
     options = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in services]
     html = ''

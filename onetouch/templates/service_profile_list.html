@@ -693,20 +693,21 @@
 <script>
     // skripta za tabelu
     $(document).ready(function () {
-        $('#data').DataTable({
-                columnDefs: [
-                {
-                    // targets: [5],
-                    visible: false,
-                    searchable: true,
-                },
-            ],
-            order: [[2, 'asc'], [3, 'asc'],],
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
-            }
-        });
+    $('#data').DataTable({
+        columnDefs: [
+            {
+                // targets: [5],
+                visible: false,
+                searchable: true,
+            },
+        ],
+        order: [[2, 'asc'], [3, 'asc']],
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+        }
     });
+});
+
 </script>
 
 <script>
