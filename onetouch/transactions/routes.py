@@ -600,74 +600,77 @@ def posting_payment():
             error_mesage = f'Uplata za dati datum ({payment_date}) i broj računa ({statment_nubmer}) već postoji u bazi. Izaberite novi XML fajl i pokušajte ponovo.'
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
-        # Spremanje podataka u bazu
-        new_payment = StudentPayment(payment_date=payment_date,
-                                        statment_nubmer=statment_nubmer,
-                                        total_payment_amount=total_payment_amount,
-                                        number_of_items=number_of_items
-                                    )
-        db.session.add(new_payment)
-        db.session.commit()
-        # print('dodato u db - proveri')
-        # print(f'{new_payment.id=}')
-        
-        uplatioci = request.form.getlist('uplatilac')
-        iznosi = request.form.getlist('iznos')
-        pozivi_na_broj = request.form.getlist('poziv_na_broj')
-        svrha_uplate = request.form.getlist('svrha_uplate')
-        print(f'{iznosi=}')
-        print(f'{pozivi_na_broj=}')
-        print(f'{svrha_uplate=}')
-        records = []
-        for i in range(len(iznosi)):
-            records.append({
-                    'uplatilac': uplatioci[i],
-                    'iznos': iznosi[i],
-                    'poziv_na_broj': pozivi_na_broj[i],
-                    'svrha_uplate': svrha_uplate[i]
-                })
-        print(f'{records=}')
-        number_of_errors = 0
-        student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
-        service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
-        for record in records:
-            payer = record['uplatilac']
-            purpose_of_payment = record['svrha_uplate']
-            reference_number = record['poziv_na_broj']
-            student_id = record['poziv_na_broj'][:4]
-            service_item_id = record['poziv_na_broj'][-3:]
-            student_debt_total = float(record['iznos'].replace(',', '.'))
-            payment_error = False
-            print(f'{student_ids=}')
-            print(f'{service_item_ids=}')
-            print(f'{student_id=}')
-            print(f'{service_item_id=}')
-            if (student_id not in student_ids) or (service_item_id not in service_item_ids):
-                print(f'nije u listi student_ids: {student_id=}')
-                student_id = 1
-                service_item_id = 0
-                payment_error = True
-                number_of_errors += 1
-            new_record = TransactionRecord(student_debt_id = None,
-                                            student_payment_id = new_payment.id,
-                                            student_id = student_id,
-                                            service_item_id = service_item_id,
-                                            student_debt_installment_number = None,
-                                            student_debt_amount = None,
-                                            studetn_debt_installment_value = None,
-                                            student_debt_discount = None,
-                                            student_debt_total = student_debt_total,
-                                            purpose_of_payment=purpose_of_payment,
-                                            payer=payer,
-                                            reference_number=reference_number,
-                                            payment_error=payment_error)
-            print(f'{new_record.student_id=}')
-            print(f'{new_record.service_item_id=}')
-            print(f'{new_record.student_debt_total=}')
-            print(f'{new_record.purpose_of_payment=}')
-            print(f'{new_record.reference_number=}')
-            db.session.add(new_record)
+        else:
+            # čuvanje podataka u bazu
+            new_payment = StudentPayment(payment_date=payment_date,
+                                            statment_nubmer=statment_nubmer,
+                                            total_payment_amount=total_payment_amount,
+                                            number_of_items=number_of_items
+                                        )
+            db.session.add(new_payment)
             db.session.commit()
-        new_payment.number_of_errors = number_of_errors
-        db.session.commit()
+            # print('dodato u db - proveri')
+            # print(f'{new_payment.id=}')
+            
+            uplatioci = request.form.getlist('uplatilac')
+            iznosi = request.form.getlist('iznos')
+            pozivi_na_broj = request.form.getlist('poziv_na_broj')
+            svrha_uplate = request.form.getlist('svrha_uplate')
+            print(f'{iznosi=}')
+            print(f'{pozivi_na_broj=}')
+            print(f'{svrha_uplate=}')
+            records = []
+            for i in range(len(iznosi)):
+                records.append({
+                        'uplatilac': uplatioci[i],
+                        'iznos': iznosi[i],
+                        'poziv_na_broj': pozivi_na_broj[i],
+                        'svrha_uplate': svrha_uplate[i]
+                    })
+            print(f'{records=}')
+            number_of_errors = 0
+            student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
+            service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
+            for record in records:
+                payer = record['uplatilac']
+                purpose_of_payment = record['svrha_uplate']
+                reference_number = record['poziv_na_broj']
+                student_id = record['poziv_na_broj'][:4]
+                service_item_id = record['poziv_na_broj'][-3:]
+                student_debt_total = float(record['iznos'].replace(',', '.'))
+                payment_error = False
+                print(f'{student_ids=}')
+                print(f'{service_item_ids=}')
+                print(f'{student_id=}')
+                print(f'{service_item_id=}')
+                if (student_id not in student_ids) or (service_item_id not in service_item_ids):
+                    print(f'nije u listi student_ids: {student_id=}')
+                    student_id = 1
+                    service_item_id = 0
+                    payment_error = True
+                    number_of_errors += 1
+                new_record = TransactionRecord(student_debt_id = None,
+                                                student_payment_id = new_payment.id,
+                                                student_id = student_id,
+                                                service_item_id = service_item_id,
+                                                student_debt_installment_number = None,
+                                                student_debt_amount = None,
+                                                studetn_debt_installment_value = None,
+                                                student_debt_discount = None,
+                                                student_debt_total = student_debt_total,
+                                                purpose_of_payment=purpose_of_payment,
+                                                payer=payer,
+                                                reference_number=reference_number,
+                                                payment_error=payment_error)
+                print(f'{new_record.student_id=}')
+                print(f'{new_record.service_item_id=}')
+                print(f'{new_record.student_debt_total=}')
+                print(f'{new_record.purpose_of_payment=}')
+                print(f'{new_record.reference_number=}')
+                db.session.add(new_record)
+                db.session.commit()
+            new_payment.number_of_errors = number_of_errors
+            db.session.commit()
+            flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer}), od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
+            return redirect(url_for('transactions.payments_archive_list'))
     return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")

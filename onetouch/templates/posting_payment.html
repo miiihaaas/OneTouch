@@ -14,10 +14,20 @@
         </div>
         <div class="col">
             {% if broj_izvoda_element %}
-                <p>Datum izvoda: <input id="payment_date" name="payment_date" type="text" value="{{ datum_izvoda_element }}"  readonly></p>
-                <p>Broj izvoda: <input id="statment_nubmer" name="statment_nubmer" type="text" value="{{ broj_izvoda_element }}"  readonly></p>
-                <p>Iznos potražuje: <input id="total_payment_amount" name="total_payment_amount" type="text" value="{{ iznos_potrazuje_element }}"  readonly></p>
-                <p>Broj uplatnica: <input id="number_of_items" name="number_of_items" type="text" value="{{ broj_pojavljivanja }}"  readonly></p>
+            <div class="row">
+                <div class="col">
+                    <label for="payment_date">Datum izvoda</label>
+                    <input class="form-control mb-2" id="payment_date" name="payment_date" type="text" value="{{ datum_izvoda_element }}"  readonly>
+                    <label for="statment_nubmer">Broj izvoda</label>
+                    <input class="form-control" id="statment_nubmer" name="statment_nubmer" type="text" value="{{ broj_izvoda_element }}"  readonly>
+                </div>
+                <div class="col">
+                    <label for="statment_nubmer">Iznos potražuje</label>
+                    <input class="form-control mb-2" id="c" name="total_payment_amount" type="text" value="{{ iznos_potrazuje_element }}"  readonly>
+                    <label for="number_of_items">Broj uplata</label>
+                    <input class="form-control" id="number_of_items" name="number_of_items" type="text" value="{{ broj_pojavljivanja }}"  readonly>
+                </div>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -26,11 +36,11 @@
     <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
         <thead>
             <tr>
-                <th>RacunZaduzenja = Broj bankovnog računa?</th>
-                <th>NazivZaduzenja = Uplatilac?</th>
+                <th>Broj bankovnog računa</th>
+                <th>Uplatilac</th>
                 <th>Iznos</th>
-                <th>PozivOdobrenja = Poziv na broj?</th>
-                <th>SvrhaDoznake = Svrha uplate?</th>
+                <th>Poziv na broj</th>
+                <th>Svrha uplate</th>
             </tr>
         </thead>
         <tbody>
