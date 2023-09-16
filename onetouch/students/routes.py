@@ -27,7 +27,7 @@ def require_login():
 @students.route('/student_list', methods=['GET', 'POST'])
 def student_list():
     danas = datetime.now()
-    active_date_start = danas.replace(month=4, day=15)
+    active_date_start = danas.replace(month=8, day=15)
     active_date_end = danas.replace(month=9, day=15)
     students = Student.query.filter(Student.student_class < 9).all()
     edit_form = EditStudentModalForm()

@@ -99,7 +99,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 'valuta': 'RSD', #! proveri da li je zbog QR koda potrebno drugačije definisati valutu
                 'iznos': record.student_debt_total,
                 'racun_primaoca': school.school_bank_account,
-                'model': '', #! proveriti koji je model zbog QR koda 
+                'model': '00', #! proveriti koji je model zbog QR koda 
                 'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
                 'slanje_mejla_roditelju': record.transaction_record_student.send_mail
             }

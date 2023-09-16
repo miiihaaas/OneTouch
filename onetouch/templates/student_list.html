@@ -68,7 +68,7 @@
         {% for student in students %}
         <tr class="odd">
             <td>{{ "{:04d}".format(student.id) }}</td>
-            <td contenteditable="true">{{ student.student_name }}</td>
+            <td>{{ student.student_name }}</td>
             <td>{{ student.student_surname }}</td>
             <td>{{ student.student_class }}</td>
             <td>{{ student.student_section }}</td>
@@ -109,9 +109,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Modal Edit -->
-
         {% endfor %}
     </tbody>
 </table>
@@ -310,9 +307,22 @@
 {% endblock content%}
 {% block scripts %}
 <script>
-    // switch dugmići - međusobna zavisnost sa parent_email poljem
-    document.addEventListener("DOMContentLoaded", function () {
-        // Selektujte relevantne elemente
+    function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
+        console.log('pokrenuta je funkcija editStudent')
+        document.getElementById("student_id").value = studentId
+        document.getElementById("student_name").value = studentName;
+        document.getElementById("student_surname").value = studentSurname;
+        document.getElementById("student_class").value = studentClass;
+        document.getElementById("student_section").value = studentSection;
+        document.getElementById("parent_email").value = parentEmail;
+        console.log('sendMail: ', sendMail)
+        if ( sendMail === true || sendMail === 'True' ) {
+            document.getElementById("send_mail").checked = true;
+            document.getElementById("send_mail").value = sendMail;
+        } else {
+            document.getElementById("send_mail").checked = false;
+            document.getElementById("send_mail").value = sendMail;
+        }
         var parentEmailInput = document.getElementById("parent_email");
         var sendMailCheckbox = document.getElementById("send_mail");
 
@@ -336,30 +346,6 @@
         handleParentEmailChange();
         // Dodajte event listener za promene u polju 'parent_email'
         parentEmailInput.addEventListener("input", handleParentEmailChange);
-    });
-    function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
-        console.log('pokrenuta je funkcija editStudent')
-        document.getElementById("student_id").value = studentId
-        document.getElementById("student_name").value = studentName;
-        document.getElementById("student_surname").value = studentSurname;
-        document.getElementById("student_class").value = studentClass;
-        document.getElementById("student_section").value = studentSection;
-        document.getElementById("parent_email").value = parentEmail;
-        console.log('sendMail: ', sendMail)
-        if ( sendMail === true || sendMail === 'True' ) {
-            document.getElementById("send_mail").checked = true;
-            document.getElementById("send_mail").value = sendMail;
-        } else {
-            document.getElementById("send_mail").checked = false;
-            document.getElementById("send_mail").value = sendMail;
-        }
-        if ( printPayment === true || printPayment === 'True' ) {
-            document.getElementById("print_payment").checked = true;
-            document.getElementById("print_payment").value = sendMail;
-        } else {printPayment
-            document.getElementById("print_payment").checked = false;
-            document.getElementById("print_payment").value = printPayment;
-        }
     }
     $(document).ready(function () {
         var table = $('#data').DataTable({

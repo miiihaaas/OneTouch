@@ -45,29 +45,31 @@
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
-            <th>Učenik</th>
+            <th>Ime</th>
+            <th>Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
-            <th>Poziv na broj</th>
-            <th>Usluga</th>
-            <th>Količina</th>
-            <th>Iznos</th>
-            <th>Olakšica</th>
-            <th>iznos zaduženja</th>
+            <th data-sortable="false">Poziv na broj</th>
+            <th data-sortable="false">Usluga</th>
+            <th data-sortable="false">Količina</th>
+            <th data-sortable="false">Iznos</th>
+            <th data-sortable="false">Olakšica</th>
+            <th data-sortable="false">Iznos zaduženja</th>
         </tr>
     </thead>
     <tbody>
         {% for student in students %}
         <tr class="odd">
-            <td>{{ student.student_name }} {{ student.student_surname }}</td>
-            <td contenteditable="true">{{ student.student_class }}</td>
-            <td>{{ student.student_section }}</td>
-            <td id="poziv_na_broj_{{ student.id }}"></td>
-            <td id="usluga_{{ student.id }}"></td>
-            <td id="kolicina_{{ student.id }}">0</td> <!-- dodati input element unutar ovog td -->
-            <td id="iznos-{{ student.id }}">0</td>
-            <td id="olaksice_{{ student.id }}">0</td>
-            <td id="iznos_zaduženja_{{ student.id }}">0</td>
+            <td data-sort="{{ student.student_name }}"><input class="form-control" type="text" value="{{ student.student_name }}" readonly></td>
+            <td data-sort="{{ student.student_surname }}"><input class="form-control" type="text" value="{{ student.student_surname }}" readonly></td>
+            <td>{{ student.student_class }}</td> <!-- sakriveni, ali potrebni zbog filtera -->
+            <td>{{ student.student_section }}</td> <!-- sakriveni, ali potrebni zbog filtera -->
+            <td><input id="poziv_na_broj_{{ student.id }}" class="form-control" type="text" value="" readonly></td>
+            <td><input id="usluga_{{ student.id }}" class="form-control" type="text" value="" readonly></td>
+            <td><input id="kolicina_{{ student.id }}" class="form-control" type="number" value="0" readonly></td>
+            <td><input id="iznos-{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
+            <td><input id="olaksice_{{ student.id }}" class="form-control" type="number" step="0.01" value="0.00" readonly></td>
+            <td><input id="iznos_zaduženja_{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -75,7 +77,7 @@
 <div class="form-group">
     <label for="purpose_of_payment" class="form-control-label" title="max 35 karaktera">Svrha uplate</label>
     <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
-    <p id="errorMessage" style="display: none;">Uneli ste previse karaktera.</p>
+    <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera</p>
 </div>
 <div class="form-group">
     <button class="btn btn-info loading disable-button" id="save_button" disabled>Sačuvajte</button>
@@ -88,90 +90,40 @@
 
 {% block scripts %}
 <script>
-    function dataChanged() {
-        const inputFieldInstallmentValue = $('#installment_value');
-        const kolicinaCells = document.querySelectorAll('[id^="kolicina_"]');
+    // Funkcija za izračunavanje iznosa zaduženja
+    function dataChanged(studentId) {
+        // Dohvati vrednosti iz input polja 'Količina' i 'Olakšica' za određenog studenta
+        var kolicina = parseFloat(document.getElementById("kolicina_" + studentId).value);
+        var olaksice = parseFloat(document.getElementById("olaksice_" + studentId).value);
 
-        // Iteriranje kroz svaki red u tabeli
-        $('#data tbody tr').each(function() {
-            // Postavljanje slušaoca događaja za klik na td elementu za količinu
-            $(this).find('td:nth-child(6)').on('click', function() {
-                var currentValue = $(this).text().trim();
-                console.log('trenutna vrednost: ', currentValue)
-                var inputElement = $('<input class="form-control" type="number" value="0" max="500">');
+        // Dohvati vrednost iznosa iz odgovarajućeg input polja za taj student
+        var iznos = parseFloat(document.getElementById("iznos-" + studentId).value);
 
-                // Dodajte event slušaoca za input element
-                inputElement.on('input', function() {
-                    var input = $(this);
-                    var newValue = input.val().trim();
-                    // Koristite regex da zadržite samo cifre
-                    newValue = newValue.replace(/\D/g, '');
-                    input.val(newValue);
-                    
-                    // Postavite kursor na kraju broja
-                    var inputLength = input.val().length;
-                    input[0].setSelectionRange(inputLength, inputLength);
-                });
+        // Izračunaj iznos zaduženja
+        var iznosZaduzenja = (kolicina * iznos) - olaksice;
 
-
-
-
-                $(this).html(inputElement.attr({ "value": currentValue }));
-                // inputElement.attr({ "value": currentValue })
-                inputElement.focus();
-
-                // Postavljanje slušaoca događaja blur na input elementu
-                inputElement.on('blur', function() {
-                    var newValue = $(this).val().trim();
-                    $(this).parent().text(newValue);
-
-                    recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
-                });
-            });
-
-            /// Postavljanje slušaoca događaja za klik na td elementu za olakšice
-            $(this).find('td:nth-child(8)').on('click', function() {
-                var currentValue = $(this).text().trim();
-                var inputElement = $('<input class="form-control form-control-lg" type="number" step="0.01" value="' + currentValue + '">');
-
-                $(this).html(inputElement);
-                inputElement.focus();
-
-                // Postavljanje slušaoca događaja blur na input elementu
-                inputElement.on('blur', function() {
-                    var newValue = parseFloat($(this).val());
-
-                    // Provera da li je unet broj sa najviše 2 decimale
-                    if (!isNaN(newValue)) {
-                        var roundedValue = parseFloat(newValue.toFixed(2));
-                        $(this).parent().text(roundedValue);
-                    } else {
-                        // Neispravan unos, vraćamo prethodnu vrednost
-                        $(this).parent().text(currentValue);
-                    }
-
-                    recalculateResults(); // Ponovno izračunavanje rezultata nakon promene vrednosti
-                });
-            });
-
-        });
-
-        // Funkcija za ponovno izračunavanje rezultata
-        function recalculateResults() {
-            $('#data tbody tr').each(function() {
-            var kolicina = parseFloat($(this).find('td:nth-child(6)').text());
-            var iznos = parseFloat(inputFieldInstallmentValue.val());
-            var olaksice = parseFloat($(this).find('td:nth-child(8)').text());
-
-            var iznos_zaduzenja = kolicina * iznos - olaksice;
-            $(this).find('td:nth-of-type(9)').text(iznos_zaduzenja);
-            });
-        }
-
-        // Postavljanje slušaoca događaja change na polju za unos
-        inputFieldInstallmentValue.on('change', recalculateResults);
-        inputFieldInstallmentValue.trigger('change');
+        // Postavi izračunati iznos zaduženja u odgovarajuće input polje
+        document.getElementById("iznos_zaduženja_" + studentId).value = iznosZaduzenja.toFixed(2);
+        document.getElementById("kolicina_" + studentId).value = kolicina.toFixed(0);
+        document.getElementById("olaksice_" + studentId).value = olaksice.toFixed(2);
     }
+
+    // Dodaj event listenere za promene u input poljima 'Količina' i 'Olakšica' za svakog studenta
+    var students = document.querySelectorAll('[id^="kolicina_"]');
+    students.forEach(function (student) {
+        var studentId = student.id.split("_")[1];
+        student.addEventListener("change", function () {
+            dataChanged(studentId);
+        });
+    });
+
+    var olaksiceInputs = document.querySelectorAll('[id^="olaksice_"]');
+    olaksiceInputs.forEach(function (olaksiceInput) {
+        var studentId = olaksiceInput.id.split("_")[1];
+        olaksiceInput.addEventListener("change", function () {
+            dataChanged(studentId);
+        });
+    });
 
 
     $(document).ready(function() {
@@ -181,13 +133,16 @@
         const selectFieldInstallment = $('#installment'); //
         const inputFieldInstallmentValue = $('#installment_value');
         const pozivNaBrojCells = $('[id^="poziv_na_broj_"]'); ///
+        console.log('test pozivNaBrojCells: ', pozivNaBrojCells)
         const uslugaCells = $('[id^="usluga_"]'); ///
-        const inputIznos = $('#installment_value'); ///
+        const inputFieldQuantityValue = $('[id^="kolicina_"]')
+        const inputFieldDiscountValue = $('[id^="olaksice"]')
 
         const iznosCells = document.querySelectorAll('[id^="iznos-"]');
+        
+        console.log('test iznosCells: ', iznosCells)
         const inputFieldPurposeOfPayment = $('#purpose_of_payment');
         const buttonSave = $('#save_button');
-        const buttonPrint = $('#print_button');
 
         const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
         document.getElementById("today_date").value = today;
@@ -196,24 +151,29 @@
         var table = $('#data').DataTable({
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
-            }
+            },
+            columnDefs: [
+                { targets: [2,3], visible: false },
+                { targets: 'sort', orderData: 'data-sort'}
+            ],
+            order: [[1, 'asc'], [0, 'asc']]
         });
 
         // Prazna tabela
-        table.column(1).search("zzz").draw(); // samo da ne bude neki broj razreda - uzeo sam neka slova bez ikakvog posebnog razloga
+        table.column(2).search("zzz").draw(); // samo da ne bude neki broj razreda - uzeo sam neka slova bez ikakvog posebnog razloga
 
         // Filter po razredu
         selectFieldClasses.on('change', function() {
             const classes = $(this).val();
             const section = "";
-            table.column(1).search(classes).draw();
-            table.column(2).search(section).draw();
+            table.column(2).search(classes).draw();
+            table.column(3).search(section).draw();
         });
 
         // Filter po odeljenju
         selectFieldSection.on('change', function() {
             const section = $(this).val();
-            table.column(2).search(section).draw();
+            table.column(3).search(section).draw();
         });
 
         // Dropdown: RAZRED
@@ -230,7 +190,6 @@
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
                 buttonSave.prop('disabled', true);
-                buttonPrint.prop('disabled', true);
             } else {
                 console.log('selectkovani razred: ', selectFieldClasses.val());
                 selectFieldSection.prop('disabled', false);
@@ -242,7 +201,6 @@
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
                 buttonSave.prop('disabled', true);
-                buttonPrint.prop('disabled', true);
                 inputFieldInstallmentValue.prop('value', "----");
                 $.ajax({
                     url: 'get_service_items',
@@ -252,7 +210,6 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
-                        buttonPrint.prop('disabled', true);
                     }
                 })
                 dataChanged(); // call function
@@ -271,16 +228,33 @@
                 selectFieldInstallment.prop('value', 0);
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
                 buttonSave.prop('disabled', true);
-                buttonPrint.prop('disabled', true);
             } else {
                 console.log('nastavi kod')
                 selectFieldInstallment.prop('disabled', true);
                 selectFieldInstallment.prop('value', 0);
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
                 buttonSave.prop('disabled', true);
-                buttonPrint.prop('disabled', true);
+
                 $.ajax({
                     url: 'get_service_items',
                     data: {classes: newValue},
@@ -291,7 +265,6 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
-                        buttonPrint.prop('disabled', true);
                     }
                 })
                 dataChanged(); // call function
@@ -309,9 +282,26 @@
                 selectFieldInstallment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
                 buttonSave.prop('disabled', true);
-                buttonPrint.prop('disabled', true);
             } else {
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
                 $.ajax({
                     url: 'get_installments',
                     data: {installments: newValue2},
@@ -323,17 +313,16 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
-                        buttonPrint.prop('disabled', true);
 
                         const selectedServiceId = selectFieldServiceItem.val();
                         const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
 
                         pozivNaBrojCells.each(function() {
                             const studentId = this.id.split('_')[3];
-                            $(this).text(`${studentId.padStart(4, '0')}-${selectedServiceId.padStart(3, '0')}`);
+                            $(this).val(`${studentId.padStart(4, '0')}-${selectedServiceId.padStart(3, '0')}`);
                         });
                         uslugaCells.each(function() {
-                            $(this).text(`${selectedServiceText}`); // ovaj tekst mi treba i na drugom mestu
+                            $(this).val(`${selectedServiceText}`); // ovaj tekst mi treba i na drugom mestu
                         });
                     },
                 })                    
@@ -350,13 +339,28 @@
             if(selectFieldInstallment.val() === "0") {
                 inputFieldInstallmentValue.prop('value', "----")
                 iznosCells.forEach(cell => {
-                    cell.innerText = 0;
+                    cell.value = 0;
                 });
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
+                // Iterirajte kroz kolekciju i uklonite readonly atribut sa svakog elementa
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
                 buttonSave.prop('disabled', true);
-                buttonPrint.prop('disabled', true);
             } else {
+                inputFieldQuantityValue.each(function() {
+                    $(this).prop('readonly', false);
+                });
+                inputFieldDiscountValue.each(function() {
+                    $(this).prop('readonly', false);
+                });
                 $.ajax({
                     url: 'get_installment_values',
                     data: {installment_values: newValue3,
@@ -366,7 +370,7 @@
                         var value = data.result
                         inputFieldInstallmentValue.val(value)
                         iznosCells.forEach(cell => {
-                            cell.innerText = value;
+                            cell.value = value;
                             console.log('vrednost rate-- posle izmene rednog broja rate: ', cell.innerText);
 
                             const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
@@ -377,22 +381,36 @@
                             inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / ' + selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
                             inputFieldPurposeOfPayment.prop('disabled', false);
                             inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
-                            buttonSave.prop('disabled', false);
-                            buttonPrint.prop('disabled', true);
+                            if (inputFieldPurposeOfPayment.val().length > 35) {
+                                buttonSave.prop('disabled', true);
+                                inputFieldPurposeOfPayment.addClass("error-result");
+                                errorMessage.show(); // Prikazati errorMessage
+                            } else {
+                                buttonSave.prop('disabled', false);
+                                inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
+                                errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
+                            }
                         });
                         dataChanged(); // call function
                     }
                 })
             }
         });
+        const errorMessage = $("#errorMessage");
         inputFieldPurposeOfPayment.on('input', function() {
-            if(inputFieldPurposeOfPayment.val() === "") {
-                buttonSave.prop('disabled', true)
-                buttonPrint.prop('disabled', true)
+            if (inputFieldPurposeOfPayment.val() === "") {
+                buttonSave.prop('disabled', true);
+                errorMessage.hide(); // Sakrijte errorMessage
+            } else if (inputFieldPurposeOfPayment.val().length > 35) {
+                buttonSave.prop('disabled', true);
+                inputFieldPurposeOfPayment.addClass("error-result");
+                errorMessage.show(); // Prikazati errorMessage
             } else {
-                buttonSave.prop('disabled', false)
+                buttonSave.prop('disabled', false);
+                inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
+                errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
             }
-        })
+        });
 
 
         // Onemogućavanje polja
@@ -402,12 +420,11 @@
             selectFieldServiceItem.prop('disabled', true);
             inputFieldInstallmentValue.val("----");
             iznosCells.forEach(cell => {
-                cell.innerText = 0;
+                cell.value = 0;
             });
             inputFieldPurposeOfPayment.val("");
             inputFieldPurposeOfPayment.prop('disabled', true);
             buttonSave.prop('disabled', true);
-            buttonPrint.prop('disabled', true);
         }
 
         // Inicijalno onemogućavanje polja
@@ -417,7 +434,6 @@
 <script>
     // skripta koja prikuplja sve filtere prosleđuje ih u backend za kreranje zadužejna (StudentDebt) i zapisa transakcija (TransactionRecord)
     const buttonSave = $('#save_button');
-    const buttonPrint = $('#print_button');
     const inputFieldPurposeOfPayment = $('#purpose_of_payment');
 
     buttonSave.on('click', (event) => {
@@ -433,7 +449,6 @@
         console.log('odeljenje: ', selectSection);
         console.log('detalji usluge: ', selectServiceItem);
         console.log('rata: ', selectInstallmentNumber);
-
         var table = $('#data');
         var rows = table.find('tr');
         console.log('redovi: ', rows)
@@ -441,16 +456,13 @@
         var records = []
         for (var i = 0; i < rows.length; i++) {
             var quantityCell = rows[i].querySelector('[id^="kolicina_"]');
-            if (quantityCell !== null && quantityCell.textContent !== null) {
-                var quantity = parseInt(quantityCell.textContent);
-                console.log('količina: ', quantity)
-                
-                if ((rows[i].querySelector('[id^="poziv_na_broj_"]'))) {
+            if (quantityCell) {
+                if (quantityCell) { // Provera da li je ćelija za količinu prisutna
+                    var quantity = parseFloat(quantityCell.value);
                     var studentIdCell = rows[i].querySelector('[id^="poziv_na_broj_"]');
                     var studentId = studentIdCell.id.split('_')[3];
-                    
                     var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
-                    var olaksica = parseFloat(olaksicaCell.textContent.trim()).toFixed(2);
+                    var olaksica = parseFloat(olaksicaCell.value);
                     
                     console.log('Student ID:', studentId);
                     console.log('Količina:', quantity);
@@ -490,7 +502,6 @@
             }
         })
         buttonSave.prop('disabled', true);
-        buttonPrint.prop('disabled', false);
     })
 </script>
 <script>
@@ -501,44 +512,5 @@
         });
     });
 </script>
-<!-- <script>
-    var textInput = document.getElementById('purpose_of_payment');
-    var errorMessage = document.getElementById('errorMessage');
-
-    textInput.addEventListener('input', function () {
-        var inputValue = textInput.value;
-        
-        if (inputValue.length > 35) {
-            errorMessage.textContent = 'Unos ne sme biti veći od 35 karaktera.';
-            textInput.classList.add('disabled-input');
-            buttonSave.prop('disabled', true);
-        } else {
-            errorMessage.textContent = '';
-            textInput.classList.remove('disabled-input');
-            buttonSave.prop('disabled', false);
-        }
-    });
-
-</script> -->
-<script> 
-// <Mihailo probaj da nađeš rešenje da nadjačaš ovu skriptu u odnosu na druge...> 
-		document.addEventListener("DOMContentLoaded", function() {
-			const inputField = document.getElementById("purpose_of_payment");
-			const errorMessage = document.getElementById("errorMessage");
-			const myButton = document.querySelector(".disable-button");
-
-			inputField.addEventListener("input", function() {
-				if (inputField.value.length > 35) {
-					inputField.classList.add("error-result");
-					errorMessage.style.display = "block";
-					myButton.disabled = true; // Disable the button
-				} else {
-					inputField.classList.remove("error-result");
-					errorMessage.style.display = "none";
-					myButton.disabled = false; // Enable the button
-				}
-			});
-		});
-	</script>
 
 {% endblock %}

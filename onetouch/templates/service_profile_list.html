@@ -78,7 +78,6 @@
                                     <input class="form-control form-control-lg" type="" value="{{service_profile.id}}" id="get_service_profile" name="get_service_profile" readonly>
                                 </div>
                                 <div class="form-group">
-                                    NAPRAVITI KONDICIONAL KADA SE PROMENI DOBAVLJAČ DA SE DONJI DUGMIĆI RESETUJU (KAO PRI REGISTRACIJI), DA SE 'TIP USLUGE' IZMENI NA OSNOVU DOBAVLJAČA I OSTALI DA BUDU READONLY
                                     {{ edit_form.supplier_id.label(class="form-control-label") }}
                                     {% if edit_form.supplier_id.errors %}
                                         {{ edit_form.supplier_id(class="form-control form-control-lg is-invalid") }}
@@ -93,7 +92,6 @@
                                     {% endif %}
                                 </div>
                                 <div class="form-group">
-                                    NAPRAVITI KONDICIONAL KADA SE PROMENI TIP USLUGE DA SE DONJA POLJA RESETUJU (KAO KOD REGISTRACIJE)
                                     {{ edit_form.service_id.label(class="form-control-label") }}
                                     {% if edit_form.service_id.errors %}
                                         {{ edit_form.service_id(class="form-control form-control-lg is-invalid") }}
@@ -120,9 +118,6 @@
                                         {% set z = edit_form.service_item_name.process_data(service_profile.service_item_name) %}
                                         {{ edit_form.service_item_name(class="form-control form-control-lg", id="service_item_name-" + service_profile.id|string) }}
                                     {% endif %}
-                                </div>
-                                <div class="bg-danger">
-                                    napraviti da radi select meni za razrede (učitava iz liste izabrane razrede i preselektuje ih)
                                 </div>
                                 <div class="form-group">
                                     {{ edit_form.service_item_class.label(class="form-control-label") }}
@@ -399,9 +394,9 @@
                                         {% endif %}
                                     {% endif %}
                                 </div>
-                                <div>
+                                <!-- <div>
                                     <input type="text" id="result-input" readonly>
-                                </div>
+                                </div> -->
                                 <div class="form-check form-switch">
                                     {% set z = edit_form.archived.process_data(service_profile.archived) %}
                                     {{ edit_form.archived(class="form-check-input", id="archived-"+ service_profile.id|string) }}
