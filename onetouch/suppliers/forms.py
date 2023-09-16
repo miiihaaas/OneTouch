@@ -21,8 +21,10 @@ class EditSupplierModalForm(FlaskForm):
     submit_edit = SubmitField('Sačuvajte')
     
     def validate_supplier_name(self, supplier_name):
+        suppliers = Supplier.query.all()
         supplier = Supplier.query.filter_by(supplier_name=supplier_name.data).first()
-        if supplier:
+        suppliers.remove(Supplier.query.get(supplier.id))
+        if supplier.supplier_name in [s.supplier_name for s in suppliers]:
             raise ValidationError('Već postoji dobavljač sa istim imenom.')
     
 

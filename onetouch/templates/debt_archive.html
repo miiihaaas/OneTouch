@@ -60,6 +60,7 @@
 <div class="form-group">
     <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
     <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
+    <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
 </div>
 <div class="form-group">
     <button class="btn btn-primary loading" id="save_button" name="save_button">Sačuvajte</button>
@@ -92,9 +93,25 @@
             var iznosZaduzenja = (kolicina * iznosRate) - olaksice;
             $('#iznos_zaduženja_' + id).text(iznosZaduzenja.toFixed(2));
         });
+        
+        const inputFieldPurposeOfPayment = $('#purpose_of_payment');
+        const errorMessage = $("#errorMessage");
+        inputFieldPurposeOfPayment.on('input', function() {
+            if (inputFieldPurposeOfPayment.val() === "") {
+                buttonSave.prop('disabled', true);
+                errorMessage.hide(); // Sakrijte errorMessage
+            } else if (inputFieldPurposeOfPayment.val().length > 35) {
+                buttonSave.prop('disabled', true);
+                inputFieldPurposeOfPayment.addClass("error-result");
+                errorMessage.show(); // Prikazati errorMessage
+            } else {
+                buttonSave.prop('disabled', false);
+                inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
+                errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
+            }
+        });
         const buttonSave = $('#save_button');
         const buttonPrint = $('#print_button');
-        const inputFieldPurposeOfPayment = $('#purpose_of_payment');
 
         buttonSave.on('click', (event) => {
             console.log('test radi - pritisnuto je dugme sačuvaj. nastavi kodiranje')

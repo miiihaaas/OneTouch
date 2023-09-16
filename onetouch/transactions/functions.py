@@ -23,7 +23,7 @@ def send_mail(uplatnica, path, file_name):
     parent_email = student.parent_email
     print(f'Poslao bi mejl roditelju na: {parent_email}')
     sender_email = 'noreply@uplatnice.online'
-    recipient_email = 'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
+    recipient_email = parent_email #!'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
     body = f'''
 <html>
