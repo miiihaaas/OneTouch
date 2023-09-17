@@ -24,30 +24,30 @@
             <td>{{ record.id }}</td>
             <td>
                 {% if record.student_id == 0 %}
-                    <strong>Ignorisana uplata</strong>
+                    <input type="text" class="form-control" value="Ignorisana uplata" readonly>
                 {% elif record.student_id == 1 %}
-                    <strong>Greška</strong>
+                    <input type="text" class="form-control" value="Greška" readonly>
                 {% else %}
                     <a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a>
                 {% endif %}
             </td>
-            <td>{{ record.reference_number }}</td>
-            <td contenteditable="true" class="edit-cell student-id">{{ "{:04d}".format(record.student_id) }}</td>
-            <td contenteditable="true" class="edit-cell service-id">{{ "{:03d}".format(record.service_item_id) }}</td>
+            <td><input type="text" class="form-control" value="{{ record.reference_number }}" readonly></td>
+            <td><input id="student_id_{{ record.id }}" class="form-control" type="text" value="{{ '{:04d}'.format(record.student_id) }}"></td>
+            <td><input id="service_id_{{ record.id }}" class="form-control" type="text" value="{{ '{:03d}'.format(record.service_item_id) }}"></td>
             <td>
                 {% if record.student_id == 1 %}
-                    <strong>Greška</strong>
+                    <input type="text" class="form-control" value="Greška" readonly>
                 {% elif record.service_item_id == 0 %}
-                    <strong>Ignorisana uplata</strong>
+                    <input type="text" class="form-control" value="Ignorisana uplata" readonly>
                 {% elif record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
-                    {{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}
+                    <input class="form-control" value="{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}" readonly>
                 {% else %}
-                    <strong>Greška</strong>
+                    <input type="text" class="form-control" value="Greška" readonly>
                 {% endif %}
                 </td>
-            <td>{{ record.purpose_of_payment }}</td>
-            <td>{{ record.payer }}</td>
-            <td>{{ record.student_debt_total }}</td>
+            <td><input class="form-control" value="{{ record.purpose_of_payment }}" readonly></td>
+            <td><input value="{{ record.payer }}" class="form-control" readonly></td>
+            <td><input value="{{ '{:.2f}'.format(record.student_debt_total) }}" class="form-control" readonly></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -116,7 +116,9 @@
         var table = $('#data').DataTable({
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
-            }
+            },
+            "lengthMenu": [50, 100, 200],
+            "pageLength": 50
         });
         var tableExport = $('#export_data').DataTable({
             language: {
@@ -124,23 +126,40 @@
             }
         });
         // Promena vrednosti u koloni 'ID učenika'
-        $('.student-id').on('input', function() {
-            var row = $(this).closest('tr');
-            var studentId = $(this).text();
-            var studentName = get_student_name(studentId);
-            console.log('test_studen id: ', studentName, studentId)
-            row.find('td:nth-child(4)').text(studentId);
-            row.find('td:nth-child(2)').text(studentName);
-        });
+        $('#data tbody').on('input', 'input[id^="student_id_"]', function () {
+            var row = table.row($(this).closest('tr'));
+            var studentId = $(this).val();
+            var studentDetails = get_student_name(studentId)
+            console.log('debuging - red: ', row)
+            console.log('debuging - studentId: ', studentId)
+            console.log('debuging - studentIdDetails: ', studentDetails)
+            // Pristupamo input elementu u koloni 'Učenik' unutar trenutnog reda
+            var $studentInput = $(this).closest('tr').find('td:eq(1) input');
 
+            // Postavljanje nove vrednosti u input elementu
+            $studentInput.val(studentDetails);
+
+            row.invalidate().draw();
+            // Fokusiranje input polja nakon ažuriranja vrednosti
+            $(this).focus();
+        });
         // Promena vrednosti u koloni 'ID usluge'
-        $('.service-id').on('input', function() {
-            var row = $(this).closest('tr');
-            var serviceId = $(this).text();
+        $('#data tbody').on('input', 'input[id^="service_id_"]', function() {
+            var row = table.row($(this).closest('tr'));
+            var serviceId = $(this).val();
             var serviceDetails = get_service_name(serviceId);
-            console.log('test_service id: ', serviceDetails, serviceId)
-            row.find('td:nth-child(5)').text(serviceId);
-            row.find('td:nth-child(6)').text(serviceDetails);
+            console.log('debuging - red: ', row)
+            console.log('debuging - serviceId: ', serviceId)
+            console.log('debuging - serviceDetails: ', serviceDetails)
+            // Pristupamo input elementu u koloni 'Učenik' unutar trenutnog reda
+            var $serviceInput = $(this).closest('tr').find('td:eq(5) input');
+
+            // Postavljanje nove vrednosti u input elementu
+            $serviceInput.val(serviceDetails);
+
+            row.invalidate().draw();
+            // Fokusiranje input polja nakon ažuriranja vrednosti
+            $(this).focus();
         });
         const buttonSave = $('#save_button');
         buttonSave.on('click', (event) => {
@@ -162,8 +181,10 @@
             for (var i = 1; i < rows.length; i++) {
                 const row = rows[i];
                 const recordId = parseInt($(row).find('td:nth-child(1)').text());
-                const studentId = parseInt($(row).find('.student-id').text());
-                const serviceId = parseInt($(row).find('.service-id').text());
+                const studentIdInput = $(row).find('td:nth-child(4) input'); // Dohvati input polje iz stupca 'ID učenika'
+                const serviceIdInput = $(row).find('td:nth-child(5) input'); // Dohvati input polje iz stupca 'ID usluge'
+                const studentId = parseInt(studentIdInput.val()); // Dohvati vrijednost iz input polja 'ID učenika'
+                const serviceId = parseInt(serviceIdInput.val()); // Dohvati vrijednost iz input polja 'ID usluge'
                 records.push({
                     'record_id': recordId,
                     'student_id': studentId,

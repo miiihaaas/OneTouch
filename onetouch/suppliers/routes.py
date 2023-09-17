@@ -26,26 +26,37 @@ def supplier_list():
     suppliers = Supplier.query.filter(Supplier.id != 0).all()
     edit_form = EditSupplierModalForm()
     register_form = RegisterSupplierModalForm()
-    if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        supplier = Supplier.query.get(request.form.get('supplier_id'))
-        
-        supplier.supplier_name = edit_form.supplier_name.data
-        supplier.archived = edit_form.archived.data
-        db.session.commit()
-        flash(f'Izmene profila dobavljača "{supplier.supplier_name}" su sačuvane.', 'success')
-        return redirect(url_for('suppliers.supplier_list'))
-    elif request.method == 'GET': 
-        supplier = Supplier.query.get(request.form.get('supplier_id'))
-        
-        #
-    
-    if register_form.validate_on_submit() and request.form.get('submit_register'):
-        supplier = Supplier(supplier_name=register_form.supplier_name.data,
-                            archived=False)
-        db.session.add(supplier)
-        db.session.commit()
-        flash(f'Registrovan je novi dobavljač "{supplier.supplier_name}".', 'success')
-        return redirect(url_for('suppliers.supplier_list'))
+    print(f'test submit dugmeta: {request.form.get("submit_edit")=} ili {request.form.get("submit_register")=}')
+    print('--------------------------------------------------------')
+    if request.form.get('submit_edit'):
+        if edit_form.validate_on_submit():
+            supplier = Supplier.query.get(request.form.get('supplier_id'))
+            print(f'{supplier.supplier_name=}; {supplier.archived=}')
+            suppliers = Supplier.query.all()
+            suppliers.remove(Supplier.query.get(supplier.id))
+            
+            supplier.supplier_name = edit_form.supplier_name.data
+            supplier.archived = edit_form.archived.data
+            if supplier.supplier_name in [s.supplier_name for s in suppliers]:
+                flash(f'Dobavljač sa nazivom "{supplier.supplier_name}" već postoji.', 'danger')
+                return redirect(url_for('suppliers.supplier_list'))
+            db.session.commit()
+            flash(f'Izmene profila dobavljača "{supplier.supplier_name}" su sačuvane.', 'success')
+            return redirect(url_for('suppliers.supplier_list'))
+        elif request.method == 'GET': 
+            supplier = Supplier.query.get(request.form.get('supplier_id'))
+    if request.form.get('submit_register'):
+        if register_form.validate_on_submit():
+            existing_supplier = Supplier.query.filter_by(supplier_name=register_form.supplier_name.data).first()
+            if existing_supplier:
+                flash(f'Dobavljač sa nazivom "{existing_supplier.supplier_name}" već postoji.', 'danger')
+                return redirect(url_for('suppliers.supplier_list'))
+            supplier = Supplier(supplier_name=register_form.supplier_name.data,
+                                archived=False)
+            db.session.add(supplier)
+            db.session.commit()
+            flash(f'Registrovan je novi dobavljač "{supplier.supplier_name}".', 'success')
+            return redirect(url_for('suppliers.supplier_list'))
 
 
     return render_template('supplier_list.html',
