@@ -42,6 +42,9 @@
     <label for="today_date" class="form-control-label">Datum</label>
     <input type="date" id="today_date" class="form-control" readonly>
 </div>
+<div class="form-group" style="display: inline-block;">
+    <button id="zaduzi_sve" class="btn btn-primary" type="button" disabled>zaduži sve učenike</button>
+</div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
@@ -143,6 +146,7 @@
         console.log('test iznosCells: ', iznosCells)
         const inputFieldPurposeOfPayment = $('#purpose_of_payment');
         const buttonSave = $('#save_button');
+        const buttonZaduziSve = $("#zaduzi_sve");
 
         const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
         document.getElementById("today_date").value = today;
@@ -192,6 +196,7 @@
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
                 buttonSave.prop('disabled', true);
+                buttonZaduziSve.prop('disabled', true);
             } else {
                 console.log('selectkovani razred: ', selectFieldClasses.val());
                 selectFieldSection.prop('disabled', false);
@@ -240,6 +245,7 @@
                     $(this).prop('value', 0);
                 });
                 buttonSave.prop('disabled', true);
+                buttonZaduziSve.prop('disabled', true);
             } else {
                 console.log('nastavi kod')
                 selectFieldInstallment.prop('disabled', true);
@@ -294,22 +300,16 @@
                     $(this).prop('value', 0);
                 });
                 buttonSave.prop('disabled', true);
+                buttonZaduziSve.prop('disabled', true);
             } else {
-                inputFieldQuantityValue.each(function() {
-                    console.log("Izvršava se uvjet");
-                    $(this).prop('readonly', true);
-                    $(this).prop('value', 0);
-                });
-                inputFieldDiscountValue.each(function(){
-                    $(this).prop('readonly', true);
-                    $(this).prop('value', 0);
-                });
                 $.ajax({
                     url: 'get_installments',
                     data: {installments: newValue2},
                     method: 'POST',
+                    dataType: 'json',
                     success: function(data) {
-                        selectFieldInstallment.html(data);
+                        const komadno = data.komadno
+                        selectFieldInstallment.html(data.html);
                         selectFieldInstallment.prop('disabled', false);
                         inputFieldInstallmentValue.prop('value', "----");
                         inputFieldPurposeOfPayment.prop('value', "");
@@ -326,6 +326,38 @@
                         uslugaCells.each(function() {
                             $(this).val(`${selectedServiceText}`); // ovaj tekst mi treba i na drugom mestu
                         });
+                        console.log('debug komadno: ', komadno)
+                        if(komadno){
+                            buttonZaduziSve.prop('disabled', true);
+                            // dodati kod da input za količinu može da ima vrednost ili 0 ili 1
+                            inputFieldQuantityValue.each(function() {
+                                console.log("Izvršava se uvjet");
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                                $(this).prop('max', 100);
+                            });
+                            inputFieldDiscountValue.each(function(){
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                            });
+                        } else {
+                            buttonZaduziSve.prop('disabled', false)
+                            // dodati kod da input za količinu može da ima vrednost od 0 do npr 30
+                            inputFieldQuantityValue.each(function() {
+                                console.log("Izvršava se uvjet");
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                                $(this).prop('max', 1);
+                            });
+                            inputFieldDiscountValue.each(function(){
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                            });
+                        }
                     },
                 })                    
                 dataChanged(); // call function
@@ -413,7 +445,22 @@
                 errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
             }
         });
+        buttonZaduziSve.on('click', function() {
+            // Selektujte tabelu sa ID-om "data" koristeći jQuery
+            var $tabela = $('#data');
 
+            // Selektujte sve input elemente u sedmoj koloni "Količina" unutar tabele
+            var $kolicinaInputElements = $tabela.find('tbody tr td:nth-child(5) input');
+
+            // Inicijalizujte prazan niz za čuvanje izvučenih vrednosti
+            var kolicinaVrednosti = [];
+            $kolicinaInputElements.each(function(){
+                $(this).prop('value', 1);
+                var id = $(this).attr('id').split("_")[1];
+                console.log('debug this.id: ',  id)
+                dataChanged(id);
+            });
+        });
 
         // Onemogućavanje polja
         function disableFields() {
@@ -428,6 +475,41 @@
             inputFieldPurposeOfPayment.prop('disabled', true);
             buttonSave.prop('disabled', true);
         }
+
+        // ograničava vrednosti u intervalu min-max za svaki input element u koloni 'Količina'
+        // function proveraVrednostiKolicine() {
+        //     // Selektujte sve input elemente u sedmoj koloni "Količina" unutar tabele
+        //     var $kolicinaInputElements = $('#data tbody tr td:nth-child(5) input');
+
+        //     // Dodajte događaj za unos (input event) na svako input polje
+        //     $kolicinaInputElements.on('input', function() {
+        //         // Izvucite trenutnu vrednost iz input polja
+        //         var vrednost = parseFloat($(this).val());
+
+        //         // Izvucite min i max vrednosti iz određenih input polja (promenite selektor prema vašem HTML-u)
+        //         var $minInput = $('#minInput'); // Promenite ovaj selektor prema stvarnom HTML-u
+        //         var $maxInput = $('#maxInput'); // Promenite ovaj selektor prema stvarnom HTML-u
+        //         var min = parseFloat($minInput.val());
+        //         var max = parseFloat($maxInput.val());
+
+        //         // Proverite da li je vrednost manja od minimuma
+        //         if (vrednost < min) {
+        //             // Ako je manja, postavite vrednost na minimum
+        //             $(this).val(min);
+        //         }
+
+        //         // Proverite da li je vrednost veća od maksimuma
+        //         if (vrednost > max) {
+        //             // Ako je veća od maksimuma, postavite vrednost na prve dve cifre
+        //             var prveDveCifre = Math.floor(vrednost / 10); // Dobijanje prve dve cifre
+        //             $(this).val(prveDveCifre);
+        //         }
+        //     });
+        // }
+
+        // // Pozovite funkciju za proveru vrednosti količine
+        // proveraVrednostiKolicine();
+
 
         // Inicijalno onemogućavanje polja
         disableFields();

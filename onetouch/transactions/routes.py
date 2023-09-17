@@ -3,7 +3,7 @@ import requests, os, io
 import xml.etree.ElementTree as ET
 from PIL import Image
 from datetime import datetime, date, timedelta
-from flask import  render_template, url_for, flash, redirect, request, send_file
+from flask import  render_template, url_for, flash, redirect, request, send_file, jsonify
 from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
@@ -62,6 +62,12 @@ def get_installments():
     print(f'from AJAX installments: {service_item_id=}')
     options = [(0, "Selektujte ratu")]
     service_item = ServiceItem.query.get_or_404(service_item_id)
+    if service_item.service_item_service.payment_per_unit == 'kom':
+        komadno = True
+    else:
+        komadno = False
+    
+    print(f'{komadno=}')
     
     if service_item_id == 1:
         options.append((1, f'Rata 1'))
@@ -78,7 +84,7 @@ def get_installments():
     html = ''
     for option in options:
         html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
-    return html
+    return jsonify(html=html, komadno=komadno)
 
 
 @transactions.route('/get_installment_values', methods=['POST'])
