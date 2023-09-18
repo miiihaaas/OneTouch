@@ -611,7 +611,8 @@ def posting_payment():
             new_payment = StudentPayment(payment_date=payment_date,
                                             statment_nubmer=statment_nubmer,
                                             total_payment_amount=total_payment_amount,
-                                            number_of_items=number_of_items
+                                            number_of_items=number_of_items,
+                                            number_of_errors=0
                                         )
             db.session.add(new_payment)
             db.session.commit()

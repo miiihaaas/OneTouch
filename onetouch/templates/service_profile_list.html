@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
-<a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+<div>
+    <a href="#" class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+</div>
 <hr>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
@@ -12,7 +14,7 @@
             <th>Cena</th>
             <th>Broj rata</th>
             <th>Razred</th>
-            <th>Aktivnosti</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -26,7 +28,7 @@
             {% else %}
                 {{ service_profile.service_item_service.service_name }}
             {% endif %}</td>
-            <td>{{ service_profile.price }}</td>
+            <td>{{ "{:.2f}".format(service_profile.price) }}</td>
             <td>{{ service_profile.installment_number }}</td>
             <td>{{ service_profile.service_item_class }}</td>
             <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
@@ -45,13 +47,13 @@
                         </button>
                     </div>
                 <div class="modal-body">
-                <label for="input_password">Da bi ste obrisali uslugu "{{ service_profile.service_item_name }}" potrebno je potvrditi svojom lozinkom:</label>
+                <label for="input_password">Da biste obrisali uslugu "{{ service_profile.service_item_name }}" potrebno je potvrditi svojom lozinkom:</label>
                 </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                         <form action="{{ url_for('suppliers.delete_service_profile', service_profile_id=service_profile.id) }}" method="post">
                             <input class="btn btn-danger" type="submit" value="Obrišite uslugu">
-                            <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
+                            <input class="form-control" type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
                         </form>
                     </div>
                 </div>

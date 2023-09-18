@@ -1,9 +1,8 @@
-from bs4 import BeautifulSoup
 from datetime import date
 from flask import Blueprint, jsonify
 from flask import render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
-from onetouch.models import Supplier, Service, ServiceItem, User
+from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord
 from onetouch.suppliers.forms import RegisterSupplierModalForm, EditSupplierModalForm, EditServiceModalForm, RegisterServiceModalForm, RegisterServiceProfileModalForm, EditServiceProfileModalForm
 from flask_login import login_required, current_user
 
@@ -261,12 +260,16 @@ def get_payment():
 def delete_service_profile(service_profile_id):
     print(f'delete profile section: {service_profile_id}')
     service_profile = ServiceItem.query.get_or_404(service_profile_id)
+    transactions = TransactionRecord.query.filter_by(service_item_id=service_profile_id).all()
     if not current_user.is_authenticated:
         flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         print ('nije dobar password')
-        flash('Niste dobro uneli lozinku.', 'danger')
+        flash('Uneliste pogrešnu lozinku.', 'danger')
+        return redirect(url_for('suppliers.service_profile_list'))
+    elif transactions:
+        flash(f'Usluga "{service_profile.service_item_name}" ima zaduženja i jedino što možete je da je arhivirate.', 'danger')
         return redirect(url_for('suppliers.service_profile_list'))
     else:
         flash(f'Uspešno je obrisana usluga "{service_profile.service_item_name}".', 'success')
