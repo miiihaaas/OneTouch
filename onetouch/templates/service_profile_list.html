@@ -396,9 +396,9 @@
                                         {% endif %}
                                     {% endif %}
                                 </div>
-                                <div>
+                                <!-- <div>
                                     <input type="text" id="result-input" readonly>
-                                </div>
+                                </div> -->
                                 <div class="form-check form-switch">
                                     {% set z = edit_form.archived.process_data(service_profile.archived) %}
                                     {{ edit_form.archived(class="form-check-input", id="archived-"+ service_profile.id|string) }}

@@ -69,7 +69,7 @@
             <td>{{ student.student_section }}</td> <!-- sakriveni, ali potrebni zbog filtera -->
             <td><input id="poziv_na_broj_{{ student.id }}" class="form-control" type="text" value="" readonly></td>
             <td><input id="usluga_{{ student.id }}" class="form-control" type="text" value="" readonly></td>
-            <td><input id="kolicina_{{ student.id }}" class="form-control" type="number" value="0" readonly></td>
+            <td><input id="kolicina_{{ student.id }}" class="form-control" type="number" step="1" onkeypress='return event.charCode >= 48 && event.charCode <= 57' value="0" readonly></td>
             <td><input id="iznos-{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
             <td><input id="olaksice_{{ student.id }}" class="form-control" type="number" step="0.01" value="0.00" readonly></td>
             <td><input id="iznos_zaduženja_{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
