@@ -125,9 +125,9 @@
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             }
         });
-        // Dodajemo filter na prvu kolonu
-        tableExport.column(0).search('>0', true, false).draw();
-        
+        // Filtriranje prvog reda da prikaže samo vrednosti različite od "000"
+        tableExport.column(0).search('^(?!000).', true, false).draw();
+
         // Promena vrednosti u koloni 'ID učenika'
         $('#data tbody').on('input', 'input[id^="student_id_"]', function () {
             var row = table.row($(this).closest('tr'));

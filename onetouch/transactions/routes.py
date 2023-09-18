@@ -256,7 +256,7 @@ def submit_records():
         #! ako ima greške onda se naznači nekako red sa greškom
         payment.number_of_errors = number_of_errors
         db.session.commit()
-        flash('Uspešno ste izmijenili uplate!','success')
+        flash('Uspešno ste izmenili uplate.','success')
         return str(student_payment_id)
         
     
@@ -414,7 +414,7 @@ def payment_archive(payment_id):
     students_data = [
             {
                 'student_id': 0,
-                'student_name': "ignoisana",
+                'student_name': "ignorisana",
                 'student_surname': "uplata",
                 
             }
