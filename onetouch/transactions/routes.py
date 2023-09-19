@@ -484,6 +484,7 @@ def payment_archive(payment_id):
 
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
 def posting_payment():
+    school = School.query.first()
     if request.method == 'POST' and ('submitBtnImportData' in request.form):
         file = request.files['fileInput']
         if file.filename == '':
@@ -540,7 +541,7 @@ def posting_payment():
             podaci['PozivZaduzenja'] = stavka.find('PozivZaduzenja').text
             podaci['SifraPlacanja'] = stavka.find('SifraPlacanja').text
             podaci['Iznos'] = stavka.find('Iznos').text
-            podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text
+            podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! ova pozicija se traži
             podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
             podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
             podaci['ModelPozivaOdobrenja'] = stavka.find('ModelPozivaOdobrenja').text
@@ -554,6 +555,10 @@ def posting_payment():
             podaci['TipSloga'] = stavka.find('TipSloga').text
 
             #! provera da li je poziv na broj validan
+            if podaci['RacunOdobrenja'] == school.school_bank_account:
+                print('izaći iz foo loop u sledeću iteraciju')
+                continue
+            print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_account=}')
             if len(podaci['PozivOdobrenja']) == 7:
                 # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
                 formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
