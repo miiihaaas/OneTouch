@@ -555,7 +555,7 @@ def posting_payment():
             podaci['TipSloga'] = stavka.find('TipSloga').text
 
             #! provera da li je poziv na broj validan
-            if podaci['RacunOdobrenja'] == school.school_bank_account:
+            if podaci['RacunOdobrenja'] != school.school_bank_account:
                 print('izaći iz foo loop u sledeću iteraciju')
                 continue
             print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_account=}')
