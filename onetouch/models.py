@@ -14,6 +14,7 @@ class User(db.Model, UserMixin): #! ovo je samo administrator škole
     user_surname = db.Column(db.String(255), nullable=False)
     user_mail = db.Column(db.String(255), nullable=False)
     user_password = db.Column(db.String(255), nullable=False)
+    school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(app.config['SECRET_KEY'], expires_sec)
@@ -28,7 +29,7 @@ class User(db.Model, UserMixin): #! ovo je samo administrator škole
         return User.query.get(user_id)
 
     def __repr__(self):
-        return f"{self.id}, '{self.name} {self.surname}'"
+        return f"{self.id}, '{self.user_name} {self.user_surname}'"
 
 
 class School(db.Model):
@@ -39,6 +40,7 @@ class School(db.Model):
     school_city = db.Column(db.String(255), nullable=False)
     school_municipality = db.Column(db.String(255), nullable=False)
     school_bank_account = db.Column(db.String(255), nullable=False)
+    users = db.relationship('User', backref='user_school', lazy=True)
 
 
 class Supplier(db.Model):

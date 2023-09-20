@@ -72,9 +72,9 @@
             <td>{{ student['student_name'] }} {{ student['student_surname'] }}</td>
             <td>{{ student['student_class'] }}</td>
             <td>{{ student['student_section'] }}</td>
-            <td>{{ student['student_debt'] }}</td>
-            <td>{{ student['student_payment'] }}</td>
-            <td>{{ student['saldo'] }}</td>
+            <td>{{ "{:.2f}".format(student['student_debt']) }}</td>
+            <td>{{ "{:.2f}".format(student['student_payment']) }}</td>
+            <td>{{ "{:.2f}".format(student['saldo']) }}</td>
             <td><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a></td>
         </tr>
         {% endfor %}
@@ -107,9 +107,9 @@
     }
 
     // Prikazivanje suma u HTML-u
-    zaduzenjeSumElement.textContent = zaduzenjeSum;
-    uplateSumElement.textContent = uplateSum;
-    saldoSumElement.textContent = saldoSum;
+    zaduzenjeSumElement.textContent = zaduzenjeSum.toFixed(2);
+    uplateSumElement.textContent = uplateSum.toFixed(2);
+    saldoSumElement.textContent = saldoSum.toFixed(2);
     
     $(document).ready(function () {
         var table = $('#data').DataTable({

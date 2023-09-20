@@ -38,9 +38,9 @@
             <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
             <td>{{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_service_item.service_item_name }}</td>
             <td id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
-            <td id="installment_{{ record.transaction_record_student.id }}">{{ record.studetn_debt_installment_value }}</td>
-            <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_discount}}</td>
-            <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount}}</td>
+            <td id="installment_{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.studetn_debt_installment_value) }}</td>
+            <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.student_debt_discount)}}</td>
+            <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}}</td>
             <td>
                 {% if record.student_debt_amount > 0 %}
                     {% if record.transaction_record_student.send_mail %}

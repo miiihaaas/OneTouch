@@ -28,7 +28,7 @@
         <tr>
             <td>{{ payment.payment_date.strftime('%d.%m.%Y.') }}</td>
             <td>{{ payment.statment_nubmer }}</td>
-            <td>{{ payment.total_payment_amount }}</td>
+            <td>{{ "{:.2f}".format(payment.total_payment_amount) }}</td>
             <td>{{ payment.number_of_items }} ({{ payment.number_of_errors }})</td>
             <td><a class="btn-x btn-primary-x" href="{{ url_for('transactions.payment_archive', payment_id=payment.id) }}" title="Pregled arhive izvoda"><i class="fa fa-magnifying-glass awesomeedit"></i></a></td>
         </tr>

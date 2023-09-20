@@ -34,7 +34,9 @@
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel">
         <div class="container">
-          <a class="navbar-brand mr-4" href="/">{{ current_user.user_name }}</a>
+          {% if current_user.is_authenticated %}
+          <a class="navbar-brand mr-4" href="">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
+          {% endif %}
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -54,50 +56,12 @@
       </nav>
     </header>
     <div class="wrapper d-flex align-items-stretch">
+      {% if current_user.is_authenticated %}
       <nav id="sidebar" class>
-        <!--
-        <div class="custom-menu">
-          <button type="button" id="sidebarColapse" class="btn btn-primary">
-            <i class="fa fa-bars">
-              
-            </i>
-            <span class="sr-only">Togle Menu</span>
-          </button>
-        </div>
-        -->
         <div class="p-4 pt-5">
           <h1>
             <p href="#" class="logo">Đačke uplate</p>
           </h1>
-<!--     <ul class="list-unstyled components mb-5">
-            <li>
-              <a href="{{ url_for('main.home') }}">Početna strana</a>
-            </li>
-            <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Unos podataka #</a>
-              <a class="nav-item nav-link" href="{{ url_for('students.student_list') }}">Učenici</a>
-              <a class="nav-item nav-link" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
-              <a class="nav-item nav-link" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
-              <a class="nav-item nav-link" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
-              <a class="nav-item nav-link" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
-              <a class="nav-item nav-link" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
-            </li>
-            <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Knjiženje #</a>
-              <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}">Zaduživanje učenika</a>
-              <a class="nav-item nav-link" href="{{ url_for('transactions.posting_payment') }}">Knjiženje uplata</a>
-            </li>
-            <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Pregled #</a>
-              <a class="nav-item nav-link" href="{{ url_for('overviews.overview_students') }}">Učenik</a>
-              <a class="nav-item nav-link" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
-            </li>
-            <li class="active">
-              <a href="#" data-toggle="collapse" aria-expanded="true" class="dropdown-togle">Arhiva #</a>
-              <a class="nav-item nav-link" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
-              <a class="nav-item nav-link" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
-            </li>
-          </ul>-->
           <div class="accordion leftcolacc" id="accordionMenu">
             <a href="{{ url_for('main.home') }}" class="homelink">Početna strana</a>
             <div class="accordion-item">
@@ -159,6 +123,7 @@
           </div>
         </div>
       </nav>
+      {% endif %}
       
       <main role="main" class="container">
         <div class="row">

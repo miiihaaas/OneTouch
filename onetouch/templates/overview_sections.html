@@ -72,9 +72,9 @@
             <td>{{ record['class'] }}</td>
             <td>{{ record['section'] }}</td>
             <td><strong>({{ record['class'] }}/{{ record['section'] }})</strong> {{ record['teacher'] }}</td>
-            <td>{{ record['student_debt'] }}</td>
-            <td>{{ record['student_payment'] }}</td>
-            <td>{{ record['saldo'] }}</td>
+            <td>{{ "{:.2f}".format(record['student_debt']) }}</td>
+            <td>{{ "{:.2f}".format(record['student_payment']) }}</td>
+            <td>{{ "{:.2f}".format(record['saldo']) }}</td>
         </tr>
         {% endfor %}
     </tbody>
@@ -106,9 +106,9 @@
     }
 
     // Prikazivanje suma u HTML-u
-    zaduzenjeSumElement.textContent = zaduzenjeSum;
-    uplateSumElement.textContent = uplateSum;
-    saldoSumElement.textContent = saldoSum;
+    zaduzenjeSumElement.textContent = zaduzenjeSum.toFixed(2);
+    uplateSumElement.textContent = uplateSum.toFixed(2);
+    saldoSumElement.textContent = saldoSum.toFixed(2);
     
     $(document).ready(function() {
         var table = $('#data').DataTable({
