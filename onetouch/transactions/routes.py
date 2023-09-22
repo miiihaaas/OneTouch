@@ -45,6 +45,7 @@ def get_service_items():
     print(f'from AJAX service items: {service_item_class=}')
     options = [(0, "Selektujte uslugu")]
     service_items = ServiceItem.query.filter_by(archived=False).all()
+    service_items = [item for item in service_items if item.id != 0] #! treba da eliminiše uslugu sa id=0 koji se koristi za "grešku"
     for service_item in service_items:
         if str(service_item_class) in service_item.service_item_class:
             options.append((service_item.id, service_item.service_item_service.service_name + " - " + service_item.service_item_name))

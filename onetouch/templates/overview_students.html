@@ -2,6 +2,26 @@
 {% block content %}
 <div class="row form-group align-items-end">
     <div class="col form-group">
+        <label for="">Pretraga po usluzi</label>
+        <select name="searchUsluga" id="searchUsluga" class="form-select">
+            {% if service_id == "0" %}
+            <option value="0" selected>Sve</option>
+            {% for option in options %}
+            <option value="{{option['value']}}">{{option['label']}}</option>
+            {% endfor %}
+            {% else %}
+            <option value="0">Sve</option>
+            {% for option in options %}
+            {% if service_id == option['value'] %}
+            <option value="{{option['value']}}" selected>{{option['label']}}</option>
+            {% else %}
+            <option value="{{option['value']}}">{{option['label']}}</option>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+        </select>
+    </div>
+    <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
             <option value="">Svi razredi</option>
@@ -17,26 +37,6 @@
             {% for section in range(16) %}
                 <option value="{{ section }}">{{ section }}</option>
             {% endfor %}
-        </select>
-    </div>
-    <div class="col form-group">
-        <label for="">Pretraga po usluzi</label>
-        <select name="searchUsluga" id="searchUsluga" class="form-select">
-            {% if service_id == "0" %}
-                <option value="0" selected>Sve</option>
-                {% for option in options %}
-                    <option value="{{option['value']}}">{{option['label']}}</option>
-                {% endfor %}
-            {% else %}
-                <option value="0">Sve</option>
-                {% for option in options %}
-                    {% if service_id == option['value'] %}
-                        <option value="{{option['value']}}" selected>{{option['label']}}</option>
-                    {% else %}
-                        <option value="{{option['value']}}">{{option['label']}}</option>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
         </select>
     </div>
     <div class="col form-group">

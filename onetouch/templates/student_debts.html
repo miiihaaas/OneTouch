@@ -40,10 +40,14 @@
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="today_date" class="form-control-label">Datum</label>
-    <input type="date" id="today_date" class="form-control" readonly>
+    <input type="date" id="today_date" class="form-control" disabled>
 </div>
 <div class="form-group" style="display: inline-block;">
+    <label for="zaduzi_sve_kolicina" class="form-control-label">Količina</label>
+    <input id="zaduzi_sve_kolicina" class="form-control" type="number" min="0" value="1" disabled style="width: 30%;">
     <button id="zaduzi_sve" class="btn btn-primary" type="button" disabled>zaduži sve učenike</button>
+</div>
+<div class="form-group" style="display: inline-block;">
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
@@ -147,6 +151,7 @@
         const inputFieldPurposeOfPayment = $('#purpose_of_payment');
         const buttonSave = $('#save_button');
         const buttonZaduziSve = $("#zaduzi_sve");
+        const inputZaduziSveKolicina = $("#zaduzi_sve_kolicina");
 
         const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
         document.getElementById("today_date").value = today;
@@ -197,6 +202,7 @@
                 inputFieldPurposeOfPayment.prop('disabled', true);
                 buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
+                inputZaduziSveKolicina.prop('disabled', true);
             } else {
                 console.log('selectkovani razred: ', selectFieldClasses.val());
                 selectFieldSection.prop('disabled', false);
@@ -246,6 +252,7 @@
                 });
                 buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
+                inputZaduziSveKolicina.prop('disabled', true);
             } else {
                 console.log('nastavi kod')
                 selectFieldInstallment.prop('disabled', true);
@@ -301,6 +308,7 @@
                 });
                 buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
+                inputZaduziSveKolicina.prop('disabled', true);
             } else {
                 $.ajax({
                     url: 'get_installments',
@@ -328,7 +336,9 @@
                         });
                         console.log('debug komadno: ', komadno)
                         if(komadno){
-                            buttonZaduziSve.prop('disabled', true);
+                            buttonZaduziSve.prop('disabled', false);
+                            inputZaduziSveKolicina.prop('disabled', false);
+                            inputZaduziSveKolicina.val(0);
                             // dodati kod da input za količinu može da ima vrednost ili 0 ili 1
                             inputFieldQuantityValue.each(function() {
                                 console.log("Izvršava se uvjet");
@@ -343,7 +353,9 @@
                                 $(this).prop('min', 0);
                             });
                         } else {
-                            buttonZaduziSve.prop('disabled', false)
+                            buttonZaduziSve.prop('disabled', false);
+                            inputZaduziSveKolicina.prop('disabled', true);
+                            inputZaduziSveKolicina.val(1);
                             // dodati kod da input za količinu može da ima vrednost od 0 do npr 30
                             inputFieldQuantityValue.each(function() {
                                 console.log("Izvršava se uvjet");
@@ -452,10 +464,13 @@
             // Selektujte sve input elemente u sedmoj koloni "Količina" unutar tabele
             var $kolicinaInputElements = $tabela.find('tbody tr td:nth-child(5) input');
 
+            //čita vrednost iz input elementa koju treba da dodeli svim redovima
+            var vrednost = inputZaduziSveKolicina.val();
+
             // Inicijalizujte prazan niz za čuvanje izvučenih vrednosti
             var kolicinaVrednosti = [];
             $kolicinaInputElements.each(function(){
-                $(this).prop('value', 1);
+                $(this).prop('value', vrednost);
                 var id = $(this).attr('id').split("_")[1];
                 console.log('debug this.id: ',  id)
                 dataChanged(id);
