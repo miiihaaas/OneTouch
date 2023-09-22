@@ -81,7 +81,9 @@
         var table = $('#data').DataTable({
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
-            }
+            },
+            "lengthMenu": [50, 100, 200, 400, 800],
+            "pageLength": 800,
         });
         // Postavljanje događaja nakon izmjene ćelija "Količina" i "Olakšica"
         $('.edit-cell').on('input', function() {
