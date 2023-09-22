@@ -118,7 +118,8 @@
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             },
             "lengthMenu": [50, 100, 200],
-            "pageLength": 50
+            "pageLength": 50,
+            "stateSave": true
         });
         var tableExport = $('#export_data').DataTable({
             language: {
@@ -209,7 +210,7 @@
                     // Uspešan AJAX zahtjev
                     // Preusmjeravanje na edit debt stranicu
                     var editDebtUrl = "{{ url_for('transactions.payment_archive', payment_id='1') }}";
-                    editDebtUrl = editDebtUrl.replace('1', response);
+                    editDebtUrl = editDebtUrl.replace(/1(?=[^1]*$)/, response);
                     window.location.href = editDebtUrl;
                 }
             })
