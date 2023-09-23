@@ -139,7 +139,8 @@ def overview_students():
                 }
                 new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
                 # print(f'{new_record}')
-                export_data.append(new_record)
+                if int(new_record['student_class']) < 9:
+                    export_data.append(new_record)
     # export_data = [dict(t) for t in {tuple(d.items()) for d in export_data}]
 
     print(f'{export_data=}')
