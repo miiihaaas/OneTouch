@@ -396,7 +396,7 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
     zaduzenje = 0
     uplate = 0
     for student in sorted_data:
-        if student['student_id'] != 1:
+        if student['student_id'] > 1:
             pdf.set_font('DejaVuSansCondensed', '', 10)
             # pdf.set_fill_color(255, 255, 255)  # vrati na belu boju za ćelije
             pdf.cell(80, 8, f"({'{:04d}'.format(student['student_id'])}) {student['student_name']} {student['student_surname']}", 1, 0, 'L')
@@ -408,6 +408,7 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
             uplate += student['student_payment']
     saldo = zaduzenje - uplate
     pdf.set_font('DejaVuSansCondensed', 'B', 10)
+    pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
     pdf.cell(80, 8, f"", 0, 0, 'R')
     pdf.cell(10, 8, f"Suma: ", 0, 0, 'R')
     pdf.cell(30, 8, f"{zaduzenje:.2f}", 1, 0, 'R', 1)
