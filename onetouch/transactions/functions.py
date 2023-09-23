@@ -361,36 +361,36 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
             self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
             self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
             self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
+            pdf.set_font('DejaVuSansCondensed', 'B', 18)
+            pdf.cell(40, 8, '', 0, 1, 'R')
+            pdf.cell(0, 15, f'Pregled stanja učenika po uslugama', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
+            pdf.set_font('DejaVuSansCondensed', 'B', 12)
+            if service_id != '0':
+                pdf.cell(0, 5, f'Usluga: ({int(service_id):03}) {service_name}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            else:
+                pdf.cell(0, 5, f'Usluge: Sve', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            if razred:
+                pdf.cell(0, 5, f'Razred: {razred} ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            else:
+                pdf.cell(0, 5, f'Razred: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            if odeljenje:
+                pdf.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            else:
+                pdf.cell(0, 5, f'Odeljenje: Sva', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            pdf.cell(0, 5, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            pdf.cell(40, 8, '', 0, 1, 'R')
+            
+            pdf.set_font('DejaVuSansCondensed', 'B', 10)
+            pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+            pdf.cell(80, 8, f"Učenik", 1, 0, 'C', 1)
+            pdf.cell(10, 8, f"R/O", 1, 0, 'C', 1)
+            pdf.cell(30, 8, f"Zaduženje", 1, 0, 'C', 1)
+            pdf.cell(30, 8, f"Uplate", 1, 0, 'C', 1)
+            pdf.cell(30, 8, f"Saldo", 1, 1, 'C', 1)
     
     pdf = PDF()
     pdf.add_page()
     
-    pdf.set_font('DejaVuSansCondensed', 'B', 18)
-    pdf.cell(40, 8, '', 0, 1, 'R')
-    pdf.cell(0, 15, f'Pregled stanja učenika po uslugama', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
-    pdf.set_font('DejaVuSansCondensed', 'B', 12)
-    if service_id != '0':
-        pdf.cell(0, 5, f'Usluga: ({int(service_id):03}) {service_name}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    else:
-        pdf.cell(0, 5, f'Usluge: Sve', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    if razred:
-        pdf.cell(0, 5, f'Razred: {razred} ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    else:
-        pdf.cell(0, 5, f'Razred: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    if odeljenje:
-        pdf.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    else:
-        pdf.cell(0, 5, f'Odeljenje: Sva', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    pdf.cell(0, 5, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-    pdf.cell(40, 8, '', 0, 1, 'R')
-    
-    pdf.set_font('DejaVuSansCondensed', 'B', 10)
-    pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
-    pdf.cell(80, 8, f"Učenik", 1, 0, 'C', 1)
-    pdf.cell(10, 8, f"R/O", 1, 0, 'C', 1)
-    pdf.cell(30, 8, f"Zaduženje", 1, 0, 'C', 1)
-    pdf.cell(30, 8, f"Uplate", 1, 0, 'C', 1)
-    pdf.cell(30, 8, f"Saldo", 1, 1, 'C', 1)
     sorted_data = sorted(export_data, key=lambda x: (x['student_class'], x['student_section']))
 
     zaduzenje = 0
@@ -413,7 +413,6 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
     pdf.cell(30, 8, f"{zaduzenje:.2f}", 1, 0, 'R', 1)
     pdf.cell(30, 8, f"{uplate:.2f}", 1, 0, 'R', 1)
     pdf.cell(30, 8, f"{saldo:.2f}", 1, 1, 'R', 1)
-
     
     file_name = 'report_student_list.pdf'
     path = f'{project_folder}/static/reports/'
