@@ -4,7 +4,7 @@ from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord
-from onetouch.transactions.functions import gen_report_student, gen_report_school
+from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list
 
 
 overviews = Blueprint('overviews', __name__)
@@ -27,8 +27,16 @@ def overview_students():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     service_id = request.args.get('service_id')
+    razred = request.args.get('razred')
+    odeljenje = request.args.get('odeljenje')
+    print(f'pri uvoženju podataka: {razred=} {odeljenje=}')
     if not service_id:
         service_id = '0' # ako nije definisana promenjiva na početku, dodeli joj '0' što predstavlja sve usluge
+    if not razred:
+        razred = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve razrede
+    if not odeljenje:
+        odeljenje = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve odeljenja
+    print(f'nakon prilagođavanja: {razred=} {odeljenje=}')
     print(f'{start_date=} {end_date=} {service_id=}')
     if start_date is None or end_date is None:
         if danas.month < 9:
@@ -47,16 +55,54 @@ def overview_students():
     print(f'sve transakcije: {len(records)=}')
     
     filtered_records = []
-    for record in records:
-        # print(f'{start_date=} {end_date=}')
-        if record.student_debt_id:
-            # print(f'{record.transaction_record_student_debt.student_debt_date=}')
-            if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
-                filtered_records.append(record)
-        elif record.student_payment_id:
-            # print(f'{record.transaction_record_student_payment.payment_date=}')
-            if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
-                filtered_records.append(record)
+    if razred == '' and odeljenje == '': #! ako nisu definisani raztrd i odeljenje, izlistaj sve razrede i odeljenja
+        for record in records:
+            if record.student_debt_id:
+                if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                    filtered_records.append(record)
+            elif record.student_payment_id:
+                if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                    filtered_records.append(record)
+    elif razred != '' and odeljenje == '': #! ako je definisan razred, izlistaj sva odeljenja tog razreda
+        for record in records:
+            current_class = record.transaction_record_student.student_class
+            if current_class == int(razred):
+                if record.student_debt_id:
+                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
+                    if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.student_payment_id:
+                    # print(f'{record.transaction_record_student_payment.payment_date=}')
+                    if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                        filtered_records.append(record)
+    elif odeljenje != '' and razred == '': #! ako je definisana odeljenja, izlistaj sve studente tog odeljenja
+        for record in records:
+            current_section = record.transaction_record_student.student_section
+            if current_section == int(odeljenje):
+                if record.student_debt_id:
+                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
+                    if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.student_payment_id:
+                    # print(f'{record.transaction_record_student_payment.payment_date=}')
+                    if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                        filtered_records.append(record)
+    else:
+        for record in records:
+            # print(f'{start_date=} {end_date=}')
+            current_class = record.transaction_record_student.student_class
+            current_section = record.transaction_record_student.student_section
+            print(f'{current_class=} {current_section=}')
+            print(f'{razred=} {odeljenje=}')
+            if current_class == int(razred) and current_section == int(odeljenje):
+                if record.student_debt_id:
+                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
+                    if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.student_payment_id:
+                    # print(f'{record.transaction_record_student_payment.payment_date=}')
+                    if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                        filtered_records.append(record)
     print(f'nakon filtriranja: {len(filtered_records)=}')
     
     options = []
@@ -100,6 +146,9 @@ def overview_students():
     
     students = Student.query.filter(Student.student_class < 9).all()
     teachers = Teacher.query.all()
+    
+    report_students = gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje)
+    
     return render_template('overview_students.html', 
                             title='Pregled po učeniku', 
                             legend="Pregled po učeniku", 
@@ -109,7 +158,9 @@ def overview_students():
                             start_date=start_date,
                             end_date=end_date,
                             service_id=service_id,
-                            options=options,)
+                            options=options,
+                            razred=razred,
+                            odeljenje=odeljenje,)
 
 
 @overviews.route("/overview_student/<int:student_id>", methods=['GET', 'POST'])

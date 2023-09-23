@@ -7,7 +7,7 @@
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
-            <th>ID detalja usluge</th>
+            <th>ID</th>
             <th>Detalji usluge</th>
             <th>Naziv dobavljača</th>
             <th>Naziv usluge</th>
@@ -20,7 +20,7 @@
     <tbody>
         {% for service_profile in service_profiles %}
         <tr class="odd">
-            <td>{{ service_profile.id }}</td>
+            <td>{{ "{:03d}".format(service_profile.id) }}</td>
             <td>{{ service_profile.service_item_service.service_name }} - {{ service_profile.service_item_name }}</td>
             <td>{{ service_profile.service_item_supplier.supplier_name }}</td>
             <td>{% if service_profile.service_item_service.payment_per_unit == 'kom' %}

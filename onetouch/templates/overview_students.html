@@ -5,38 +5,60 @@
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
             {% if service_id == "0" %}
-            <option value="0" selected>Sve</option>
-            {% for option in options %}
-            <option value="{{option['value']}}">{{option['label']}}</option>
-            {% endfor %}
+                <option value="0" selected>Sve</option>
+                {% for option in options %}
+                    <option value="{{option['value']}}">{{option['label']}}</option>
+                {% endfor %}
             {% else %}
-            <option value="0">Sve</option>
-            {% for option in options %}
-            {% if service_id == option['value'] %}
-            <option value="{{option['value']}}" selected>{{option['label']}}</option>
-            {% else %}
-            <option value="{{option['value']}}">{{option['label']}}</option>
-            {% endif %}
-            {% endfor %}
+                <option value="0">Sve</option>
+                {% for option in options %}
+                    {% if service_id == option['value'] %}
+                        <option value="{{option['value']}}" selected>{{option['label']}}</option>
+                    {% else %}
+                        <option value="{{option['value']}}">{{option['label']}}</option>
+                    {% endif %}
+                {% endfor %}
             {% endif %}
         </select>
     </div>
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
-            <option value="">Svi razredi</option>
-            {% for class in range(9) %}
-                <option value="{{ class }}">{{ class }}</option>
-            {% endfor %}
+            {% if razred|string == "" %}
+                <option value="">Svi razredi</option>
+                {% for class in range(9) %}
+                    <option value="{{ class }}">{{ class }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">Svi razredi</option>
+                {% for class in range(9) %}
+                    {% if class|string == razred|string %}
+                        <option value="{{ class }}" selected>{{ class }}</option>
+                    {% else %}
+                        <option value="{{ class }}">{{ class }}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </select>
     </div>    
     <div class="col form-group">
         <label for="searchOdeljenje">Pretraga po odeljenju:</label>
         <select id="searchOdeljenje" class="form-select">
-            <option value="">Sva odeljenja</option>
-            {% for section in range(16) %}
-                <option value="{{ section }}">{{ section }}</option>
-            {% endfor %}
+            {% if odeljenje|string == "" %}
+                <option value="">Sva odeljenja</option>
+                {% for section in range(1,15) %}
+                    <option value="{{ section }}">{{ section }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">Sva odeljenja</option>
+                {% for section in range(15) %}
+                    {% if section|string == odeljenje|string %}
+                        <option value="{{ section }}" selected>{{ section }}</option>
+                    {% else %}
+                        <option value="{{ section }}">{{ section }}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
         </select>
     </div>
     <div class="col form-group">
@@ -49,6 +71,9 @@
     </div>
     <div class="col form-group">
         <a class="btn btn-danger" href="./overview_students">Reset filtera</a>
+    </div>
+    <div class="col-md-1  mt-1">
+        <a id="resetButton" class="btn btn-promary" href="{{ url_for('static', filename='reports/report_student_list.pdf') }}" target="_blank">Štampa pregleda</a>
     </div>
     <hr>
 </div>
@@ -128,14 +153,16 @@
             table.column(3).search(selectedValue).draw();
         });
 
-        // Funkcija koja se poziva pri promeni datuma
+        // Funkcija koja se poziva pri promeni datuma, razreda, odeljenja
         function handleDateChange() {
+            var razred = document.getElementById("searchRazred").value;
+            var odeljenje = document.getElementById("searchOdeljenje").value;
             var startDate = document.getElementById("start-date").value;
             var endDate = document.getElementById("end-date").value;
             var serviceId = document.getElementById("searchUsluga").value;
             console.log('id usluge: ', serviceId)
             var currentUrl = window.location.href.split('?')[0];
-            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId;
+            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje;
             window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
         }
 
@@ -143,6 +170,8 @@
         document.getElementById("start-date").addEventListener("change", handleDateChange);
         document.getElementById("end-date").addEventListener("change", handleDateChange);
         document.getElementById("searchUsluga").addEventListener("change", handleDateChange);
+        document.getElementById("searchRazred").addEventListener("change", handleDateChange);
+        document.getElementById("searchOdeljenje").addEventListener("change", handleDateChange);
     });
 </script>
 {% endblock %}
