@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
-from onetouch import db, bcrypt, file_handler
+from onetouch import db, bcrypt
 from onetouch.models import Student, User, StudentDebt, School, TransactionRecord
 from onetouch.students.forms import EditStudentModalForm, RegisterStudentModalForm
 from flask_login import login_required, current_user

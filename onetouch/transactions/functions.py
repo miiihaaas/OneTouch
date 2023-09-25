@@ -66,15 +66,16 @@ def export_payment_stats(data):
     pdf.cell(0, 10, f'Izvod podataka uplatnice: {data[0]["payment_id"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
     pdf.cell(0, 10, '', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
     pdf.set_font('DejaVuSansCondensed', 'B', 14)
-    pdf.cell(50, 10, 'ID usluge', new_y='LAST', align='C', border=1)
-    pdf.cell(90, 10, 'Detalji usluge', new_y='LAST', align='C', border=1)
-    pdf.cell(50, 10, 'Ukupan iznos', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
-    pdf.set_font('DejaVuSansCondensed', '', 14)
+    pdf.set_fill_color(200, 200, 200)
+    pdf.cell(30, 10, 'ID usluge', new_y='LAST', align='C', border=1, fill=True)
+    pdf.cell(120, 10, 'Detalji usluge', new_y='LAST', align='C', border=1, fill=True)
+    pdf.cell(40, 10, 'Ukupan iznos', new_y='NEXT', new_x='LMARGIN', align='C', border=1, fill=True)
+    pdf.set_font('DejaVuSansCondensed', '', 12)
     for record in data:
         if record['service_item_id'] != 0:
-            pdf.cell(50, 10, f'{record["service_item_id"]:03d}', new_y='LAST', align='C', border=1)
-            pdf.cell(90, 10, f'{record["name"]}', new_y='LAST', align='C', border=1)
-            pdf.cell(50, 10, f'{record["sum_amount"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=1)
+            pdf.cell(30, 7, f'{record["service_item_id"]:03d}', new_y='LAST', align='C', border=1)
+            pdf.cell(120, 7, f'{record["name"]}', new_y='LAST', align='L', border=1)
+            pdf.cell(40, 7, f'{record["sum_amount"]:.2f}', new_y='NEXT', new_x='LMARGIN', align='R', border=1)
 
     path = f"{project_folder}/static/payment_slips/"
     file_name = f'export.pdf'
