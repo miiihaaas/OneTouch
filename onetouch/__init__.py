@@ -36,14 +36,6 @@ app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') # https://www.youtube.com/
 app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASS') # https://www.youtube.com/watch?v=IolxqkL7cD8&ab_channel=CoreySchafer -- za 2 step verification: https://support.google.com/accounts/answer/185833
 mail = Mail(app)
 
-#logging
-app.logger.setLevel(logging.DEBUG)
-log_file_path = os.path.join(os.path.dirname(__file__), 'loggings.txt')
-file_handler = logging.FileHandler(log_file_path)
-file_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-app.logger.addHandler(file_handler)
 
 
 from onetouch.main.routes import main
