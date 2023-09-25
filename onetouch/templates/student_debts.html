@@ -595,8 +595,9 @@
             success: function(response) {
                 // Uspešan AJAX zahtjev
                 // Preusmjeravanje na edit debt stranicu
+                console.log('debug: ', response)
                 var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
-                editDebtUrl = editDebtUrl.replace('1', response);
+                editDebtUrl = editDebtUrl.replace(/\/1$/, '/' + response);
                 window.location.href = editDebtUrl;
             }
         })
