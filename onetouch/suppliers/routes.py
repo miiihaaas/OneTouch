@@ -187,6 +187,7 @@ def service_profile_list():
         print(f'debug installment_number: {service_profile.installment_number=}; {type(service_profile.installment_number)=}')
         if service_profile.installment_number == "1":
             service_profile.installment_1 = service_profile.price
+            print(f'dodeljena je ukupna cena u prvu vrednost polja prverate!')
         db.session.commit()
         return redirect(url_for("suppliers.service_profile_list"))
         
