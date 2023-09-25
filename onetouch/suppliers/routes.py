@@ -184,7 +184,7 @@ def service_profile_list():
         service_profile.installment_11 = edit_form.installment_11.data
         service_profile.installment_12 = edit_form.installment_12.data
         service_profile.archived = edit_form.archived.data
-        if service_profile.installment_number == 1:
+        if service_profile.installment_number == "1":
             service_profile.installment_1 = service_profile.price
         db.session.commit()
         return redirect(url_for("suppliers.service_profile_list"))
