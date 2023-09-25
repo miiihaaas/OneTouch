@@ -70,7 +70,7 @@ def get_installments():
     
     print(f'{komadno=}')
     
-    if service_item_id == 1:
+    if service_item.installment_number == 1:
         options.append((1, f'Rata 1'))
         installment_attr = f'price'
         installment_option = getattr(service_item, installment_attr)
