@@ -17,6 +17,42 @@
     <label for="today_date" class="form-control-label">Datum zaduživanja</label>
     <input id="today_date" name="today_date" type="text" class="form-control" value="{{ debt.student_debt_date.strftime('%d.%m.%Y.') }}" disabled>
 </div>
+{% if new_students %}
+<div class="form-group" style="display: inline-block;">
+    <a class="btn btn-primary" data-toggle="modal" data-target="#AddStudent">zadužite novog učenika</a>
+</div>
+<!-- add new student modal -->
+<div class="modal fade" id="AddStudent" tabindex="-1" role="dialog" aria-labelledby="AddStudentLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="AddStudentLabel">Zadužianje novog učenika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ url_for('transactions.add_new_student') }}" method="post">
+                <div class="modal-body">
+                    <input type="text" name="student_debt_id" value="{{ records[0].student_debt_id }}" readonly>
+                    <input type="text" name="service_item_id" value="{{ records[0].service_item_id }}" readonly>
+                    <input type="text" name="student_debt_installment_number" value="{{ records[0].student_debt_installment_number }}" readonly>
+                    <input type="text" name="studetn_debt_installment_value" value="{{ records[0].studetn_debt_installment_value }}" readonly>
+                    <select class="form-select"  name="student_id" id="student_id">
+                        {% for student in new_students %}
+                            <option value="{{student.id}}">{{student.student_name}} {{student.student_surname}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    <button type="submit" class="btn btn-info">Zadužite novog učenika</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endif %}
 <hr>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
     <thead>

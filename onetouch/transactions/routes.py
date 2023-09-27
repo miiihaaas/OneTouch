@@ -38,6 +38,30 @@ def student_debts():
                             service_items=service_items, 
                             teachers=teachers)
 
+
+
+@transactions.route('/add_new_student', methods=['POST']) #! dodaje novog studenta u postojeće zaduženje (npr došao novi đak tokom školse godine i treba da se zaduži za osiguranje...)
+def add_new_student():
+    student_debt_id = request.form.get('student_debt_id')
+    service_item_id = request.form.get('service_item_id')
+    student_debt_installment_number = request.form.get('student_debt_installment_number')
+    studetn_debt_installment_value = request.form.get('studetn_debt_installment_value')
+    student_id = request.form.get('student_id')
+    print(f'{student_debt_id=} {service_item_id=} {student_debt_installment_number=} {studetn_debt_installment_value=} {student_id=}')
+    new_student_record = TransactionRecord(student_debt_id=student_debt_id,
+                                            student_id=student_id,
+                                            service_item_id=service_item_id,
+                                            student_debt_installment_number=student_debt_installment_number,
+                                            student_debt_amount=0,
+                                            studetn_debt_installment_value=studetn_debt_installment_value,
+                                            student_debt_discount=0,
+                                            student_debt_total=0)
+    db.session.add(new_student_record)
+    db.session.commit()
+    flash('Učenik je uspešno zadušen!', 'success')
+    return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
+
+
 #! Ajax
 @transactions.route('/get_service_items', methods=['POST'])
 def get_service_items():
@@ -330,7 +354,16 @@ def debt_archive(debt_id):
     teacher = Teacher.query.filter_by(teacher_class=debt.debt_class).filter_by(teacher_section=debt.debt_section).first()
     
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-    print(f'{records=}')
+    print(f'provera broja đaka: {records=}, {len(records)=}')
+    
+    students = Student.query.filter_by(student_class=debt.debt_class).filter_by(student_section=debt.debt_section).all()
+    print(f'provera broja đaka: {students=}, {len(students)=}')
+    
+    new_students = []
+    if len(students) > len(records):
+        record_ids = set([record.transaction_record_student.id for record in records])
+        new_students = [student for student in students if student.id not in record_ids]
+        print(f'{record_ids=}; {new_students=}')
     
     single = False
     send = False
@@ -340,6 +373,7 @@ def debt_archive(debt_id):
                             records=records, 
                             debt=debt, 
                             teacher=teacher,
+                            new_students=new_students,
                             purpose_of_payment=purpose_of_payment,
                             legend=f"Pregled zaduženja: {debt.id}",
                             title="Pregled zaduženja")
