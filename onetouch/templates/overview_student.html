@@ -24,9 +24,15 @@
 {% for service in unique_services_list %}
 <hr>
 <div class="btn-group" role="group">
-    <a class="btn btn-info loading" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
-    <a class="btn btn-primary loading" href="{{url_for('transactions.debt_archive', debt_id = service['service_debt_id'])}}">{{ service['service_name'] }}</a>
+    {% if service['service_debt_id'] is not none %}
+        <a class="btn btn-info loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
+        <a class="btn btn-primary loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{ service['service_name'] }}</a>
+    {% else %}
+        <span class="btn btn-info loading disabled">{{'{:03d}'.format(service['id'])}}</span>
+        <span class="btn btn-primary loading disabled">{{ service['service_name'] }}</span>
+    {% endif %}
 </div>
+
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
     <thead>
         <tr>
