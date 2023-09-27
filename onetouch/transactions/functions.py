@@ -3,7 +3,7 @@ from PIL import Image
 from fpdf import FPDF
 from flask import flash, redirect, url_for
 from flask_mail import Message
-from onetouch.models import School, Student
+from onetouch.models import School, Student, StudentPayment
 from onetouch import mail, app
 
 
@@ -54,6 +54,8 @@ def send_mail(uplatnica, path, file_name):
 
 
 def export_payment_stats(data):
+    print(f'{data=}')
+    student_payment = StudentPayment.query.get_or_404(data[0]['payment_id'])
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
@@ -61,9 +63,9 @@ def export_payment_stats(data):
             self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     pdf = PDF()
     pdf.add_page()
-    pdf.set_font('DejaVuSansCondensed', 'B', 24)
+    pdf.set_font('DejaVuSansCondensed', 'B', 22)
     pdf.set_y(10)
-    pdf.cell(0, 10, f'Izvod podataka uplatnice: {data[0]["payment_id"]}', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
+    pdf.cell(0, 10, f'Izvod podataka uplatnice: {student_payment.statment_nubmer} ({student_payment.payment_date.strftime("%d.%m.%Y.")})', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
     pdf.cell(0, 10, '', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
     pdf.set_font('DejaVuSansCondensed', 'B', 14)
     pdf.set_fill_color(200, 200, 200)

@@ -56,7 +56,7 @@
                 {% if record['debt_amount'] > 0 %} 
                 <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite uplatnicu</a> 
                 {% else %} 
-                <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn btn-primary">Izvod: {{ record['student_payment_id'] }}</a> 
+                <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn btn-primary">Otvorite izvod</a> 
                 {% endif %}
             </td>
         </tr>

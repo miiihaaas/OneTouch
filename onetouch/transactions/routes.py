@@ -514,7 +514,7 @@ def payment_archive(payment_id):
                             students=json.dumps(students_data),
                             services=json.dumps(services_data),
                             export_data = export_data,
-                            legend=f"Pregled izvoda: {payment.id}")
+                            legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})")
 
 
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
