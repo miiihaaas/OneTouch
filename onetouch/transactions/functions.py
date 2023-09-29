@@ -84,14 +84,14 @@ def export_payment_stats(data):
     pdf.output(path + file_name)
     return file_name
 
+
 def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send):
-    file_name = None
     data_list = []
     qr_code_images = []
-    print('debug generisanja uplatnice kod aktivne opcije slanja na mejl')
     print(f'{records=}')
     path = f'{project_folder}/static/payment_slips/'
     
+    #! Generiše QR kodove
     for i, record in enumerate(records):
         if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
             #! ako je čekirano da se šalje roditelju, onda ne treba da generiše uplatnicu zajedno sa ostalim uplatnicama, ali treba da generiše posebno uplatnicu koju će poslati mejlom
@@ -165,9 +165,9 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
             self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     pdf = PDF()
-    # pdf.add_page()
     printed_on_uplatnice = 0
     counter = 1
+    #!
     for i, uplatnica in enumerate(data_list):
         print(f'{uplatnica=}')
         print(f'ulazni parametrii funkcije: {single=} {send=}')
@@ -322,15 +322,17 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             printed_on_uplatnice += 1
     print(f'{printed_on_uplatnice=}')
     if not single:
+        print(f'debug: ušao sam u "if not single:": {printed_on_uplatnice=}')
         if printed_on_uplatnice == 0:
-            # nije bilo štamše na uplatnicama
+            print(f'debug: ušao sam u "if not single: // if printed_on_uplatnice == 0:": {printed_on_uplatnice=}')
+            # nije bilo štampe na uplatnicama
             pdf = PDF()
             pdf.add_page()
             pdf.set_font('DejaVuSansCondensed', 'B', 16)
             pdf.multi_cell(0, 20, 'Svim zaduženim učenicima je aktivirana opcija slanja generisanih uplatnica putem e-maila. \n Ne zaboravite da pošaljete mejlove roditeljima. \nMolimo Vas da ne štampate ovaj dokument.', align='C')
         file_name = f'uplatnice.pdf'
         pdf.output(path + file_name)
-
+        print(f'debug if not single: {file_name=}')
 
     #! briše QR kodove nakon dodavanja na uplatnice
     folder_path = f'{project_folder}/static/payment_slips/qr_code/'
@@ -347,7 +349,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         print("Svi QR kodovi su uspješno obrisani.")
     else:
         print("Navedena putanja nije direktorijum.")
-    filename = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
+    file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
 
     
     return file_name
