@@ -437,7 +437,7 @@ def debt_archive_delete(debt_id):
     debt = StudentDebt.query.get_or_404(debt_id)
     db.session.delete(debt)
     db.session.commit()
-    flash(f'Uplata {debt_id} je uspešno obrisana, kao i sva zaduženja učenika iz te uplate.', 'success')
+    flash(f'Nalog {debt_id} je uspešno obrisan, kao i sva zaduženja učenika iz tog nalogas.', 'success')
     return redirect(url_for('transactions.debts_archive_list'))
 
 
@@ -509,11 +509,11 @@ def payment_archive(payment_id):
         print(f'{record_data=}')
     print(f'{export_data=}')
     return render_template('payment_archive.html', 
-                            records=records, 
+                            records=records, #! ovo je za prvu tabelu
                             payment=payment,
                             students=json.dumps(students_data),
                             services=json.dumps(services_data),
-                            export_data = export_data,
+                            export_data = export_data, #! ovo je za treću tabelu
                             legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})")
 
 
@@ -591,7 +591,8 @@ def posting_payment():
 
             #! provera da li je poziv na broj validan
             if podaci['RacunOdobrenja'] != school.school_bank_account:
-                print('izaći iz foo loop u sledeću iteraciju')
+                print('Ovo je isplata')
+                podaci['Iznos'] = -float(podaci['Iznos'])
                 continue
             print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_account=}')
             if len(podaci['PozivOdobrenja']) == 7:

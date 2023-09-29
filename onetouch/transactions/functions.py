@@ -375,7 +375,7 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
             if razred:
                 pdf.cell(0, 5, f'Razred: {razred} ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
-                pdf.cell(0, 5, f'Razrei: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                pdf.cell(0, 5, f'Razredi: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             if odeljenje:
                 pdf.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
@@ -522,7 +522,7 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
             if razred:
                 pdf.cell(0, 5, f'Razred: {razred} ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
-                pdf.cell(0, 5, f'Razrei: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                pdf.cell(0, 5, f'Razredi: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             if odeljenje:
                 pdf.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:

@@ -33,10 +33,10 @@
             </div>
             <form action="{{ url_for('transactions.add_new_student') }}" method="post">
                 <div class="modal-body">
-                    <input type="text" name="student_debt_id" value="{{ records[0].student_debt_id }}" readonly>
-                    <input type="text" name="service_item_id" value="{{ records[0].service_item_id }}" readonly>
-                    <input type="text" name="student_debt_installment_number" value="{{ records[0].student_debt_installment_number }}" readonly>
-                    <input type="text" name="studetn_debt_installment_value" value="{{ records[0].studetn_debt_installment_value }}" readonly>
+                    <input type="text" name="student_debt_id" value="{{ records[0].student_debt_id }}" readonly style="display: none;">
+                    <input type="text" name="service_item_id" value="{{ records[0].service_item_id }}" readonly style="display: none;">
+                    <input type="text" name="student_debt_installment_number" value="{{ records[0].student_debt_installment_number }}" readonly style="display: none;">
+                    <input type="text" name="studetn_debt_installment_value" value="{{ records[0].studetn_debt_installment_value }}" readonly style="display: none;">
                     <select class="form-select"  name="student_id" id="student_id">
                         {% for student in new_students %}
                             <option value="{{student.id}}">{{student.student_name}} {{student.student_surname}}</option>
