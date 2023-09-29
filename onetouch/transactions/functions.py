@@ -85,6 +85,7 @@ def export_payment_stats(data):
     return file_name
 
 def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send):
+    file_name = None
     data_list = []
     qr_code_images = []
     print('debug generisanja uplatnice kod aktivne opcije slanja na mejl')
