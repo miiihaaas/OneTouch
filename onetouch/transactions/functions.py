@@ -350,6 +350,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     else:
         print("Navedena putanja nije direktorijum.")
     # file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
+    file_name = f'uplatnice.pdf' #!
 
     print(f'debug na samom kraju uplatice_gen(): {file_name=}')
     return file_name
