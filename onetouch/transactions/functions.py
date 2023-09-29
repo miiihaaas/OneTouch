@@ -349,7 +349,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         print("Svi QR kodovi su uspješno obrisani.")
     else:
         print("Navedena putanja nije direktorijum.")
-    file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
+    # file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
 
     
     return file_name

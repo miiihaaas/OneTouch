@@ -339,6 +339,7 @@ def single_payment_slip(record_id):
     single = True
     send = False
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+    print(f'{file_name=}')
     file_path = f'static/payment_slips/{file_name}'
     print(f'{file_path=}')
     return send_file(file_path, as_attachment=False)
