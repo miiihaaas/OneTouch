@@ -333,6 +333,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         file_name = f'uplatnice.pdf'
         pdf.output(path + file_name)
         print(f'debug if not single: {file_name=}')
+    else:
+        file_name = f'uplatnica.pdf'
 
     #! briše QR kodove nakon dodavanja na uplatnice
     folder_path = f'{project_folder}/static/payment_slips/qr_code/'
@@ -350,7 +352,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     else:
         print("Navedena putanja nije direktorijum.")
     # file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
-    file_name = f'uplatnice.pdf' #!
+    # file_name = f'uplatnice.pdf' #!
 
     print(f'debug na samom kraju uplatice_gen(): {file_name=}')
     return file_name
