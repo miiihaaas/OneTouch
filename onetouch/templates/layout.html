@@ -22,12 +22,21 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='mikicustom.css') }}">
     
-
+    
     {% if title %}
       <title>OneTouch - {{ title }}</title>
     {% else %}
       <title>OneTouch</title>
     {% endif %}
+    <!-- sprečava back dugme i šalje uvek na home page -->
+    <script>
+      // Koristi JavaScript za ponovno usmeravanje na home page prilikom povratka
+      history.pushState(null, null, document.URL);
+      window.addEventListener('popstate', function () {
+          history.pushState(null, null, document.URL);
+          window.location.href = '/';  // Preusmeri na home page
+      });
+    </script>
 
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>

@@ -165,6 +165,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     pdf = PDF()
     # pdf.add_page()
+    printed_on_uplatnice = 0
     counter = 1
     for i, uplatnica in enumerate(data_list):
         print(f'{uplatnica=}')
@@ -316,7 +317,16 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 pdf = PDF()
                 if counter % 3 != 1:
                     pdf.add_page()
+        else:
+            printed_on_uplatnice += 1
+    print(f'{printed_on_uplatnice=}')
     if not single:
+        if printed_on_uplatnice == 0:
+            # nije bilo štamše na uplatnicama
+            pdf = PDF()
+            pdf.add_page()
+            pdf.set_font('DejaVuSansCondensed', 'B', 16)
+            pdf.multi_cell(0, 20, 'Svim zaduženim učenicima je aktivirana opcija slanja generisanih uplatnica putem e-maila. \n Ne zaboravite da pošaljete mejlove roditeljima. \nMolimo Vas da ne štampate ovaj dokument.', align='C')
         file_name = f'uplatnice.pdf'
         pdf.output(path + file_name)
 
