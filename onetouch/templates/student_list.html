@@ -75,15 +75,15 @@
             <td>
                 {% if student.parent_email %}
                     {% if student.send_mail %}
-                        <i class="fa fa-envelope activemail" title="Šalje se email"></i> | 
+                        <i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | 
                     {% else %}
-                    <i class="fa fa-envelope nonactivemail" title="Ne šalje se email"></i> | 
+                    <i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | 
                     {% endif %}
                 {% endif %}
                 {{ student.parent_email }}
             </td>
-            <td><button type="button" class="btn-x btn-info-x i-btn" title="Izmeni" data-toggle="modal" data-target="#EditModal" onclick="editStudent('{{student.id}}', '{{student.student_name}}', '{{student.student_surname}}', '{{student.student_class}}', '{{student.student_section}}', '{{student.parent_email}}', '{{student.send_mail}}', '{{student.print_payment}}')"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></button>
-                <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{student.id}}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
+            <td><button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika" data-toggle="modal" data-target="#EditModal" onclick="editStudent('{{student.id}}', '{{student.student_name}}', '{{student.student_surname}}', '{{student.student_class}}', '{{student.student_section}}', '{{student.parent_email}}', '{{student.send_mail}}', '{{student.print_payment}}')"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></button>
+                <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{student.id}}" title="Obrišite profil učenika"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
         </tr>
         
         <!-- Modal Delete -->

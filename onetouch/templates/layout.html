@@ -24,15 +24,23 @@
     
     <style>
       #sidebar {
-          transition: margin-left 0.3s;
-          overflow-x: hidden;
+        transition: margin-left 0.3s;
+        overflow-x: hidden;
       }
   
       #sidebar.active {
-          margin-left: -300px; /* Adjust this value based on your sidebar width */
+        margin-left: -300px; /* Adjust this value based on your sidebar width */
       }
       .sidebar-active #navbarToggle .navbar-nav li {
         display: none;
+      }.navbar-nav .nav-item {
+        opacity: 0;
+        transition: opacity 0.5s ease; /* Dodajte tranziciju za opacity */
+      }
+    
+      .navbar-nav .nav-item.hidden {
+        opacity: 0;
+        pointer-events: none; /* Onemogućite interakcije za skrivene elemente */
       }
     </style>
     
@@ -48,9 +56,11 @@
   <body>
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel">
+        {% if current_user.is_authenticated %}
         <button type="button" id="sidebarToggle" style="background: transparent; border: none;">
           <i class="fa-solid fa-bars awesomedelete" style="color: white;"></i>
         </button>
+        {% endif %}
         <div class="container">
           {% if current_user.is_authenticated %}
           <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
@@ -92,9 +102,9 @@
                   </div>
                 </li>
                 <!-- <i class="fa-solid fa-window-minimize fa-rotate-90 awesomedelete mt-2" style="color: white;"></i> -->
-                <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Odjavite se</a>
+                <a class="nav-item nav-link" href="{{ url_for('users.logout') }}" style="opacity: 1;">Odjavite se</a>
               {% else %}
-                <a class="nav-item nav-link" href="{{ url_for('users.login') }}"> Prijavite se</a>
+                <!-- <a class="nav-item nav-link" href="{{ url_for('users.login') }}" style="opacity: 1;"> Prijavite se</a> -->
               {% endif %}
             </div>
           </div>
@@ -240,17 +250,25 @@
   
               // Check if the sidebar is active and update the visibility of li elements
               var navbarItems = document.querySelectorAll(".navbar-nav .nav-item");
-              navbarItems.forEach(function (item) {
-                  // Check if the item is not one of the excluded items
-                  var isExcludedItem = item.querySelector("a").href.includes("users.logout") || item.querySelector("a").href.includes("users.login");
-                  if (!isExcludedItem) {
-                      if (sidebar.classList.contains("active")) {
-                          item.style.display = "block";
-                      } else {
-                          item.style.display = "none";
-                      }
+  
+              // Check if the sidebar is active
+              if (sidebar.classList.contains("active")) {
+                  // Fade in one by one from right to left
+                  navbarItems.forEach(function (item, index) {
+                    setTimeout(function () {
+                            item.classList.remove("hidden");
+                            item.style.opacity = "1";
+                        }, (navbarItems.length - index - 1) * 100); // Podesite vreme zakašnjenja po potrebi
+                  });
+              } else {
+                  // Fade out one by one from left to right
+                  for (let i = 0; i < navbarItems.length - 1; i++) {
+                      setTimeout(function () {
+                          navbarItems[i].classList.add("hidden");
+                          navbarItems[i].style.opacity = "0";
+                      }, i * 100); // Adjust the delay time as needed
                   }
-              });
+              }
           }
   
           // Add a click event listener to the button
@@ -260,6 +278,7 @@
           toggleSidebar();
       });
     </script>
+  
   
   
   
@@ -297,8 +316,11 @@
         "posting_payment": { section: '#collapseTwo', link: '#posting_payment' },
 				"overview_students": { section: '#collapseThree', link: '#overview_students' },
         "overview_sections": { section: '#collapseThree', link: '#overview_sections' },
+        "overview_student": { section: '#collapseThree', link: '#overview_student' },
         "debts_archive_list": { section: '#collapseFour', link: '#debts_archive_list' },
-        "payments_archive_list": { section: '#collapseFour', link: '#payments_archive_list' }
+        "payments_archive_list": { section: '#collapseFour', link: '#payments_archive_list' },
+        "payment_archive": { section: '#collapseFour', link: '#payment_archive' },
+        "debt_archive": { section: '#collapseFour', link: '#debt_archive' },
 			};
 
 			// Check if the URL contains a keyword/identifier from the mapping

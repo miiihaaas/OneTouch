@@ -16,7 +16,7 @@
         <tr class="odd">
             <td>{{ supplier.id }}</td>
             <td>{{ supplier.supplier_name }}</td>
-            <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{supplier.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if supplier.archived %} <i class="fa-regular fa-file-zipper awesomearchive"></i> {% endif %}</td>
+            <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{supplier.id}}" title="Izmenite dobavljača"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if supplier.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Dobavljač arhiviran"></i> {% endif %}</td>
         </tr>
         <!-- Modal Edit -->
         <div class="modal fade" id="EditModal{{supplier.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">

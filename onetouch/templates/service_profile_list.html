@@ -31,9 +31,9 @@
             <td>{{ "{:.2f}".format(service_profile.price) }}</td>
             <td>{{ service_profile.installment_number }}</td>
             <td>{{ service_profile.service_item_class }}</td>
-            <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}" title="Izmeni"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
-                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}" title="Obriši"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
-                {% if service_profile.archived %} <i class="fa-regular fa-file-zipper awesomearchive"></i> {% endif %}
+            <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
+                <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}" title="Obrišite uslugu"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
+                {% if service_profile.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}
             </td>
         </tr>
         <!-- Modal Delete -->
@@ -473,9 +473,7 @@
             </div>
             <div class="form-group">
                 {{ register_form.service_item_class.label(class="form-control-label", title="Pritisnite dugme CTRL da bi ste selektovali više razreda") }}
-                <button type="button" class="btn btn-secondary" data-toggle="tooltip" data-placement="right" title="Pritisnite dugme CTRL da bi ste selektovali više razreda">
-                    Pomoć
-                </button>
+                <i class="fa-solid fa-circle-info awesomeedit" title="Pritisnite dugme CTRL da bi ste selektovali više razreda"></i>
                 {% if register_form.service_item_class.errors %}
                     {{ register_form.service_item_class(class="form-control form-control-lg is-invalid") }}
                     <div class="invalid-feedback">
