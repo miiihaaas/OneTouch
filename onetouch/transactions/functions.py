@@ -313,8 +313,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 if counter % 3 != 1:
                 # if counter % 3 != 1:
                     pdf.add_page()
-            elif send:
-                print(f'NIJE poslat mejl za {uplatnica["uplatilac"]}')
+            elif not uplatnica['slanje_mejla_roditelju'] and send:
+                print(f'NIJE poslat mejl za {uplatnica["uplatilac"]}. Kreiraj početak pdf stranice za sledeću uplatnicu koja se šalje')
                 pdf = PDF()
                 if counter % 3 != 1:
                     pdf.add_page()

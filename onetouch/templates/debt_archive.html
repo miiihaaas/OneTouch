@@ -80,12 +80,10 @@
             <td>
                 {% if record.student_debt_amount > 0 %}
                     {% if record.transaction_record_student.send_mail %}
-                    <div class="btn-group">
-                        <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite upl</a>
-                        <a class="btn btn-secondary loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}">Pošaljite upl</a>
-                    </div>
+                    <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
+                    <a class="btn-x btn-primary-x loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}" title="Generišite i pošaljite uplaticu  roditelju"><i class="fa-regular fa-envelope awesomedelete"></i></a>
                     {% else %}
-                    <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite upl</a>
+                    <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
                     {% endif %}
                 {% endif %}
             </td>

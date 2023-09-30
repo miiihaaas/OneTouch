@@ -41,7 +41,7 @@
             <th>Zaduženje</th>
             <th>Uplate</th>
             <th>Saldo</th>
-            <th>Štampa</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -60,9 +60,9 @@
 
             <td>
                 {% if record['debt_amount'] > 0 %} 
-                <a class="btn btn-primary" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank">generišite uplatnicu</a> 
+                <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a> 
                 {% else %} 
-                <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn btn-primary">Otvorite izvod</a> 
+                <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn-x btn-primary-x" title="Otvorite izvod"><i class="fa-solid fa-file-lines awesomeedit"></i></a> 
                 {% endif %}
             </td>
         </tr>
