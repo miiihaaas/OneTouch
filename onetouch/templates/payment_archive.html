@@ -6,8 +6,8 @@
             <th></th>
             <th style="width: 150px;">Učenik</th>
             <th style="width: 80px;">Poziv na broj</th>
-            <th style="width: 60px;">ID učenika</th>
-            <th style="width: 60px;">ID usluge</th>
+            <th style="width: 50px;">ID učenika</th>
+            <th style="width: 50px;">ID usluge</th>
             <th>Detalji usluge</th>
             <th>Svrha uplate</th>
             <th style="width: 140px;">Uplatilac</th>
@@ -36,17 +36,17 @@
             <td><input id="service_id_{{ record.id }}" class="form-control" type="text" value="{{ '{:03d}'.format(record.service_item_id) }}"></td>
             <td>
                 {% if record.student_id == 1 %}
-                    <input type="text" class="form-control" value="Greška" readonly>
+                    <input type="text" class="form-control" value="Greška" title="Greška" readonly>
                 {% elif record.service_item_id == 0 %}
-                    <input type="text" class="form-control" value="Ignorisana uplata" readonly>
+                    <input type="text" class="form-control" value="Ignorisana uplata" title="Ignorisana uplata" readonly>
                 {% elif record is defined and record.transaction_record_service_item is defined and record.transaction_record_service_item.service_item_service is defined and record.transaction_record_service_item.service_item_name is defined %}
-                    <input class="form-control" value="{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}" readonly>
+                    <input class="form-control" value="{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}" title="{{ record.transaction_record_service_item.service_item_service.service_name }} - {{ record.transaction_record_service_item.service_item_name }}" readonly>
                 {% else %}
-                    <input type="text" class="form-control" value="Greška" readonly>
+                    <input type="text" class="form-control" value="Greška" title="Greška" readonly>
                 {% endif %}
                 </td>
-            <td><input class="form-control" value="{{ record.purpose_of_payment }}" readonly></td>
-            <td><input value="{{ record.payer }}" class="form-control" readonly></td>
+            <td><input class="form-control" value="{{ record.purpose_of_payment }}" title="{{ record.purpose_of_payment }}" readonly></td>
+            <td><input value="{{ record.payer }}" class="form-control" title="{{ record.payer }}" readonly></td>
             <td><input style="text-align: right;" value="{{ '{:.2f}'.format(record.student_debt_total) }}" class="form-control" readonly></td>
         </tr>
         {% endfor %}
