@@ -82,12 +82,12 @@
         <tr role="row">
             <th>ID učenika</th>
             <th>Učenik</th>
-            <th>Razred</th>
-            <th>Odeljenje</th>
-            <th>Zaduženje</th>
-            <th>Uplate</th>
-            <th>Saldo</th>
-            <th></th>
+            <th style="width: 80px;">Razred</th>
+            <th style="width: 80px;">Odeljenje</th>
+            <th style="width: 80px;">Zaduženje</th>
+            <th style="width: 80px;">Uplate</th>
+            <th style="width: 80px;">Saldo</th>
+            <th style="width: 40px;"></th>
         </tr>
     </thead>
     <tbody>
@@ -95,12 +95,12 @@
         <tr>
             <td>{{ "{:04d}".format(student['student_id']) }}</td>
             <td>{{ student['student_name'] }} {{ student['student_surname'] }}</td>
-            <td>{{ student['student_class'] }}</td>
-            <td>{{ student['student_section'] }}</td>
-            <td>{{ "{:.2f}".format(student['student_debt']) }}</td>
-            <td>{{ "{:.2f}".format(student['student_payment']) }}</td>
-            <td>{{ "{:.2f}".format(student['saldo']) }}</td>
-            <td><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a></td>
+            <td style="text-align: center;">{{ student['student_class'] }}</td>
+            <td style="text-align: center;">{{ student['student_section'] }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(student['student_debt']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(student['student_payment']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(student['saldo']) }}</td>
+            <td style="text-align: center;"><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a></td>
         </tr>
         {% endfor %}
     </tbody>

@@ -4,14 +4,14 @@
     <thead>
         <tr>
             <th></th>
-            <th>Učenik</th>
-            <th>Poziv na broj</th>
-            <th>ID učenika</th>
-            <th>ID usluge</th>
+            <th style="width: 150px;">Učenik</th>
+            <th style="width: 80px;">Poziv na broj</th>
+            <th style="width: 60px;">ID učenika</th>
+            <th style="width: 60px;">ID usluge</th>
             <th>Detalji usluge</th>
             <th>Svrha uplate</th>
-            <th>Uplatilac</th>
-            <th>Iznos</th>
+            <th style="width: 140px;">Uplatilac</th>
+            <th style="width: 80px;">Iznos</th>
         </tr>
     </thead>
     <tbody>
@@ -47,7 +47,7 @@
                 </td>
             <td><input class="form-control" value="{{ record.purpose_of_payment }}" readonly></td>
             <td><input value="{{ record.payer }}" class="form-control" readonly></td>
-            <td><input value="{{ '{:.2f}'.format(record.student_debt_total) }}" class="form-control" readonly></td>
+            <td><input style="text-align: right;" value="{{ '{:.2f}'.format(record.student_debt_total) }}" class="form-control" readonly></td>
         </tr>
         {% endfor %}
     </tbody>
@@ -70,7 +70,7 @@
         <tr>
             <td>{{ "{:03d}".format(data.service_item_id) }}</td>
             <td>{{ data.name }}</td>
-            <td>{{ data.sum_amount }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(data.sum_amount) }}</td>
         </tr>
         {% endfor %}
     </tbody>

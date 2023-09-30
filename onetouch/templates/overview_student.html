@@ -54,11 +54,11 @@
         {% endif %} 
             <td>{{ record['date'].strftime('%d.%m.%Y.') }}</td>
             <td>{{ record['description'] }}</td>
-            <td>{{ record['debt_amount'] }}</td>
-            <td>{{ record['payment_amount'] }}</td>
-            <td>{{ record['saldo'] }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(record['debt_amount']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(record['payment_amount']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(record['saldo']) }}</td>
 
-            <td>
+            <td style="text-align: center;">
                 {% if record['debt_amount'] > 0 %} 
                 <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a> 
                 {% else %} 

@@ -94,9 +94,9 @@
             <td>{{ record['class'] }}</td>
             <td>{{ record['section'] }}</td>
             <td><strong>({{ record['class'] }}/{{ record['section'] }})</strong> {{ record['teacher'] }}</td>
-            <td>{{ "{:.2f}".format(record['student_debt']) }}</td>
-            <td>{{ "{:.2f}".format(record['student_payment']) }}</td>
-            <td>{{ "{:.2f}".format(record['saldo']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(record['student_debt']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(record['student_payment']) }}</td>
+            <td style="text-align: right;">{{ "{:.2f}".format(record['saldo']) }}</td>
         </tr>
         {% endfor %}
     </tbody>

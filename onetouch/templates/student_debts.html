@@ -52,16 +52,16 @@
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
-            <th>Ime</th>
-            <th>Prezime</th>
+            <th style="width: 80px;">Ime</th>
+            <th style="width: 80px;">Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
-            <th data-sortable="false">Poziv na broj</th>
+            <th style="width: 80px;" data-sortable="false">Poziv na broj</th>
             <th data-sortable="false">Usluga</th>
-            <th data-sortable="false">Količina</th>
-            <th data-sortable="false">Iznos</th>
-            <th data-sortable="false">Olakšica</th>
-            <th data-sortable="false">Iznos zaduženja</th>
+            <th style="width: 30px;" data-sortable="false">Količina</th>
+            <th style="width: 60px;" data-sortable="false">Iznos</th>
+            <th style="width: 60px;" data-sortable="false">Olakšica</th>
+            <th style="width: 60px;" data-sortable="false">Iznos zaduženja</th>
         </tr>
     </thead>
     <tbody>
@@ -73,10 +73,10 @@
             <td>{{ student.student_section }}</td> <!-- sakriveni, ali potrebni zbog filtera -->
             <td><input id="poziv_na_broj_{{ student.id }}" class="form-control" type="text" value="" readonly></td>
             <td><input id="usluga_{{ student.id }}" class="form-control" type="text" value="" readonly></td>
-            <td><input id="kolicina_{{ student.id }}" class="form-control" type="number" step="1" onkeypress='return event.charCode >= 48 && event.charCode <= 57' value="0" readonly></td>
-            <td><input id="iznos-{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
-            <td><input id="olaksice_{{ student.id }}" class="form-control" type="number" step="0.01" value="0.00" readonly></td>
-            <td><input id="iznos_zaduženja_{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
+            <td><input style="text-align: center;" id="kolicina_{{ student.id }}" class="form-control" type="number" step="1" onkeypress='return event.charCode >= 48 && event.charCode <= 57' value="0" readonly></td>
+            <td><input style="text-align: right;" id="iznos-{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
+            <td><input style="text-align: right;" id="olaksice_{{ student.id }}" class="form-control" type="number" step="0.01" value="0.00" readonly></td>
+            <td><input style="text-align: right;" id="iznos_zaduženja_{{ student.id }}" class="form-control" type="text" value="0" readonly></td>
         </tr>
         {% endfor %}
     </tbody>

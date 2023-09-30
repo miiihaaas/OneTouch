@@ -60,11 +60,11 @@
             <th>Učenik</th>
             <th>Poziv na broj</th>
             <th>Detalji usluge</th>
-            <th>Količina</th>
-            <th>Iznos</th>
-            <th>Olakšica</th>
-            <th>Iznos zaduženja</th>
-            <th></th>
+            <th style="width: 50px;">Količina</th>
+            <th style="width: 80px;">Iznos</th>
+            <th style="width: 80px;">Olakšica</th>
+            <th style="width: 80px;">Iznos zaduženja</th>
+            <th style="width: 80px;"></th>
         </tr>
     </thead>
     <tbody>
@@ -73,10 +73,10 @@
             <td><a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a></td>
             <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
             <td>{{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_service_item.service_item_name }}</td>
-            <td id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
-            <td id="installment_{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.studetn_debt_installment_value) }}</td>
-            <td id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.student_debt_discount)}}</td>
-            <td id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}}</td>
+            <td style="text-align: center;"id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
+            <td style="text-align: right;" id="installment_{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.studetn_debt_installment_value) }}</td>
+            <td style="text-align: right;" id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.student_debt_discount)}}</td>
+            <td style="text-align: right;" id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}}</td>
             <td>
                 {% if (record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount) > 0 %}
                     {% if record.transaction_record_student.send_mail %}
