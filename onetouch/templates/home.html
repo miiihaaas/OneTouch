@@ -1,33 +1,35 @@
 {% extends "layout.html" %}
 {% block content %}
 <h1 class="mb-4" style="text-align: center;  font-size: xx-large;">Brzi linkovi</h1>
-<div class="row mb-2">
-    <div class="col">
-        <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{url_for('transactions.student_debts')}}" style="font-size: 25px;">Zaduživanje učenika</a>
+<div class="container" style="width: 600px;">
+    <div class="row mb-2">
+        <div class="col">
+            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{url_for('transactions.student_debts')}}" style="font-size: 15px;">Zaduživanje učenika</a>
+        </div>
+        <div class="col">
+            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.posting_payment') }}" style="font-size: 15px;">Knjiženje uplata</a>
+        </div>
     </div>
-    <div class="col">
-        <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.posting_payment') }}" style="font-size: 25px;">Knjiženje uplata</a>
+    <div class="row mb-2">
+        <div class="col">
+            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('overviews.overview_students') }}" style="font-size: 15px;">Pregled po učeniku</a>
+        </div>
+        <div class="col">
+            <a id="school" name="school" class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('overviews.overview_sections') }}" style="font-size: 15px;">Pregled škole</a>
+        </div>
     </div>
-</div>
-<div class="row mb-2">
-    <div class="col">
-        <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('overviews.overview_students') }}" style="font-size: 25px;">Pregled po učeniku</a>
+    <div class="row mb-4">
+        <div class="col">
+            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.debts_archive_list') }}" style="font-size: 15px;">Arhiva naloga</a>
+        </div>
+        <div class="col">
+            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.payments_archive_list') }}" style="font-size: 15px;">Arhiva izvoda</a>
+        </div>
     </div>
-    <div class="col">
-        <a id="school" name="school" class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('overviews.overview_sections') }}" style="font-size: 25px;">Pregled škole</a>
+    <div class="loading-overlay">
+        <div class="spinner"></div>
+        <div>  Učitava se stranica. Molim Vas sačekajte...</div>
     </div>
-</div>
-<div class="row mb-4">
-    <div class="col">
-        <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.debts_archive_list') }}" style="font-size: 25px;">Arhiva naloga</a>
-    </div>
-    <div class="col">
-        <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.payments_archive_list') }}" style="font-size: 25px;">Arhiva izvoda</a>
-    </div>
-</div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>  Učitava se stranica. Molim Vas sačekajte...</div>
 </div>
 {% endblock content%}
 

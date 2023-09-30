@@ -122,10 +122,10 @@ body.Registracija form > div.form-group { text-align: center; }
 footer { display: flex; max-width: 1320px; margin: auto; justify-content: center; font-size: 12px; }
 form > div.form-group { text-align: center; }
 .btn.btn-danger, .btn.btn-secondary { margin-bottom: 10px !important; }
-.btn.btn-secondary { background-image: linear-gradient(#eee, #ccc) !important; color:#555 !important; }
-.btn.btn-secondary:hover { background-image: linear-gradient(#ccc, #ccc) !important; }
-.btn.btn-danger { background-image: linear-gradient(#ff0000, #990000) !important; }
-.btn.btn-danger:hover { background-image: linear-gradient(#990000, #990000) !important; }
+.btn.btn-secondary { background-image: linear-gradient(#009dde, #0174a5) !important; color:#ffffff !important; }
+.btn.btn-secondary:hover { background-image: linear-gradient(#0174a5, #0174a5) !important; }
+.btn.btn-danger { background-image: linear-gradient(#eb0081, #940052) !important; }
+.btn.btn-danger:hover { background-image: linear-gradient(#940052, #940052) !important; }
 .btn.btn-secondary, .btn.btn-danger { margin: 0 0 0 0 !important; }
 .form-check-input:checked { background-color: #009cdd; border-color: #009cdd; }
 .select2-container--open { z-index: 1111; }

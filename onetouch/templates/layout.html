@@ -49,9 +49,8 @@
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel">
         <button type="button" id="sidebarToggle" style="background: transparent; border: none;">
-          <i class="fa-solid fa-bars awesomedelete"></i>
+          <i class="fa-solid fa-bars awesomedelete" style="color: white;"></i>
         </button>
-      
         <div class="container">
           {% if current_user.is_authenticated %}
           <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
@@ -85,13 +84,14 @@
                     <a class="dropdown-item" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
                   </div>
                 </li>
-                <li class="nav-item dropdown dropdown--align-right">
+                <li class="nav-item dropdown dropdown--align-right mr-4">
                   <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Arhiva</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
                     <a class="dropdown-item" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
                     <a class="dropdown-item" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
                   </div>
                 </li>
+                <!-- <i class="fa-solid fa-window-minimize fa-rotate-90 awesomedelete mt-2" style="color: white;"></i> -->
                 <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Odjavite se</a>
               {% else %}
                 <a class="nav-item nav-link" href="{{ url_for('users.login') }}"> Prijavite se</a>
