@@ -1,6 +1,23 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="row form-group align-items-end">
+    d:{{dugovanje}}  p:{{preplata}}
+    <div class="form-check form-switch">
+        {% if dugovanje %}
+        <input class="form-check-input" type="checkbox" role="switch" id="debts" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" role="switch" id="debts">
+        {% endif %}
+        <label class="form-check-label" for="debts">Dugovanja</label>
+    </div>
+    <div class="form-check form-switch">
+        {% if preplata %}
+        <input class="form-check-input" type="checkbox" role="switch" id="overpayments" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" role="switch" id="overpayments">
+        {% endif %}
+        <label class="form-check-label" for="overpayments">Preplate</label>
+    </div>
     <div class="col form-group">
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
@@ -72,7 +89,7 @@
     <div class="col form-group">
         <a class="btn btn-danger" href="./overview_students">Reset filtera</a>
     </div>
-    <div class="col-md-1  mt-1">
+    <div class="col form-group">
         <a id="resetButton" class="btn btn-promary" href="{{ url_for('static', filename='reports/report_student_list.pdf') }}" target="_blank">Štampa pregleda</a>
     </div>
     <hr>
@@ -118,6 +135,25 @@
     var zaduzenjeSumElement = document.getElementById('zaduzenjeSum');
     var uplateSumElement = document.getElementById('uplateSum');
     var saldoSumElement = document.getElementById('saldoSum');
+    var debtsCheckbox = document.getElementById('debts');
+    var overpaymentsCheckbox = document.getElementById('overpayments');
+
+    // Dodaj event listener za promene stanja prekidača 'debts'
+    debtsCheckbox.addEventListener('change', function() {
+        // Ako je 'debts' uključen, isključi 'overpayments'
+        if (this.checked) {
+            overpaymentsCheckbox.checked = false;
+        }
+    });
+
+    // Dodaj event listener za promene stanja prekidača 'overpayments'
+    overpaymentsCheckbox.addEventListener('change', function() {
+        // Ako je 'overpayments' uključen, isključi 'debts'
+        if (this.checked) {
+            debtsCheckbox.checked = false;
+        }
+    });
+
 
     // Izračunavanje sumi za svaki ključ
     var data = JSON.parse('{{ export_data | tojson | safe }}');
@@ -160,9 +196,11 @@
             var startDate = document.getElementById("start-date").value;
             var endDate = document.getElementById("end-date").value;
             var serviceId = document.getElementById("searchUsluga").value;
+            var debtsCheckbox = document.getElementById("debts").checked;
+            var overpaymentsCheckbox = document.getElementById("overpayments").checked;
             console.log('id usluge: ', serviceId)
             var currentUrl = window.location.href.split('?')[0];
-            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje;
+            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje + "&debts=" + debtsCheckbox + "&overpayments=" + overpaymentsCheckbox;
             window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
         }
 
@@ -172,6 +210,8 @@
         document.getElementById("searchUsluga").addEventListener("change", handleDateChange);
         document.getElementById("searchRazred").addEventListener("change", handleDateChange);
         document.getElementById("searchOdeljenje").addEventListener("change", handleDateChange);
+        document.getElementById("debts").addEventListener("change", handleDateChange);
+        document.getElementById("overpayments").addEventListener("change", handleDateChange);
     });
 </script>
 {% endblock %}

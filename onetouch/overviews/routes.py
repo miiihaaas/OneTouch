@@ -29,6 +29,11 @@ def overview_students():
     service_id = request.args.get('service_id')
     razred = request.args.get('razred')
     odeljenje = request.args.get('odeljenje')
+    dugovanje = request.args.get('debts')
+    preplata = request.args.get('overpayments')
+    
+    print(f'debug: {start_date=} {end_date=} {service_id=} {razred=} {odeljenje=} {dugovanje=} {preplata=}')
+    
     print(f'pri uvoženju podataka: {razred=} {odeljenje=}')
     if not service_id:
         service_id = '0' # ako nije definisana promenjiva na početku, dodeli joj '0' što predstavlja sve usluge
@@ -36,6 +41,14 @@ def overview_students():
         razred = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve razrede
     if not odeljenje:
         odeljenje = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve odeljenja
+    if dugovanje == 'true':
+        dugovanje = True
+    else:
+        dugovanje = False
+    if preplata == 'true':
+        preplata = True
+    else:
+        preplata = False
     print(f'nakon prilagođavanja: {razred=} {odeljenje=}')
     print(f'{start_date=} {end_date=} {service_id=}')
     if start_date is None or end_date is None:
@@ -138,17 +151,28 @@ def overview_students():
                     'student_payment': record.student_debt_total if record.student_payment_id else 0,
                 }
                 new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
-                # print(f'{new_record}')
+                print(f'{new_record=}')
                 if int(new_record['student_id']) > 1:
                     export_data.append(new_record)
     # export_data = [dict(t) for t in {tuple(d.items()) for d in export_data}]
 
     print(f'{export_data=}')
     
+    filtered_export_data = []
+    for record in export_data:
+        if dugovanje:
+            if record['saldo'] > 0:
+                filtered_export_data.append(record)
+        elif preplata:
+            if record['saldo'] < 0:
+                filtered_export_data.append(record)
+    if len(filtered_export_data) > 0:
+        export_data = filtered_export_data
+    
     students = Student.query.filter(Student.student_class < 9).all()
     teachers = Teacher.query.all()
     
-    report_students = gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje)
+    report_students = gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje, dugovanje, preplata)
     
     return render_template('overview_students.html', 
                             title='Pregled po učeniku', 
@@ -161,7 +185,9 @@ def overview_students():
                             service_id=service_id,
                             options=options,
                             razred=razred,
-                            odeljenje=odeljenje,)
+                            odeljenje=odeljenje,
+                            dugovanje=dugovanje,
+                            preplata=preplata,)
 
 
 @overviews.route("/overview_student/<int:student_id>", methods=['GET', 'POST'])

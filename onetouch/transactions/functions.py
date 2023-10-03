@@ -358,7 +358,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     return file_name
 
 
-def gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje):
+def gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje, dugovanje, preplata):
     school = School.query.first()
     service_name = ''
     for record in filtered_records:
@@ -396,6 +396,10 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
                 pdf.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
                 pdf.cell(0, 5, f'Odeljenja: Sva', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            if dugovanje:
+                pdf.cell(0, 5, f'FsIltrirani učenici sa dugom', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            elif preplata:
+                pdf.cell(0, 5, f'Filtriranji učenici sa preplatom', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             pdf.cell(0, 5, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             pdf.cell(40, 8, '', 0, 1, 'R')
             
