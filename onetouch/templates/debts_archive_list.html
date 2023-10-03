@@ -2,6 +2,46 @@
 {% block content %}
 <div class="row">
     <div class="col">
+        <label for="searchRazred">Pretraga po razredu:</label>
+        <select id="searchRazred" class="form-select">
+            {% if razred|string == "" %}
+                <option value="">Svi razredi</option>
+                {% for class in range(9) %}
+                    <option value="{{ class }}">{{ class }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">Svi razredi</option>
+                {% for class in range(9) %}
+                    {% if class|string == razred|string %}
+                        <option value="{{ class }}" selected>{{ class }}</option>
+                    {% else %}
+                        <option value="{{ class }}">{{ class }}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </select>
+    </div>    
+    <div class="col">
+        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
+        <select id="searchOdeljenje" class="form-select">
+            {% if odeljenje|string == "" %}
+                <option value="">Sva odeljenja</option>
+                {% for section in range(1,15) %}
+                    <option value="{{ section }}">{{ section }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">Sva odeljenja</option>
+                {% for section in range(15) %}
+                    {% if section|string == odeljenje|string %}
+                        <option value="{{ section }}" selected>{{ section }}</option>
+                    {% else %}
+                        <option value="{{ section }}">{{ section }}</option>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </select>
+    </div>
+    <div class="col">
         <label for="start-date" class="form-label">Početni datum:</label>
         <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}">
     </div>
@@ -9,11 +49,16 @@
         <label for="end-date" class="form-label">Krajnji datum:</label>
         <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
+    <div class="col">
+        <a class="btn btn-danger" href="./debts_archive_list">Reset filtera</a>
+    </div>
 </div>
+<hr>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
     <thead>
         <tr>
             <th>Datum</th>
+            <th>Datum_python</th>
             <th>Razred</th>
             <th>Odeljenje</th>
             <th>Detalji usluge</th>
@@ -25,6 +70,7 @@
         {% for debt in debts %}
         <tr>
             <td>{{ debt.student_debt_date.strftime('%d.%m.%Y.') }}</td>
+            <td>{{ debt.student_debt_date }}</td>
             <td>{{ debt.debt_class }}</td>
             <td>{{ debt.debt_section }}</td>
             <td>{{ debt.student_debt_service_item.service_item_service.service_name }} - {{ debt.student_debt_service_item.service_item_name }}</td>
@@ -66,11 +112,39 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        $('#data').DataTable({
+        table = $('#data').DataTable({
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            },
+            "order": [[1, 'desc']],
+            "columnDefs": [
+                { "targets": [1], "visible": false }
+            ]
+        });
+        // Filtriranje po razredu
+        $('#searchRazred').on('change', function () {
+            var selectedRazred = $(this).val();
+            
+            // Provera da li je izabrana vrednost
+            if (selectedRazred === '') {
+                table.column(2).search('').draw();
+            } else {
+                table.column(2).search(selectedRazred).draw();
             }
         });
+
+        // Filtriranje po odeljenju
+        $('#searchOdeljenje').on('change', function () {
+            var selectedOdeljenje = $(this).val();
+            
+            // Provera da li je izabrana vrednost
+            if (selectedOdeljenje === '') {
+                table.column(3).search('').draw();
+            } else {
+                table.column(3).search(selectedOdeljenje).draw();
+            }
+        });
+
         // Osluškivanje klika na link "Izbrišite" u tabeli
         $('a.btn-danger-x').on('click', function () {
             var debtId = $(this).data('debt-id'); // Uzimanje vrednosti atributa 'data-debt-id'

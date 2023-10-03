@@ -290,15 +290,24 @@ def submit_records():
 
 @transactions.route('/debts_archive_list', methods=['get', 'post'])
 def debts_archive_list():
+    danas = date.today()
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     if start_date is None or end_date is None:
-        start_date = date.today().replace(day=1, month=1).isoformat()
-        end_date = date.today().isoformat()
+        if danas.month < 9:
+            start_date = danas.replace(month=9, day=1, year=danas.year-1)
+            end_date = danas.replace(month=8, day=31)
+        else:
+            start_date = danas.replace(month=9, day=1)
+            end_date = danas.replace(month=8, day=31, year=danas.year+1)
     print(f'{start_date=}, {end_date=}')
+    if type(start_date) is str:
+        # Konvertuj start_date i end_date u datetime.date objekte
+        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
     debts = StudentDebt.query.filter(
             (StudentDebt.student_debt_date >= start_date) &
-            (StudentDebt.student_debt_date <= (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat()) #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
+            (StudentDebt.student_debt_date <= (end_date + timedelta(days=1)).isoformat()) #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
         ).all()
     print(f'{debts=}')
     return render_template('debts_archive_list.html', 
@@ -321,7 +330,7 @@ def payments_archive_list():
                             payments=payments,
                             start_date=start_date,
                             end_date=end_date,
-                            legend="Arhiva izvoda") #todo napravi html fajl
+                            legend="Arhiva izvoda")
 
 
 @transactions.route('/single_payment_slip/<int:record_id>', methods=['get', 'post'])

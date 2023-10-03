@@ -397,7 +397,7 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
             else:
                 pdf.cell(0, 5, f'Odeljenja: Sva', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             if dugovanje:
-                pdf.cell(0, 5, f'FsIltrirani učenici sa dugom', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                pdf.cell(0, 5, f'Filtrirani učenici sa dugom', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             elif preplata:
                 pdf.cell(0, 5, f'Filtriranji učenici sa preplatom', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             pdf.cell(0, 5, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
