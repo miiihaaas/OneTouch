@@ -589,7 +589,9 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
 
 
 def gen_dept_report(records):
-    sorted_records = sorted(records, key=lambda x: -(x.student_debt_id * x.studetn_debt_installment_value - x.student_debt_discount))
+    print(f'records: {records=}')
+    sorted_records = sorted(records, key=lambda x: x.student_debt_amount * x.studetn_debt_installment_value - x.student_debt_discount, reverse=True)
+    print(f'sorted_records: {sorted_records=}')
     school = School.query.first()
     class PDF(FPDF):
         def __init__(self, **kwargs):
