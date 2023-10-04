@@ -17,6 +17,9 @@
     <label for="today_date" class="form-control-label">Datum zaduživanja</label>
     <input id="today_date" name="today_date" type="text" class="form-control" value="{{ debt.student_debt_date.strftime('%d.%m.%Y.') }}" disabled>
 </div>
+<div class="form-group" style="display: inline-block;">
+    <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/dept_report.pdf') }}" target="_blank">Štampa zaduženja</a>
+</div>
 {% if new_students %}
 <div class="form-group" style="display: inline-block;">
     <a class="btn btn-primary" data-toggle="modal" data-target="#AddStudent">zadužite novog učenika</a>
@@ -51,7 +54,6 @@
         </div>
     </div>
 </div>
-
 {% endif %}
 <hr>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">

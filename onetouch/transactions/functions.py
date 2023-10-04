@@ -531,32 +531,32 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
             self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
             self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
             self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
-            pdf.set_font('DejaVuSansCondensed', 'B', 18)
-            pdf.cell(40, 8, '', 0, 1, 'R')
-            pdf.cell(0, 15, f'Pregled stanja učenika po uslugama', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
-            pdf.set_font('DejaVuSansCondensed', 'B', 12)
+            self.set_font('DejaVuSansCondensed', 'B', 18)
+            self.cell(40, 8, '', 0, 1, 'R')
+            self.cell(0, 15, f'Pregled stanja učenika po uslugama', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
+            self.set_font('DejaVuSansCondensed', 'B', 12)
             if service_id != '0':
-                pdf.cell(0, 5, f'Usluga: ({int(service_id):03}) {service_name}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                self.cell(0, 5, f'Usluga: ({int(service_id):03}) {service_name}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
-                pdf.cell(0, 5, f'Usluge: Sve', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                self.cell(0, 5, f'Usluge: Sve', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             if razred:
-                pdf.cell(0, 5, f'Razred: {razred} ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                self.cell(0, 5, f'Razred: {razred} ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
-                pdf.cell(0, 5, f'Razredi: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                self.cell(0, 5, f'Razredi: Svi ', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             if odeljenje:
-                pdf.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+                self.cell(0, 5, f'Odeljenje: {odeljenje}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
             else:
-                pdf.cell(0, 5, f'Odeljenja: Sva', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-            pdf.cell(0, 5, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
-            pdf.cell(40, 8, '', 0, 1, 'R')
+                self.cell(0, 5, f'Odeljenja: Sva', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            self.cell(0, 5, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'L')  # Promenite "new_y" u 0 i uklonite "border"
+            self.cell(40, 8, '', 0, 1, 'R')
             
             
-            pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
-            pdf.set_font('DejaVuSansCondensed', 'B', 12)
-            pdf.cell(95, 8, f'Odeljenski starešina', 1, 0, 'L', 1)
-            pdf.cell(30, 8, f'Zaduženje', 1, 0, 'C', 1)
-            pdf.cell(30, 8, f'Uplate', 1, 0, 'C', 1)
-            pdf.cell(30, 8, f'Saldo', 1, 1, 'C', 1)
+            self.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+            self.set_font('DejaVuSansCondensed', 'B', 12)
+            self.cell(95, 8, f'Odeljenski starešina', 1, 0, 'L', 1)
+            self.cell(30, 8, f'Zaduženje', 1, 0, 'C', 1)
+            self.cell(30, 8, f'Uplate', 1, 0, 'C', 1)
+            self.cell(30, 8, f'Saldo', 1, 1, 'C', 1)
             
     
     pdf = PDF()
@@ -584,5 +584,52 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
     pdf.cell(40, 8, f'{saldo:,.2f}', 0, 1, 'R')
     
     file_name = 'report_school.pdf'
+    path = f'{project_folder}/static/reports/'
+    pdf.output(path + file_name)
+
+
+def gen_dept_report(records):
+    sorted_records = sorted(records, key=lambda x: -(x.student_debt_id * x.studetn_debt_installment_value - x.student_debt_discount))
+    school = School.query.first()
+    class PDF(FPDF):
+        def __init__(self, **kwargs):
+            super(PDF, self).__init__(**kwargs)
+            print(f'{font_path=}')
+            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+    
+        def header(self):
+            # Postavite font i veličinu teksta za zaglavlje
+            self.set_font('DejaVuSansCondensed', 'B', 10)
+            # Dodajte informacije o školi
+            self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
+            self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
+            self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
+            self.set_font('DejaVuSansCondensed', 'B', 18)
+            self.cell(40, 8, '', 0, 1, 'R')
+            self.cell(0, 15, f'Zaduženje', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
+            self.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+            self.set_font('DejaVuSansCondensed', 'B', 10)
+            self.cell(40, 8, 'Učenik', 1, 0, 'L', 1)
+            self.cell(22, 8, 'Poziv na br', 1, 0, 'L', 1)
+            self.cell(63, 8, 'Detalji usluge', 1, 0, 'L', 1)
+            self.cell(10, 8, 'Kol', 1, 0, 'C', 1)
+            self.cell(15, 8, 'Iznos', 1, 0, 'C', 1)
+            self.cell(15, 8, 'Olakšica', 1, 0, 'C', 1)
+            self.cell(30, 8, 'Iznos zaduženja', 1, 1, 'C', 1)
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_fill_color(255, 255, 255)
+    for record in sorted_records:
+        pdf.set_font('DejaVuSansCondensed', '', 10)
+        pdf.cell(40, 8, f"{record.transaction_record_student.student_name} {record.transaction_record_student.student_surname}", 1, 0, 'L')
+        pdf.cell(22, 8, f'{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }', 1, 0, 'C')
+        pdf.cell(63, 8, f'{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name } - { record.transaction_record_student_debt.student_debt_service_item.service_item_name }', 1, 0, 'L')
+        pdf.cell(10, 8, f'{ record.student_debt_amount }', 1, 0, 'C')
+        pdf.cell(15, 8, f'{ "{:.2f}".format(record.studetn_debt_installment_value) }', 1, 0, 'R')
+        pdf.cell(15, 8, f'{ "{:.2f}".format(record.student_debt_discount)}', 1, 0, 'R')
+        pdf.cell(30, 8, f'{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}', 1, 1, 'R')
+    
+    file_name = 'dept_report.pdf'
     path = f'{project_folder}/static/reports/'
     pdf.output(path + file_name)
