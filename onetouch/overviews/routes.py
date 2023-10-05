@@ -220,7 +220,7 @@ def overview_student(student_id):
         if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total > 0: #! ako nije u listi 'unique_services_list' i ako ima zaduženja (>0) onda ga razmotri u dodavanje u listu na osnovu datuma
             service_data = {
                 'id': record.service_item_id,
-                'service_debt_id': record.student_debt_id if record.student_debt_id else int(record.reference_number[-3:]), #! ovde nekada bude None i pravi problem da kreira link ka zaduženju
+                'service_debt_id': record.student_debt_id if record.student_debt_id else ServiceItem.query.get_or_404(int(record.service_item_id)), #! ovde nekada bude None i pravi problem da kreira link ka zaduženju
                 'service_item_date': record.transaction_record_service_item.service_item_date,
                 'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
                 'date': record.transaction_record_student_debt.student_debt_date if record.student_debt_id else record.transaction_record_student_payment.payment_date,
