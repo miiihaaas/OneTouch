@@ -82,6 +82,9 @@ def student_list():
 
 @students.route('/test', methods=['GET', 'POST'])
 def test():
+    danas = datetime.now()
+    active_date_start = danas.replace(month=8, day=15)
+    active_date_end = danas.replace(month=9, day=15)
     register_form = RegisterStudentModalForm()
     edit_form = EditStudentModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
@@ -113,7 +116,12 @@ def test():
         print("inputi su validni")
         flash(f'Učenik "{student.student_name} {student.student_surname}" je registrovan.', 'success')
         return redirect(url_for('students.test'))
-    return render_template('test.html', register_form=register_form, edit_form=edit_form)
+    return render_template('test.html', 
+                            register_form=register_form, 
+                            edit_form=edit_form,
+                            active_date_start=active_date_start,
+                            active_date_end=active_date_end,
+                            danas=danas)
 
 
 @students.route('/testing')
@@ -128,8 +136,9 @@ def testing():
     if search:
         students_query = students_query.filter(db.or_(
             Student.student_name.like(f'%{search}%'),
-            Student.student_surname.like(f'%{search}%')
-        ))
+            Student.student_surname.like(f'%{search}%'),
+            Student.id.like(f'%{search}%'))
+        )
     if student_class:
         students_query = students_query.filter(Student.student_class == student_class)
     if student_section:
@@ -145,7 +154,7 @@ def testing():
             break
         col_name = request.args.get(f'columns[{col_index}][data]')
         if col_name not in ['id', 'student_name', 'student_surname', 'student_class', 'student_section', 'parent_email']:
-            col_name = 'student_name'
+            col_name = 'parent_email'
         descending = request.args.get(f'order[{i}][dir]') == 'desc'
         col = getattr(Student, col_name)
         if descending:
