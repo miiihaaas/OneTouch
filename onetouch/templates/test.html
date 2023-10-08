@@ -230,7 +230,7 @@
                 </button>
             </div>
         <div class="modal-body">
-        <label for="input_password">Da bi ste obrisali profil učenika TEST potrebno je potvrditi svojom lozinkom:</label>
+        <label id="input_password_label" for="input_password">Da bi ste obrisali profil učenika TEST potrebno je potvrditi svojom lozinkom:</label>
         </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
@@ -261,10 +261,12 @@
 
 {% block scripts %}
 <script>
-    function deleteStudent(studentId) {
+    function deleteStudent(studentId, studentName) {
         var form = document.getElementById('deleteForm')
         console.log('kliknuto na kanticu: ', studentId)
-        form.action = "student/" + parseInt(studentId) + "/delete"
+        form.action = "student/" + parseInt(studentId) + "/delete";
+        var labelElement = document.getElementById('input_password_label');
+        labelElement.innerHTML = 'Da biste obrisali profil učenika ' + studentName + ' potrebno je potvrditi svojom lozinkom:';
     }
     function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
         console.log('pokrenuta je funkcija editStudent')
@@ -362,7 +364,7 @@
                                 <i class="fa fa-edit awesomeedit" aria-hidden="true"></i>
                             </button>
                             <a href="#" class="btn-x btn-danger-x" data-toggle="modal"
-                                data-target="#DeleteModal" onclick="deleteStudent('${row.id}')" title="Obrišite profil učenika">
+                                data-target="#DeleteModal" onclick="deleteStudent('${row.id}', '${row.student_name} ${row.student_surname}')" title="Obrišite profil učenika">
                                 <i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i>
                             </a>
                         </td>`;
