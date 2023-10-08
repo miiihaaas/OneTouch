@@ -278,7 +278,7 @@
     $(document).ready(function () {
         var table = $('#data').DataTable({
             ajax: {
-                url: '/testing',
+                url: './testing',
                 type: 'GET',
                 data: function (d) {
                     d.searchRazred = $('#searchRazred').val();
