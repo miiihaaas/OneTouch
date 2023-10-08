@@ -1,0 +1,346 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>testing</h2>
+<div class="row form-group align-items-end">
+    <div class="col form-group">
+        <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+    </div>
+    <div class="col form-group">
+        <label for="searchRazred">Pretraga po razredu:</label>
+        <select id="searchRazred" class="form-select">
+            <option value="">Svi razredi</option>
+            {% for class in range(9) %}
+                <option value="{{ class }}">{{ class }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="col form-group">
+        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
+        <select id="searchOdeljenje" class="form-select">
+            <option value="">Sva odeljenja</option>
+            {% for section in range(16) %}
+                <option value="{{ section }}">{{ section }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+<!-- Modal Edit -->
+<div class="modal fade" id="EditModal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EditModalLabel">Detalji učenika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="" method="POST">
+                    {{ edit_form.hidden_tag() }}
+                    <div class="row">
+                        <div class="col form-group">
+                            {{ edit_form.student_name.label(class="form-control-label") }}
+                            {% if edit_form.student_name.errors %}
+                                {{ edit_form.student_name(class="form-control form-control-lg is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in edit_form.student_name.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ edit_form.student_name(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="col form-group">
+                            {{ edit_form.student_surname.label(class="form-control-label") }}
+                            {% if edit_form.student_surname.errors %}
+                                {{ edit_form.student_surname(class="form-control form-control-lg is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in edit_form.student_surname.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ edit_form.student_surname(class="form-control form-control-lg") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col form-group">
+                            {{ edit_form.student_class.label(class="form-control-label") }}
+                            {% if edit_form.student_class.errors %}
+                            {{ edit_form.student_class(class="form-control form-control-lg is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in edit_form.student_class.errors %}
+                                    <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                            {{ edit_form.student_class(class="form-select form-select-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="col form-group">
+                            {{ edit_form.student_section.label(class="form-control-label") }}
+                            {% if edit_form.student_section.errors %}
+                            {{ edit_form.student_section(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in edit_form.student_section.errors %}
+                                <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            {{ edit_form.student_section(class="form-select form-select-lg") }}
+                            {% endif %}
+                        </div>
+                        <div class="col form-group">
+                            <label class="form-control-label" for="student_id">ID učenika</label>
+                            <input class="form-control form-control-lg" value="" id="student_id" name="student_id" readonly>
+                        </div>
+                    </div>
+            <div class="form-group">
+                {{ edit_form.parent_email.label(class="form-control-label") }}
+                {% if edit_form.parent_email.errors %}
+                    {{ edit_form.parent_email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in edit_form.parent_email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ edit_form.parent_email(class="form-control form-control-lg", placeholder="xx@xx.xx") }}
+                {% endif %}
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" id="send_mail" name="send_mail" type="checkbox">
+                {{ edit_form.send_mail.label(class="form-control-label") }}
+            </div>
+            </div>
+                <div class="modal-footer">
+                    <button type="radio" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    {{ edit_form.submit_edit(class="btn btn-info") }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Register Edit -->
+<div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="RegisterModalLabel">Registracija novog učenika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <div class="modal-body">
+        <label for="input_password">Popunite podatke učenika</label>
+        <form action="" method="POST">
+            {{ register_form.hidden_tag() }}
+            <div class="form-group">
+                {{ register_form.student_name.label(class="form-control-label") }}
+                {% if register_form.student_name.errors %}
+                    {{ register_form.student_name(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_name.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_name(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.student_surname.label(class="form-control-label") }}
+                {% if register_form.student_surname.errors %}
+                    {{ register_form.student_surname(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_surname.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_surname(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.student_class.label(class="form-control-label") }}
+                {% if register_form.student_class.errors %}
+                    {{ register_form.student_class(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_class.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_class(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.student_section.label(class="form-control-label") }}
+                {% if register_form.student_section.errors %}
+                    {{ register_form.student_section(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.student_section.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.student_section(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ register_form.parent_email.label(class="form-control-label") }}
+                {% if register_form.parent_email.errors %}
+                    {{ register_form.parent_email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.parent_email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.parent_email(class="form-control form-control-lg", placeholder="xx@xx.xx") }}
+                {% endif %}
+            </div>
+            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    <div class="form-group">
+                        {{ register_form.submit_register(class="btn btn-outline-info") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>ID učenika</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Razred</th>
+            <th>Odeljenje</th>
+            <th>Mejl roditelja</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
+        console.log('pokrenuta je funkcija editStudent')
+        document.getElementById("student_id").value = parseInt(studentId)
+        document.getElementById("student_name").value = studentName;
+        document.getElementById("student_surname").value = studentSurname;
+        document.getElementById("student_class").value = studentClass;
+        document.getElementById("student_section").value = studentSection;
+        document.getElementById("parent_email").value = parentEmail;
+        console.log('student_idv: ', document.getElementById("student_id").value)
+        console.log('student_name: ', document.getElementById("student_name").value)
+        console.log('sendMail: ', sendMail)
+        if ( sendMail === 'true' || sendMail === 'True' ) {
+            document.getElementById("send_mail").checked = true;
+            document.getElementById("send_mail").value = 'True';
+        } else {
+            document.getElementById("send_mail").checked = false;
+            document.getElementById("send_mail").value = 'False';
+        }
+        var parentEmailInput = document.getElementById("parent_email");
+        var sendMailCheckbox = document.getElementById("send_mail");
+
+        function isValidEmail(email) {
+            // Regularni izraz za validaciju email adrese
+            var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+            return emailRegex.test(email);
+        }
+        // Funkcija koja se izvršava prilikom promene u polju 'parent_email'
+        function handleParentEmailChange() {
+            var email = parentEmailInput.value.trim();
+            
+            if (email === "" || !isValidEmail(email)) {
+                sendMailCheckbox.checked = false;
+                sendMailCheckbox.disabled = true;
+            } else {
+                sendMailCheckbox.disabled = false;
+            }
+        }
+        // Pozivamo funkciju handleParentEmailChange prilikom učitavanja stranice
+        handleParentEmailChange();
+        // Dodajte event listener za promene u polju 'parent_email'
+        parentEmailInput.addEventListener("input", handleParentEmailChange);
+    }
+    $(document).ready(function () {
+        var table = $('#data').DataTable({
+            ajax: {
+                url: '/testing',
+                type: 'GET',
+                data: function (d) {
+                    d.searchRazred = $('#searchRazred').val();
+                    d.searchOdeljenje = $('#searchOdeljenje').val();
+                },
+            },
+            serverSide: true,
+            columns: [
+            {data: 'id'},
+            {data: 'student_name'},
+            {data: 'student_surname'},
+            {data: 'student_class'},
+            {data: 'student_section'},
+            {
+                data: null,
+                render: function (data, type, row) {
+                    // Generisanje HTML za novu kolonu
+                    if (row.parent_email) {
+                        if (row.send_mail) {
+                            return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                        } else {
+                            return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                        }
+                    } else {
+                        return '<td></td>';
+                    }
+                },
+            },
+            {
+                data: null,
+                render: function (data, type, row) {
+                    // Generisanje HTML dugmadi za edit i delete
+                    return `<td>
+                        <button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika"
+                            data-toggle="modal" data-target="#EditModal"
+                            onclick="editStudent('${row.id}', '${row.student_name}', '${row.student_surname}',
+                            '${row.student_class}', '${row.student_section}', '${row.parent_email}',
+                            '${row.send_mail}', '${row.print_payment}')">
+                            <i class="fa fa-edit awesomeedit" aria-hidden="true"></i>
+                        </button>
+                        <a href="#" class="btn-x btn-danger-x" data-toggle="modal"
+                            data-target="#DeleteModal${row.id}" title="Obrišite profil učenika">
+                            <i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i>
+                        </a>
+                    </td>`;
+                },
+            }
+            ],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+        // Dodavanje event listenera za promenu vrednosti u searchRazred
+        $('#searchRazred').on('change', function () {
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
+        });
+        // Dodavanje event listenera za promenu vrednosti u searchOdeljenje
+        $('#searchOdeljenje').on('change', function () {
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
+        });
+    });
+</script>
+{% endblock scripts %}
