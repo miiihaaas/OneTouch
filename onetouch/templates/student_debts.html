@@ -331,6 +331,7 @@
                             const studentId = this.id.split('_')[3];
                             $(this).val(`${studentId.padStart(4, '0')}-${selectedServiceId.padStart(3, '0')}`);
                         });
+                        console.log('uslugaCells: ', uslugaCells)
                         uslugaCells.each(function() {
                             $(this).val(`${selectedServiceText}`); // ovaj tekst mi treba i na drugom mestu
                         });

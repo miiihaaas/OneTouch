@@ -39,6 +39,73 @@ def student_debts():
                             teachers=teachers)
 
 
+@transactions.route('/test', methods=['POST', 'GET'])
+def test():
+    students = Student.query.all()
+    return render_template('test.html')
+
+
+@transactions.route('/testing')
+def testing():
+    students_query = Student.query.filter(None)
+    # search filter
+    search = request.args.get('search[value]')
+    student_class = request.args.get('classes')
+    student_section = request.args.get('section')
+    service_item_id = request.args.get('service_item')
+    service_item = ServiceItem.query.get_or_404(service_item_id)
+    installment = request.args.get('installment')
+    installment_value_result = 0
+    if installment in ['', '0']:
+        service_name = '------'
+        installment_attr = f'installment_1'
+    else:
+        installment_attr = f'installment_{installment}'
+        installment_value_result = getattr(ServiceItem.query.filter_by(id=service_item_id).first(), installment_attr)
+        students_query = Student.query.filter(Student.student_class < 9)
+        service_name = f'{service_item.service_item_service.service_name} - {service_item.service_item_name}'
+    
+    print(f'debug: {search=} {student_class=} {student_section=} {service_item_id=} {installment=} {installment_attr=} {installment_value_result=}')
+    if search:
+        students_query = students_query.filter(db.or_(
+            Student.student_name.like(f'%{search}%'),
+            Student.student_surname.like(f'%{search}%'),
+            Student.id.like(f'%{search}%'))
+        )
+    if student_class:
+        students_query = students_query.filter(Student.student_class == student_class)
+    if student_section:
+        students_query = students_query.filter(Student.student_section == student_section)
+    total_filtered = students_query.count()
+    
+    
+    # pagination
+    start = request.args.get('start', type=int)
+    length = request.args.get('length', type=int)
+    students_query = students_query.offset(start).limit(length)
+    
+    students_list = []
+    for student in students_query:
+        new_dict = {
+            'student_id': student.id,
+            'student_name': student.student_name,
+            'student_surname': student.student_surname,
+            'student_class': student.student_class,
+            'student_section': student.student_section,
+            'reference_number': f'{str(student.id).zfill(4)}-{str(service_item_id).zfill(3)}',
+            'service_item_name': service_name,
+            'installment': installment,
+            'installment_value': installment_value_result,
+            
+        }
+        students_list.append(new_dict)
+    return {
+        'data': students_list,
+        'recordsFiltered': total_filtered,
+        'recordsTotal': total_filtered,
+        'draw': request.args.get('draw', type=int),
+    }
+
 
 @transactions.route('/add_new_student', methods=['POST']) #! dodaje novog studenta u postojeće zaduženje (npr došao novi đak tokom školse godine i treba da se zaduži za osiguranje...)
 def add_new_student():

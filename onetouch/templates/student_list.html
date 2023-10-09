@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-
-
+<h2>testing</h2>
 <div class="row form-group align-items-end">
     <div class="col form-group">
         <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
@@ -15,7 +14,6 @@
             {% endfor %}
         </select>
     </div>
-    
     <div class="col form-group">
         <label for="searchOdeljenje">Pretraga po odeljenju:</label>
         <select id="searchOdeljenje" class="form-select">
@@ -30,89 +28,8 @@
             <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
         {% endif %}
     </div>
-    <hr>
 </div>
-<!-- Modal +1 razred -->
-<div class="modal fade" id="PlusJedanRazredModal" tabindex="-1" role="dialog" aria-labelledby="PlusJedanRazredModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="PlusJedanRazredModalLabel">Potvrda</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        <div class="modal-body">
-        <label for="input_password">Da li ste sigurni da želite da sve đake prevedete u sledeći razred?</label>
-        </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                <a href="{{url_for('students.class_plus_one')}}" class="btn btn-info">+1 razred</a>
-            </div>
-        </div>
-    </div>
-</div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
-    <thead>
-        <tr role="row">
-            <th>ID učenika</th>
-            <th>Ime</th>
-            <th>Prezime</th>
-            <th>Razred</th>
-            <th>Odeljenje</th>
-            <th>Mejl roditelja</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for student in students %}
-        <tr class="odd">
-            <td>{{ "{:04d}".format(student.id) }}</td>
-            <td>{{ student.student_name }}</td>
-            <td>{{ student.student_surname }}</td>
-            <td>{{ student.student_class }}</td>
-            <td>{{ student.student_section }}</td>
-            <td>
-                {% if student.parent_email %}
-                    {% if student.send_mail %}
-                        <i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | 
-                    {% else %}
-                    <i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | 
-                    {% endif %}
-                {% endif %}
-                {{ student.parent_email }}
-            </td>
-            <td><button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika" data-toggle="modal" data-target="#EditModal" onclick="editStudent('{{student.id}}', '{{student.student_name}}', '{{student.student_surname}}', '{{student.student_class}}', '{{student.student_section}}', '{{student.parent_email}}', '{{student.send_mail}}', '{{student.print_payment}}')"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></button>
-                <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{student.id}}" title="Obrišite profil učenika"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
-        </tr>
-        
-        <!-- Modal Delete -->
-        <div class="modal fade" id="DeleteModal{{student.id}}" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                <div class="modal-body">
-                <label for="input_password">Da bi ste obrisali profil učenika {{ student.student_name }} {{ student.student_surname }} potrebno je potvrditi svojom lozinkom:</label>
-                </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                        <form action="{{ url_for('students.delete_student', student_id=student.id) }}" method="post">
-                            <input class="btn btn-danger" type="submit" value="Obrišite Učenika">
-                            <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </tbody>
-</table>
-
+<hr>
 <!-- Modal Edit -->
 <div class="modal fade" id="EditModal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -212,8 +129,7 @@
         </form>
     </div>
 </div>
-
-<!-- Modal Register -->
+<!-- Register Edit -->
 <div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -295,7 +211,7 @@
             </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    <div class="form-group"></div>
+                    <div class="form-group">
                         {{ register_form.submit_register(class="btn btn-outline-info") }}
                     </div>
                 </div>
@@ -303,25 +219,92 @@
         </form>
     </div>
 </div>
+<!-- Modal +1 razred -->
+<div class="modal fade" id="PlusJedanRazredModal" tabindex="-1" role="dialog" aria-labelledby="PlusJedanRazredModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="PlusJedanRazredModalLabel">Potvrda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <div class="modal-body">
+        <label for="input_password">Da li ste sigurni da želite da sve đake prevedete u sledeći razred?</label>
+        </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                <a href="{{url_for('students.class_plus_one')}}" class="btn btn-info">+1 razred</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Delete -->
+<div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <div class="modal-body">
+        <label id="input_password_label" for="input_password">Da bi ste obrisali profil učenika TEST potrebno je potvrditi svojom lozinkom:</label>
+        </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                <form action="" method="post" id="deleteForm">
+                    <input class="btn btn-danger" type="submit" value="Obrišite Učenika">
+                    <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>ID učenika</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Razred</th>
+            <th>Odeljenje</th>
+            <th>Mejl roditelja</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+{% endblock content %}
 
-{% endblock content%}
 {% block scripts %}
 <script>
+    function deleteStudent(studentId, studentName) {
+        var form = document.getElementById('deleteForm')
+        console.log('kliknuto na kanticu: ', studentId)
+        form.action = "student/" + parseInt(studentId) + "/delete";
+        var labelElement = document.getElementById('input_password_label');
+        labelElement.innerHTML = 'Da biste obrisali profil učenika ' + studentName + ' potrebno je potvrditi svojom lozinkom:';
+    }
     function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
         console.log('pokrenuta je funkcija editStudent')
-        document.getElementById("student_id").value = studentId
+        document.getElementById("student_id").value = parseInt(studentId)
         document.getElementById("student_name").value = studentName;
         document.getElementById("student_surname").value = studentSurname;
         document.getElementById("student_class").value = studentClass;
         document.getElementById("student_section").value = studentSection;
         document.getElementById("parent_email").value = parentEmail;
+        console.log('student_idv: ', document.getElementById("student_id").value)
+        console.log('student_name: ', document.getElementById("student_name").value)
         console.log('sendMail: ', sendMail)
-        if ( sendMail === true || sendMail === 'True' ) {
+        if ( sendMail === 'true' || sendMail === 'True' ) {
             document.getElementById("send_mail").checked = true;
-            document.getElementById("send_mail").value = sendMail;
+            document.getElementById("send_mail").value = 'True';
         } else {
             document.getElementById("send_mail").checked = false;
-            document.getElementById("send_mail").value = sendMail;
+            document.getElementById("send_mail").value = 'False';
         }
         var parentEmailInput = document.getElementById("parent_email");
         var sendMailCheckbox = document.getElementById("send_mail");
@@ -349,20 +332,79 @@
     }
     $(document).ready(function () {
         var table = $('#data').DataTable({
-            language: {
-                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            ajax: {
+                url: 'api/students_list',
+                type: 'GET',
+                data: function (d) {
+                    d.searchRazred = $('#searchRazred').val();
+                    d.searchOdeljenje = $('#searchOdeljenje').val();
+                },
+            },
+            serverSide: true,
+            columns: [
+                {data: 'id'},
+                {data: 'student_name'},
+                {data: 'student_surname'},
+                {data: 'student_class'},
+                {data: 'student_section'},
+                // {data: 'parent_email'},
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        // Generisanje HTML za novu kolonu
+                        if (row.parent_email) {
+                            if (row.send_mail) {
+                                return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                            } else {
+                                return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                            }
+                        } else {
+                            return '<td></td>';
+                        }
+                    },
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        console.log('row.id: ', row.id)
+                        console.log('row.student_name: ', row.student_name)
+                        console.log('row.student_surname: ', row.student_surname)
+                        console.log('row.student_class: ', row.student_class)
+                        console.log('row.student_section: ', row.student_section)
+                        console.log('row.parent_email: ', row.parent_email)
+                        console.log('row.send_mail: ', row.send_mail)
+                        console.log('row.print_payment: ', row.print_payment)
+                        // Generisanje HTML dugmadi za edit i delete
+                        return `<td>
+                            <button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika"
+                                data-toggle="modal" data-target="#EditModal"
+                                onclick="editStudent('${row.id}', '${row.student_name}', '${row.student_surname}',
+                                '${row.student_class}', '${row.student_section}', '${row.parent_email}',
+                                '${row.send_mail}', '${row.print_payment}')">
+                                <i class="fa fa-edit awesomeedit" aria-hidden="true"></i>
+                            </button>
+                            <a href="#" class="btn-x btn-danger-x" data-toggle="modal"
+                                data-target="#DeleteModal" onclick="deleteStudent('${row.id}', '${row.student_name} ${row.student_surname}')" title="Obrišite profil učenika">
+                                <i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i>
+                            </a>
+                        </td>`;
+                    },
                 }
+            ],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
         });
+        // Dodavanje event listenera za promenu vrednosti u searchRazred
         $('#searchRazred').on('change', function () {
-            var selectedValue = $(this).val();
-            table.column(3).search(selectedValue).draw();
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
         });
-
+        // Dodavanje event listenera za promenu vrednosti u searchOdeljenje
         $('#searchOdeljenje').on('change', function () {
-            var selectedValue = $(this).val();
-            table.column(4).search(selectedValue).draw();
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
         });
     });
 </script>
-
-{% endblock %}
+{% endblock scripts %}

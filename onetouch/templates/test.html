@@ -1,389 +1,615 @@
 {% extends "layout.html" %}
 {% block content %}
 <h2>testing</h2>
-<div class="row form-group align-items-end">
-    <div class="col form-group">
-        <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
-    </div>
-    <div class="col form-group">
-        <label for="searchRazred">Pretraga po razredu:</label>
-        <select id="searchRazred" class="form-select">
-            <option value="">Svi razredi</option>
-            {% for class in range(9) %}
-                <option value="{{ class }}">{{ class }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col form-group">
-        <label for="searchOdeljenje">Pretraga po odeljenju:</label>
-        <select id="searchOdeljenje" class="form-select">
-            <option value="">Sva odeljenja</option>
-            {% for section in range(16) %}
-                <option value="{{ section }}">{{ section }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col form-group">
-        {% if danas >= active_date_start and danas <= active_date_end %}
-            <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
-        {% endif %}
-    </div>
+<div class="form-group" style="display: inline-block;">
+    <label for="classes" class="form-control-label">Razred</label>
+    <select name="classes" id="classes" class="form-select">
+        <option value="s">Selektujte razred</option>
+        {% for i in range(0,9) %}
+        <option value="{{i}}">{{i}}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="section" class="form-control-label">Odeljenje</label>
+    <select name="section" id="section" class="form-select" disabled>
+        <option value="">Selektujte odeljenje</option>
+        {% for i in range(1,15) %}
+        <option value="{{i}}">{{i}}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="service_item" class="form-control-label">Usluga</label>
+    <select name="service_item" id="service_item" class="form-select js-example-basic-single" disabled>
+        <option value="0">Selektujte uslugu</option>
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="installment" class="form-control-label">Rata</label>
+    <select name="installment" id="installment" class="form-select" disabled>
+        <option value="">Selektujte ratu</option>
+        {% for service in services %}
+            <option value="">work in progress</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="installment_value">Iznos</label>
+    <input name="installment_value" id="installment_value" type="tesxt" class="form-control" value="---" readonly>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="today_date" class="form-control-label">Datum</label>
+    <input type="date" id="today_date" class="form-control" disabled>
+</div>
+<div class="form-group" style="display: inline-block;">
+    <label for="zaduzi_sve_kolicina" class="form-control-label">Količina</label>
+    <input id="zaduzi_sve_kolicina" class="form-control" type="number" min="0" value="1" disabled style="width: 30%;">
+    <button id="zaduzi_sve" class="btn btn-primary" type="button" disabled>zaduži sve učenike</button>
 </div>
 <hr>
-<!-- Modal Edit -->
-<div class="modal fade" id="EditModal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="EditModalLabel">Detalji učenika</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form action="" method="POST">
-                    {{ edit_form.hidden_tag() }}
-                    <div class="row">
-                        <div class="col form-group">
-                            {{ edit_form.student_name.label(class="form-control-label") }}
-                            {% if edit_form.student_name.errors %}
-                                {{ edit_form.student_name(class="form-control form-control-lg is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in edit_form.student_name.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ edit_form.student_name(class="form-control form-control-lg") }}
-                            {% endif %}
-                        </div>
-                        <div class="col form-group">
-                            {{ edit_form.student_surname.label(class="form-control-label") }}
-                            {% if edit_form.student_surname.errors %}
-                                {{ edit_form.student_surname(class="form-control form-control-lg is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in edit_form.student_surname.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ edit_form.student_surname(class="form-control form-control-lg") }}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col form-group">
-                            {{ edit_form.student_class.label(class="form-control-label") }}
-                            {% if edit_form.student_class.errors %}
-                            {{ edit_form.student_class(class="form-control form-control-lg is-invalid") }}
-                                <div class="invalid-feedback">
-                                    {% for error in edit_form.student_class.errors %}
-                                    <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                            {{ edit_form.student_class(class="form-select form-select-lg") }}
-                            {% endif %}
-                        </div>
-                        <div class="col form-group">
-                            {{ edit_form.student_section.label(class="form-control-label") }}
-                            {% if edit_form.student_section.errors %}
-                            {{ edit_form.student_section(class="form-control form-control-lg is-invalid") }}
-                            <div class="invalid-feedback">
-                                {% for error in edit_form.student_section.errors %}
-                                <span>{{ error }}</span>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            {{ edit_form.student_section(class="form-select form-select-lg") }}
-                            {% endif %}
-                        </div>
-                        <div class="col form-group">
-                            <label class="form-control-label" for="student_id">ID učenika</label>
-                            <input class="form-control form-control-lg" value="" id="student_id" name="student_id" readonly>
-                        </div>
-                    </div>
-            <div class="form-group">
-                {{ edit_form.parent_email.label(class="form-control-label") }}
-                {% if edit_form.parent_email.errors %}
-                    {{ edit_form.parent_email(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in edit_form.parent_email.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ edit_form.parent_email(class="form-control form-control-lg", placeholder="xx@xx.xx") }}
-                {% endif %}
-            </div>
-            <div class="form-check form-switch">
-                <input class="form-check-input" id="send_mail" name="send_mail" type="checkbox">
-                {{ edit_form.send_mail.label(class="form-control-label") }}
-            </div>
-            </div>
-                <div class="modal-footer">
-                    <button type="radio" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ edit_form.submit_edit(class="btn btn-info") }}
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-<!-- Register Edit -->
-<div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="RegisterModalLabel">Registracija novog učenika</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        <div class="modal-body">
-        <label for="input_password">Popunite podatke učenika</label>
-        <form action="" method="POST">
-            {{ register_form.hidden_tag() }}
-            <div class="form-group">
-                {{ register_form.student_name.label(class="form-control-label") }}
-                {% if register_form.student_name.errors %}
-                    {{ register_form.student_name(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.student_name.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ register_form.student_name(class="form-control form-control-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.student_surname.label(class="form-control-label") }}
-                {% if register_form.student_surname.errors %}
-                    {{ register_form.student_surname(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.student_surname.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ register_form.student_surname(class="form-control form-control-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.student_class.label(class="form-control-label") }}
-                {% if register_form.student_class.errors %}
-                    {{ register_form.student_class(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.student_class.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ register_form.student_class(class="form-select form-select-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.student_section.label(class="form-control-label") }}
-                {% if register_form.student_section.errors %}
-                    {{ register_form.student_section(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.student_section.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ register_form.student_section(class="form-select form-select-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.parent_email.label(class="form-control-label") }}
-                {% if register_form.parent_email.errors %}
-                    {{ register_form.parent_email(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.parent_email.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ register_form.parent_email(class="form-control form-control-lg", placeholder="xx@xx.xx") }}
-                {% endif %}
-            </div>
-            </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    <div class="form-group">
-                        {{ register_form.submit_register(class="btn btn-outline-info") }}
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-<!-- Modal Delete -->
-<div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-        <div class="modal-body">
-        <label id="input_password_label" for="input_password">Da bi ste obrisali profil učenika TEST potrebno je potvrditi svojom lozinkom:</label>
-        </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                <form action="" method="post" id="deleteForm">
-                    <input class="btn btn-danger" type="submit" value="Obrišite Učenika">
-                    <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
-            <th>ID učenika</th>
-            <th>Ime</th>
-            <th>Prezime</th>
+            <th style="width: 80px;">Ime</th>
+            <th style="width: 80px;">Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
-            <th>Mejl roditelja</th>
-            <th></th>
+            <th style="width: 80px;" data-sortable="false">Poziv na broj</th>
+            <th data-sortable="false">Usluga</th>
+            <th style="width: 30px;" data-sortable="false">Količina</th>
+            <th style="width: 60px;" data-sortable="false">Iznos</th>
+            <th style="width: 60px;" data-sortable="false">Olakšica</th>
+            <th style="width: 60px;" data-sortable="false">Iznos zaduženja</th>
         </tr>
     </thead>
     <tbody>
     </tbody>
 </table>
+<div class="form-group">
+    <label for="purpose_of_payment" class="form-control-label" title="max 35 karaktera">Svrha uplate</label>
+    <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
+    <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+</div>
+<div class="form-group">
+    <button class="btn btn-info loading disable-button" id="save_button" disabled>Sačuvajte</button>
+</div>
+<div class="loading-overlay">
+    <div class="spinner"></div>
+    <div>   Molim Vas sačekajte...</div>
+</div>
+
 {% endblock content %}
 
 {% block scripts %}
 <script>
-    function deleteStudent(studentId, studentName) {
-        var form = document.getElementById('deleteForm')
-        console.log('kliknuto na kanticu: ', studentId)
-        form.action = "student/" + parseInt(studentId) + "/delete";
-        var labelElement = document.getElementById('input_password_label');
-        labelElement.innerHTML = 'Da biste obrisali profil učenika ' + studentName + ' potrebno je potvrditi svojom lozinkom:';
-    }
-    function editStudent(studentId, studentName, studentSurname, studentClass, studentSection, parentEmail, sendMail, printPayment) {
-        console.log('pokrenuta je funkcija editStudent')
-        document.getElementById("student_id").value = parseInt(studentId)
-        document.getElementById("student_name").value = studentName;
-        document.getElementById("student_surname").value = studentSurname;
-        document.getElementById("student_class").value = studentClass;
-        document.getElementById("student_section").value = studentSection;
-        document.getElementById("parent_email").value = parentEmail;
-        console.log('student_idv: ', document.getElementById("student_id").value)
-        console.log('student_name: ', document.getElementById("student_name").value)
-        console.log('sendMail: ', sendMail)
-        if ( sendMail === 'true' || sendMail === 'True' ) {
-            document.getElementById("send_mail").checked = true;
-            document.getElementById("send_mail").value = 'True';
-        } else {
-            document.getElementById("send_mail").checked = false;
-            document.getElementById("send_mail").value = 'False';
-        }
-        var parentEmailInput = document.getElementById("parent_email");
-        var sendMailCheckbox = document.getElementById("send_mail");
+    // Funkcija za izračunavanje iznosa zaduženja
+    function dataChanged(studentId) {
+        // Dohvati vrednosti iz input polja 'Količina' i 'Olakšica' za određenog studenta
+        var kolicina = parseFloat(document.getElementById("kolicina_" + studentId).value);
+        var olaksice = parseFloat(document.getElementById("olaksice_" + studentId).value);
 
-        function isValidEmail(email) {
-            // Regularni izraz za validaciju email adrese
-            var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-            return emailRegex.test(email);
-        }
-        // Funkcija koja se izvršava prilikom promene u polju 'parent_email'
-        function handleParentEmailChange() {
-            var email = parentEmailInput.value.trim();
-            
-            if (email === "" || !isValidEmail(email)) {
-                sendMailCheckbox.checked = false;
-                sendMailCheckbox.disabled = true;
-            } else {
-                sendMailCheckbox.disabled = false;
-            }
-        }
-        // Pozivamo funkciju handleParentEmailChange prilikom učitavanja stranice
-        handleParentEmailChange();
-        // Dodajte event listener za promene u polju 'parent_email'
-        parentEmailInput.addEventListener("input", handleParentEmailChange);
+        // Dohvati vrednost iznosa iz odgovarajućeg input polja za taj student
+        var iznos = parseFloat(document.getElementById("iznos-" + studentId).value);
+
+        // Izračunaj iznos zaduženja
+        var iznosZaduzenja = (kolicina * iznos) - olaksice;
+
+        // Postavi izračunati iznos zaduženja u odgovarajuće input polje
+        document.getElementById("iznos_zaduženja_" + studentId).value = iznosZaduzenja.toFixed(2);
+        document.getElementById("kolicina_" + studentId).value = kolicina.toFixed(0);
+        document.getElementById("olaksice_" + studentId).value = olaksice.toFixed(2);
     }
+
+    // Dodaj event listenere za promene u input poljima 'Količina' i 'Olakšica' za svakog studenta
+    // var students = document.querySelectorAll('[id^="kolicina_"]');
+    // console.log('event listenere za promene u input poljima "Količina": ', students)
+    // students.forEach(function (student) {
+    //     var studentId = student.id.split("_")[1];
+    //     student.addEventListener("change", function () {
+    //         dataChanged(studentId);
+    //     });
+    // });
+
+    // var olaksiceInputs = document.querySelectorAll('[id^="olaksice_"]');
+    // olaksiceInputs.forEach(function (olaksiceInput) {
+    //     var studentId = olaksiceInput.id.split("_")[1];
+    //     olaksiceInput.addEventListener("change", function () {
+    //         dataChanged(studentId);
+    //     });
+    // });
     $(document).ready(function () {
+        const selectFieldClasses = $('#classes');
+        const selectFieldSection = $('#section');
+        const selectFieldServiceItem = $('#service_item'); //
+        const selectFieldInstallment = $('#installment'); //
+        const inputFieldInstallmentValue = $('#installment_value');
+        const pozivNaBrojCells = $('[id^="poziv_na_broj_"]'); ///
+        console.log('test pozivNaBrojCells: ', pozivNaBrojCells)
+        const uslugaCells = $('[id^="usluga_"]'); ///
+        const inputFieldQuantityValue = $('[id^="kolicina_"]')
+        const inputFieldDiscountValue = $('[id^="olaksice"]')
+
+        const iznosCells = document.querySelectorAll('[id^="iznos-"]');
+        
+        console.log('test iznosCells: ', iznosCells)
+        const inputFieldPurposeOfPayment = $('#purpose_of_payment');
+        const buttonSave = $('#save_button');
+        const buttonZaduziSve = $("#zaduzi_sve");
+        const inputZaduziSveKolicina = $("#zaduzi_sve_kolicina");
+
+        const today = new Date().toISOString().substr(0, 10); // Get today's date in ISO format (yyyy-mm-dd)
+        document.getElementById("today_date").value = today;
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////
         var table = $('#data').DataTable({
             ajax: {
                 url: 'testing',
                 type: 'GET',
                 data: function (d) {
-                    d.searchRazred = $('#searchRazred').val();
-                    d.searchOdeljenje = $('#searchOdeljenje').val();
+                    d.classes = $('#classes').val();
+                    d.section = $('#section').val();
+                    d.service_item = $('#service_item').val();
+                    d.installment = $('#installment').val();
+                    d.installment_value = $('#installment_value').val();
                 },
             },
             serverSide: true,
             columns: [
-                {data: 'id'},
-                {data: 'student_name'},
-                {data: 'student_surname'},
-                {data: 'student_class'},
-                {data: 'student_section'},
-                // {data: 'parent_email'},
                 {
                     data: null,
                     render: function (data, type, row) {
-                        // Generisanje HTML za novu kolonu
-                        if (row.parent_email) {
-                            if (row.send_mail) {
-                                return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
-                            } else {
-                                return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
-                            }
-                        } else {
-                            return '<td></td>';
-                        }
+                        return `<td style="width: 80px;"><input class="form-control" type="text" value="${row.student_name}" readonly></td>`
                     },
                 },
                 {
                     data: null,
                     render: function (data, type, row) {
-                        console.log('row.id: ', row.id)
-                        console.log('row.student_name: ', row.student_name)
-                        console.log('row.student_surname: ', row.student_surname)
-                        console.log('row.student_class: ', row.student_class)
-                        console.log('row.student_section: ', row.student_section)
-                        console.log('row.parent_email: ', row.parent_email)
-                        console.log('row.send_mail: ', row.send_mail)
-                        console.log('row.print_payment: ', row.print_payment)
-                        // Generisanje HTML dugmadi za edit i delete
-                        return `<td>
-                            <button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika"
-                                data-toggle="modal" data-target="#EditModal"
-                                onclick="editStudent('${row.id}', '${row.student_name}', '${row.student_surname}',
-                                '${row.student_class}', '${row.student_section}', '${row.parent_email}',
-                                '${row.send_mail}', '${row.print_payment}')">
-                                <i class="fa fa-edit awesomeedit" aria-hidden="true"></i>
-                            </button>
-                            <a href="#" class="btn-x btn-danger-x" data-toggle="modal"
-                                data-target="#DeleteModal" onclick="deleteStudent('${row.id}', '${row.student_name} ${row.student_surname}')" title="Obrišite profil učenika">
-                                <i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i>
-                            </a>
-                        </td>`;
+                        return `<td style="width: 80px;"><input class="form-control" type="text" value="${row.student_surname}" readonly></td>`
                     },
+                },
+                {data: 'student_class'},
+                {data: 'student_section'},
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<td style="width: 80px;"><input id="poziv_na_broj_${row.student_id}" class="form-control" type="text" value="${row.reference_number}" readonly></td>`
+                    },
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<td><input class="form-control" type="text" value="${row.service_item_name}" readonly></td>`
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<td><input style="text-align: center;" id="kolicina_${row.student_id}" class="form-control" type="number" step="1" onkeypress='return event.charCode >= 48 && event.charCode <= 57' value="0"></td></td>`
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<td><input style="text-align: right;" id="iznos-${row.student_id}" class="form-control" type="text" value="${row.installment_value}" readonly></td>`
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<td><input style="text-align: right;" id="olaksice_${row.student_id}" class="form-control" type="number" step="0.01" value="0.00"></td>`
+                    }
+                },
+                {
+                    data: null,
+                    render: function (data, type, row) {
+                        return `<td><input style="text-align: right;" id="iznos_zaduženja_${row.student_id}" class="form-control" type="text" value="0" readonly></td>`
+                    }
                 }
             ],
-            language: {
-                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
-            }
+            language: {url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"},
+            columnDefs: [
+                { targets: [2, 3], visible: false },
+                { targets: 'sort', orderData: 'data-sort' }
+            ],
+            order: [[1, 'asc'], [0, 'asc']],
+            "lengthMenu": [50, 100, 200, 400, 800],
+            "pageLength": 100,
         });
         // Dodavanje event listenera za promenu vrednosti u searchRazred
-        $('#searchRazred').on('change', function () {
+        $('#classes').on('change', function () {
             // Ponovno učitavanje DataTablesa sa novim parametrom
             table.ajax.reload();
         });
         // Dodavanje event listenera za promenu vrednosti u searchOdeljenje
-        $('#searchOdeljenje').on('change', function () {
+        $('#section').on('change', function () {
             // Ponovno učitavanje DataTablesa sa novim parametrom
             table.ajax.reload();
+        });
+        $('#service_item').on('change', function () {
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
+        });
+        $('#installment').on('change', function () {
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
+        });
+        $('#installment_value').on('change', function () {
+            // Ponovno učitavanje DataTablesa sa novim parametrom
+            table.ajax.reload();
+        });
+        $(document).on('input', '[id^="kolicina_"]', function () {
+            var studentId = this.id.split("_")[1];
+            dataChanged(studentId);
+        });
+        $(document).on('input', '[id^="olaksice_"]', function () {
+            var studentId = this.id.split("_")[1];
+            dataChanged(studentId);
+        });
+
+        // Dropdown: RAZRED
+        selectFieldClasses.on('change', function() {
+            const newValue = selectFieldClasses.val();
+            if(selectFieldClasses.val() === "s") {
+                console.log('selectkovani razred: ', selectFieldClasses.val());
+                selectFieldSection.prop('disabled', true);
+                selectFieldSection.prop('value', "");
+                selectFieldServiceItem.prop('disabled', true);
+                selectFieldServiceItem.prop('value', 0);
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                buttonZaduziSve.prop('disabled', true);
+                inputZaduziSveKolicina.prop('disabled', true);
+            } else {
+                console.log('selectkovani razred: ', selectFieldClasses.val());
+                selectFieldSection.prop('disabled', false);
+                selectFieldSection.prop('value', "");
+                selectFieldServiceItem.prop('disabled', true);
+                selectFieldServiceItem.prop('value', 0);
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                buttonSave.prop('disabled', true);
+                inputFieldInstallmentValue.prop('value', "----");
+                $.ajax({
+                    url: 'get_service_items',
+                    data: {classes: newValue},
+                    method: 'POST',
+                    success: function(data) {
+                        inputFieldPurposeOfPayment.prop('value', "");
+                        inputFieldPurposeOfPayment.prop('disabled', true);
+                        buttonSave.prop('disabled', true);
+                    }
+                })
+                dataChanged(); // call function
+            }
+        });
+        // dropdown: Odeljenje
+        selectFieldSection.on('change', function() {
+            const newValue = selectFieldClasses.val();
+            const newValue4 = selectFieldSection.val()
+            console.log('selectkovano odeljenje - nova vrednost: ', newValue4);
+            if (selectFieldSection.val() === "0") {
+                console.log('selektovano odeljenje je 0');
+                selectFieldServiceItem.prop('disabled', true);
+                selectFieldServiceItem.prop('value', 0);
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                buttonSave.prop('disabled', true);
+                buttonZaduziSve.prop('disabled', true);
+                inputZaduziSveKolicina.prop('disabled', true);
+            } else {
+                console.log('nastavi kod')
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', 0);
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                buttonSave.prop('disabled', true);
+
+                $.ajax({
+                    url: 'get_service_items',
+                    data: {classes: newValue},
+                    method: 'POST',
+                    success: function(data) {
+                        selectFieldServiceItem.html(data);
+                        selectFieldServiceItem.prop('disabled', false);
+                        inputFieldPurposeOfPayment.prop('value', "");
+                        inputFieldPurposeOfPayment.prop('disabled', true);
+                        buttonSave.prop('disabled', true);
+                    }
+                })
+                dataChanged(); // call function
+            }
+        })
+
+
+        // dropdown: Usluga
+        selectFieldServiceItem.on('change', function() {
+            const newValue2 = selectFieldServiceItem.val();
+            console.log('selectkovani usluga nova vrednost: ', newValue2);
+            if(selectFieldServiceItem.val() === "0") {
+                console.log('selectkovani usluga je nula');
+                selectFieldInstallment.prop('disabled', true);
+                selectFieldInstallment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                buttonSave.prop('disabled', true);
+                buttonZaduziSve.prop('disabled', true);
+                inputZaduziSveKolicina.prop('disabled', true);
+            } else {
+                $.ajax({
+                    url: 'get_installments',
+                    data: {installments: newValue2},
+                    method: 'POST',
+                    dataType: 'json',
+                    success: function(data) {
+                        const komadno = data.komadno
+                        selectFieldInstallment.html(data.html);
+                        selectFieldInstallment.prop('disabled', false);
+                        inputFieldInstallmentValue.prop('value', "----");
+                        inputFieldPurposeOfPayment.prop('value', "");
+                        inputFieldPurposeOfPayment.prop('disabled', true);
+                        buttonSave.prop('disabled', true);
+
+                        const selectedServiceId = selectFieldServiceItem.val();
+                        const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
+
+                        pozivNaBrojCells.each(function() {
+                            const studentId = this.id.split('_')[3];
+                            $(this).val(`${studentId.padStart(4, '0')}-${selectedServiceId.padStart(3, '0')}`);
+                        });
+                        console.log('uslugaCells: ', uslugaCells)
+                        uslugaCells.each(function() {
+                            $(this).val(`${selectedServiceText}`); // ovaj tekst mi treba i na drugom mestu
+                        });
+                        console.log('debug komadno: ', komadno)
+                        if(komadno){
+                            buttonZaduziSve.prop('disabled', false);
+                            inputZaduziSveKolicina.prop('disabled', false);
+                            inputZaduziSveKolicina.val(0);
+                            // dodati kod da input za količinu može da ima vrednost ili 0 ili 1
+                            inputFieldQuantityValue.each(function() {
+                                console.log("Izvršava se uvjet");
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                                $(this).prop('max', 100);
+                            });
+                            inputFieldDiscountValue.each(function(){
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                            });
+                        } else {
+                            buttonZaduziSve.prop('disabled', false);
+                            inputZaduziSveKolicina.prop('disabled', true);
+                            inputZaduziSveKolicina.val(1);
+                            // dodati kod da input za količinu može da ima vrednost od 0 do npr 30
+                            inputFieldQuantityValue.each(function() {
+                                console.log("Izvršava se uvjet");
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                                $(this).prop('max', 1);
+                            });
+                            inputFieldDiscountValue.each(function(){
+                                $(this).prop('readonly', true);
+                                $(this).prop('value', 0);
+                                $(this).prop('min', 0);
+                            });
+                        }
+                    },
+                })                    
+                dataChanged(); // call function
+            }
+        });
+
+        // dropdown: RATA
+        selectFieldInstallment.on('change', function() {
+            const newValue3 = selectFieldInstallment.val();
+            const newValue2 = selectFieldServiceItem.val();
+            console.log(newValue2)
+            console.log('rata broj: ', newValue3);
+            if(selectFieldInstallment.val() === "0") {
+                inputFieldInstallmentValue.prop('value', "----")
+                iznosCells.forEach(cell => {
+                    cell.value = 0;
+                });
+                inputFieldPurposeOfPayment.prop('value', "");
+                inputFieldPurposeOfPayment.prop('disabled', true);
+                // Iterirajte kroz kolekciju i uklonite readonly atribut sa svakog elementa
+                inputFieldQuantityValue.each(function() {
+                    console.log("Izvršava se uvjet");
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                inputFieldDiscountValue.each(function(){
+                    $(this).prop('readonly', true);
+                    $(this).prop('value', 0);
+                });
+                buttonSave.prop('disabled', true);
+            } else {
+                inputFieldQuantityValue.each(function() {
+                    $(this).prop('readonly', false);
+                });
+                inputFieldDiscountValue.each(function() {
+                    $(this).prop('readonly', false);
+                });
+                $.ajax({
+                    url: 'get_installment_values',
+                    data: {installment_values: newValue3,
+                            installments: newValue2},
+                    method: 'POST',
+                    success: function(data) {
+                        var value = data.result
+                        inputFieldInstallmentValue.val(value)
+                        const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
+                        const selectedInstallmentText = selectFieldInstallment.find('option:selected').text(); // ovde treba dodati if form da ako ima samo jena rata da const bude "" (prazan string)
+                        inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / ' + selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
+                        inputFieldPurposeOfPayment.prop('disabled', false);
+                        inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
+                        if (inputFieldPurposeOfPayment.val().length > 35) {
+                            buttonSave.prop('disabled', true);
+                            inputFieldPurposeOfPayment.addClass("error-result");
+                            errorMessage.show(); // Prikazati errorMessage
+                        } else {
+                            buttonSave.prop('disabled', false);
+                            inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
+                            errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
+                        }
+                        // dataChanged(); // call function
+                    }
+                })
+            }
+        });
+        const errorMessage = $("#errorMessage");
+        inputFieldPurposeOfPayment.on('input', function() {
+            if (inputFieldPurposeOfPayment.val() === "") {
+                buttonSave.prop('disabled', true);
+                errorMessage.hide(); // Sakrijte errorMessage
+            } else if (inputFieldPurposeOfPayment.val().length > 35) {
+                buttonSave.prop('disabled', true);
+                inputFieldPurposeOfPayment.addClass("error-result");
+                errorMessage.show(); // Prikazati errorMessage
+            } else {
+                buttonSave.prop('disabled', false);
+                inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
+                errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
+            }
+        });
+        buttonZaduziSve.on('click', function() {
+            // Selektujte tabelu sa ID-om "data" koristeći jQuery
+            var $tabela = $('#data');
+
+            // Selektujte sve input elemente u sedmoj koloni "Količina" unutar tabele
+            var $kolicinaInputElements = $tabela.find('tbody tr td:nth-child(5) input');
+
+            //čita vrednost iz input elementa koju treba da dodeli svim redovima
+            var vrednost = inputZaduziSveKolicina.val();
+
+            // Inicijalizujte prazan niz za čuvanje izvučenih vrednosti
+            var kolicinaVrednosti = [];
+            $kolicinaInputElements.each(function(){
+                $(this).prop('value', vrednost);
+                var id = $(this).attr('id').split("_")[1];
+                console.log('debug this.id: ',  id)
+                dataChanged(id);
+            });
+        });
+    })
+</script>
+<script>
+    // skripta koja prikuplja sve filtere prosleđuje ih u backend za kreranje zadužejna (StudentDebt) i zapisa transakcija (TransactionRecord)
+    const buttonSave = $('#save_button');
+    const inputFieldPurposeOfPayment = $('#purpose_of_payment');
+
+    buttonSave.on('click', (event) => {
+        var selectClass = $('#classes').val();
+        var selectSection = $('#section').val();
+        var selectServiceItem = $('#service_item').val()
+        var selectInstallmentNumber = $('#installment').val()
+        // var selectInstallmentValue = $('#installment_value').val() // može da se izvuče podatak na osnovu service_item ID
+        var listStudentId = 'provali rešenje'
+        var listInstallmentAmount = 'provali rešenje'
+        var listDiscount = 'provali rešenje'
+        console.log('razred: ', selectClass);
+        console.log('odeljenje: ', selectSection);
+        console.log('detalji usluge: ', selectServiceItem);
+        console.log('rata: ', selectInstallmentNumber);
+        var table = $('#data');
+        var rows = table.find('tr');
+        console.log('redovi: ', rows)
+        console.log('broj redova: ', rows.length)
+        var records = []
+        for (var i = 0; i < rows.length; i++) {
+            var quantityCell = rows[i].querySelector('[id^="kolicina_"]');
+            if (quantityCell) {
+                if (quantityCell) { // Provera da li je ćelija za količinu prisutna
+                    var quantity = parseFloat(quantityCell.value);
+                    var studentIdCell = rows[i].querySelector('[id^="poziv_na_broj_"]');
+                    var studentId = studentIdCell.id.split('_')[3];
+                    var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
+                    var olaksica = parseFloat(olaksicaCell.value);
+                    
+                    console.log('Student ID:', studentId);
+                    console.log('Količina:', quantity);
+                    console.log('Olakšica:', olaksica);
+                    
+                    // Ovde možete dodati svoju logiku za dalju obradu podataka
+                    records.push({
+                        'student_id': studentId,
+                        'amount': quantity,
+                        'discount': olaksica
+                    })
+                }
+            }
+        }
+        console.log('podaci: ', records)
+        const output = {
+            'class': selectClass,
+            'section': selectSection,
+            'service_item': selectServiceItem,
+            'installment': selectInstallmentNumber,
+            'purpose_of_payment': inputFieldPurposeOfPayment.val(),
+            'records': records,
+        }
+        console.log('output: ', output)
+        console.log(JSON.stringify(output));
+        $.ajax({
+            url: 'submit_records',
+            method: 'POST',
+            data: JSON.stringify(output),
+            contentType: 'application/json',
+            success: function(response) {
+                // Uspešan AJAX zahtjev
+                // Preusmjeravanje na edit debt stranicu
+                console.log('debug: ', response)
+                var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
+                editDebtUrl = editDebtUrl.replace(/\/1$/, '/' + response);
+                window.location.href = editDebtUrl;
+            }
+        })
+        buttonSave.prop('disabled', true);
+    })
+</script>
+<script>
+    $(document).ready(function() {
+        // Inicijalizujte Select2 komponentu
+        $('.js-example-basic-single').select2({
+            theme: "classic"
         });
     });
 </script>
