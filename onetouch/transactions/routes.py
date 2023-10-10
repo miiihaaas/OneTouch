@@ -78,6 +78,25 @@ def testing():
         students_query = students_query.filter(Student.student_section == student_section)
     total_filtered = students_query.count()
     
+    # sorting
+    order = []
+    i = 0
+    while True:
+        col_index = request.args.get(f'order[{i}][column]')
+        if col_index is None:
+            break
+        if col_index == '0': 
+            col_name = 'student_name'
+        elif col_index == '1':
+            col_name = 'student_surname'
+        descending = request.args.get(f'order[{i}][dir]') == 'desc'
+        col = getattr(Student, col_name)
+        if descending:
+            col = col.desc()
+        order.append(col)
+        i += 1
+    if order:
+        students_query = students_query.order_by(*order)
     
     # pagination
     start = request.args.get('start', type=int)
