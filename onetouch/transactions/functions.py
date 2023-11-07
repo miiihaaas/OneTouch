@@ -330,7 +330,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             pdf = PDF()
             pdf.add_page()
             pdf.set_font('DejaVuSansCondensed', 'B', 16)
-            pdf.multi_cell(0, 20, 'Svim zaduženim učenicima je aktivirana opcija slanja generisanih uplatnica putem e-maila. \n Ne zaboravite da pošaljete mejlove roditeljima. \nMolimo Vas da ne štampate ovaj dokument.', align='C')
+            pdf.multi_cell(0, 20, 'Nema zaduženih učenika ili je svim zaduženim učenicima aktivirana opcija slanja generisanih uplatnica putem e-maila. \nMolimo Vas da prvo proverite da li u nalogu barem jedan učenik ima zaduženje. Ako ste omogućili opciju slanja generisanih uplatnica putem e-maila, ljubazno Vas molimo da se pobrinite da sve uplatnice budu poslate roditeljima elektronskim putem. \nOvim putem Vas molimo da ne štampate ovaj dokument.', align='C')
         file_name = f'uplatnice.pdf'
         pdf.output(path + file_name)
         print(f'debug if not single: {file_name=}')
