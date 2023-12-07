@@ -615,8 +615,27 @@ def payment_archive(payment_id):
                             legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})")
 
 
+
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
 def posting_payment():
+    def provera_validnosti_poziva_na_broj(podaci):
+        if len(podaci['PozivOdobrenja']) == 7:
+            # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+            formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
+            if formated_poziv_odobrenja in all_reference_numbers:
+                podaci['Validnost'] = True
+            else:
+                podaci['Validnost'] = False
+        elif len(podaci['PozivOdobrenja']) == 8:
+            # proverava da li je forma '0001-001'
+            if podaci['PozivOdobrenja'] in all_reference_numbers:
+                podaci['Validnost'] = True
+            else:
+                podaci['Validnost'] = False
+        else:
+            # nije dobar poziv na broj
+            podaci['Validnost'] = False
+        return podaci
     school = School.query.first()
     if request.method == 'POST' and ('submitBtnImportData' in request.form):
         file = request.files['fileInput']
@@ -688,40 +707,25 @@ def posting_payment():
             podaci['TipSloga'] = stavka.find('TipSloga').text
 
             #! provera da li je poziv na broj validan
+            provera_validnosti_poziva_na_broj(podaci)
             if podaci['RacunZaduzenja'] == school.school_bank_account:
                 print('Ovo je isplata')
                 podaci['Iznos'] = -float(podaci['Iznos'])
-                #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
-                if len(podaci['PozivOdobrenja']) == 7:
-                    # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-                    formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
-                    if formated_poziv_odobrenja in all_reference_numbers:
-                        podaci['Validnost'] = True
-                elif len(podaci['PozivOdobrenja']) == 8:
-                    # proverava da li je forma '0001-001'
-                    if podaci['PozivOdobrenja'] in all_reference_numbers:
-                        podaci['Validnost'] = True
-                #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
-                else:
-                    continue
+                # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
+                # if len(podaci['PozivOdobrenja']) == 7:
+                #     # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+                #     formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
+                #     if formated_poziv_odobrenja in all_reference_numbers:
+                #         podaci['Validnost'] = True
+                # elif len(podaci['PozivOdobrenja']) == 8:
+                #     # proverava da li je forma '0001-001'
+                #     if podaci['PozivOdobrenja'] in all_reference_numbers:
+                #         podaci['Validnost'] = True
+                # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
+                # else:
+                #     continue
             print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_account=}')
-            if len(podaci['PozivOdobrenja']) == 7:
-                # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-                formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
-                if formated_poziv_odobrenja in all_reference_numbers:
-                    podaci['Validnost'] = True
-                else:
-                    podaci['Validnost'] = False
-            elif len(podaci['PozivOdobrenja']) == 8:
-                # proverava da li je forma '0001-001'
-                if podaci['PozivOdobrenja'] in all_reference_numbers:
-                    podaci['Validnost'] = True
-                else:
-                    podaci['Validnost'] = False
-            else:
-                # nije dobar poziv na broj
-                podaci['Validnost'] = False
-            
+
             print(f'pre appenda: {podaci=}')
             stavke.append(podaci)
         print(f'{stavke=}')
