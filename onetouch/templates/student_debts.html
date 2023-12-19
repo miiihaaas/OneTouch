@@ -184,7 +184,7 @@
         // Filter po odeljenju
         selectFieldSection.on('change', function() {
             const section = $(this).val();
-            table.column(3).search(section, true, false).draw();
+            table.column(3).search('^' + section + '$', true, false).draw();
         });
 
         // Dropdown: RAZRED
