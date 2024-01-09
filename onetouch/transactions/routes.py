@@ -407,7 +407,11 @@ def payments_archive_list():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     if start_date is None or end_date is None:
-        start_date = date.today().replace(day=1, month=1).isoformat()
+        if date.today().month < 9:
+            start_date = date.today().replace(day=1, month=9, year=date.today().year-1).isoformat()
+        else:
+            start_date = date.today().replace(day=1, month=9).isoformat()
+        # start_date = date.today().replace(day=1, month=1).isoformat()
         end_date = date.today().isoformat()
     payments = StudentPayment.query.filter(
         StudentPayment.payment_date.between(start_date, (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat())).all() #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
@@ -734,7 +738,7 @@ def posting_payment():
         
         flash('Uspešno je učitan XML fajl.', 'success')
         return render_template('posting_payment.html',
-                                title="Knjišenje uplata",
+                                title="Knjiženje uplata",
                                 legend="Knjiženje uplata",
                                 stavke=stavke,
                                 datum_izvoda_element=datum_izvoda_element,
@@ -760,7 +764,7 @@ def posting_payment():
             print('postoji vec uplata u bazi')
             error_mesage = f'Uplata za dati datum ({payment_date}) i broj računa ({statment_nubmer}) već postoji u bazi. Izaberite novi XML fajl i pokušajte ponovo.'
             flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
+            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
         else:
             # čuvanje podataka u bazu
             new_payment = StudentPayment(payment_date=payment_date,
@@ -835,4 +839,4 @@ def posting_payment():
             db.session.commit()
             flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer}), od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
             return redirect(url_for('transactions.payments_archive_list'))
-    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjišenje uplata")
+    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")

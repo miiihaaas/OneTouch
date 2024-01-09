@@ -18,6 +18,7 @@ onetouch/teachers/__pycache__/
 onetouch/users/__pycache__/
 __pycache__/
 venv/
+venvOneTouch/
 onetouch/static/pdf_forms/*.*
 
 ### Python ###
