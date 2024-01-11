@@ -144,7 +144,7 @@ def service_profile_list():
     
         
     edit_form.supplier_id.choices = [(0, "Selektujte dobavljača")] + [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
-    edit_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in Service.query.all()] #todo: napraviti da bude dinamično na osnovu supplier_id
+    edit_form.service_id.choices = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in Service.query.all() if s.id > 0] #todo: napraviti da bude dinamično na osnovu supplier_id
     
     if request.form.get('submit_edit'):
         print('porlazi submit edit dugme')

@@ -144,7 +144,7 @@ def add_new_student():
                                             student_debt_total=0)
     db.session.add(new_student_record)
     db.session.commit()
-    flash('Učenik je uspešno zadušen!', 'success')
+    flash('Učenik je uspešno zadužen!', 'success')
     return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
 
 
