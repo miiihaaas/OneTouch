@@ -20,6 +20,7 @@ __pycache__/
 venv/
 venvOneTouch/
 onetouch/static/pdf_forms/*.*
+.vscode/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

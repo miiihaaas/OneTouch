@@ -26,7 +26,7 @@
     <tbody>
         {% for payment in payments %}
         <tr>
-            <td>{{ payment.payment_date.strftime('%d.%m.%Y.') }}</td>
+            <td data-order="{{ payment.payment_date.strftime('%Y%m%d') }}">{{ payment.payment_date.strftime('%d.%m.%Y.') }}</td>
             <td>{{ payment.statment_nubmer }}</td>
             <td>{{ "{:.2f}".format(payment.total_payment_amount) }}</td>
             <td>{{ payment.number_of_items }} ({{ payment.number_of_errors }})</td>
@@ -44,7 +44,10 @@
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             },
-            order: [[1, 'desc']]
+            columnDefs: [
+                { type: 'date-eu', targets: 0 } // Prva kolona (indeks 0) je datum
+            ],
+            order: [[0, 'desc']]
         });
     })
 </script>
