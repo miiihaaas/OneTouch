@@ -64,7 +64,8 @@ def overview_students():
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
     print(f'posle if ako je string: {start_date=} {end_date=}')
-    records = TransactionRecord.query.all()
+    # records = TransactionRecord.query.all()
+    records = TransactionRecord.query.join(Student).filter(Student.student_class < 9).all()
     print(f'sve transakcije: {len(records)=}')
     
     filtered_records = []
