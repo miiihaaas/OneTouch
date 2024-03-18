@@ -131,6 +131,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             }
             print(f'{qr_data=}')
             #! dokumentacija: https://ips.nbs.rs/PDF/Smernice_Generator_Validator_latinica_feb2023.pdf
+            #! dokumentacija: https://ips.nbs.rs/PDF/pdfPreporukeNovoLat.pdf
             url = 'https://nbs.rs/QRcode/api/qr/v1/gen/250'
             headers = { 'Content-Type': 'application/json' }
             response = requests.post(url, headers=headers, json=qr_data)
