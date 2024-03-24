@@ -81,6 +81,7 @@
                             {{ edit_form.payment_per_unit(class="form-select form-select-lg") }}
                         {% endif %}
                     </div>
+                    
                     <div class="form-check form-switch">
                         {% set z = edit_form.archived.process_data(service.archived) %}
                         {{ edit_form.archived(class="form-check-input", id="archived-"+ service.id|string) }}

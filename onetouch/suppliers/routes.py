@@ -2,7 +2,7 @@ from datetime import date
 from flask import Blueprint, jsonify
 from flask import render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
-from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord
+from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord, School
 from onetouch.suppliers.forms import RegisterSupplierModalForm, EditSupplierModalForm, EditServiceModalForm, RegisterServiceModalForm, RegisterServiceProfileModalForm, EditServiceProfileModalForm
 from flask_login import login_required, current_user
 
@@ -133,6 +133,18 @@ def service_list():
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
 @login_required
 def service_profile_list():
+    school = School.query.first()
+    school_bank_accounts = school.school_bank_accounts.get('bank_accounts', [])
+    print(f'{school_bank_accounts=}')
+    
+    def get_reference_number(school_bank_accounts, edit_bank_account):
+        for bank_account in school_bank_accounts:
+            if bank_account['bank_account_number'] == edit_bank_account:
+                return bank_account['reference_number_spiri']
+        return None
+    
+    
+    
     # service_profiles = ServiceItem.query.all()
     service_profiles = ServiceItem.query.filter(ServiceItem.id != 0).all() #! svi koji nemaju id=0 koji je rezervisan za grešku
 
@@ -167,6 +179,8 @@ def service_profile_list():
         service_profile.service_item_name = edit_form.service_item_name.data
         service_profile.service_item_date = date.today()
         service_profile.supplier_id = edit_form.supplier_id.data
+        service_profile.bank_account = edit_form.bank_account.data
+        service_profile.reference_number_spiri = get_reference_number(school_bank_accounts, edit_form.bank_account.data)
         service_profile.service_id = edit_form.service_id.data
         service_profile.service_item_class = class_list_string
         service_profile.price = edit_form.price.data
@@ -205,6 +219,8 @@ def service_profile_list():
                                         service_item_date=date.today(),
                                         supplier_id=register_form.supplier_id.data,
                                         service_id=register_form.service_id.data,
+                                        bank_account=register_form.bank_account.data,
+                                        reference_number_spiri=get_reference_number(school_bank_accounts, register_form.bank_account.data),
                                         service_item_class=class_list_string,
                                         price=register_form.price.data,
                                         installment_number=register_form.installment_number.data,

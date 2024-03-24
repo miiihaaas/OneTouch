@@ -27,6 +27,10 @@
                     <label for="number_of_items">Broj uplata</label>
                     <input class="form-control" id="number_of_items" name="number_of_items" type="text" value="{{ broj_pojavljivanja }}"  readonly>
                 </div>
+                <div class="col">
+                    <label for="bank_account">Podračun</label>
+                    <input class="form-control" id="bank_account" name="bank_account" type="text" value="{{ racun_izvoda_element }}"  readonly>
+                </div>
             </div>
             {% endif %}
         </div>
@@ -40,16 +44,18 @@
                 <th>Uplatilac</th>
                 <th>Iznos</th>
                 <th>Poziv na broj</th>
+                <th>Identifikator</th>
                 <th>Svrha uplate</th>
             </tr>
         </thead>
         <tbody>
             {% for item in stavke %}
             <tr>
-                <td>{{ item['RacunZaduzenja'] }}</td>
+                <td><input type="text" class="form-control" value="{{ item['RacunZaduzenja'] }}" readonly></td>
                 <td><textarea name="uplatilac" class="form-control" readonly>{{ item['NazivZaduzenja'] }}</textarea></td>
                 <td><input name="iznos" type="text" class="form-control" value="{{ item['Iznos'] }}" readonly></td>
                 <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input {{ item['Validnost'] }}" value="{{ item['PozivOdobrenja'] }}" readonly></td>
+                <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input {{ item['Validnost'] }}" value="{{ item['PozivNaBrojApp'] }}" readonly></td>
                 <td><textarea name="svrha_uplate" class="form-control" readonly>{{ item['SvrhaDoznake'] }}</textarea></td>
             </tr>
             {% endfor %}

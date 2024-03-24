@@ -1,5 +1,5 @@
 import json
-import requests, os, io
+import requests, os, io, re
 import xml.etree.ElementTree as ET
 from PIL import Image
 from datetime import datetime, date, timedelta
@@ -404,6 +404,10 @@ def debts_archive_list():
 
 @transactions.route('/payments_archive_list', methods=['get', 'post'])
 def payments_archive_list():
+    school = School.query.first()
+    bank_accounts = [bank_account['bank_account_number'] for bank_account in school.school_bank_accounts['bank_accounts']]
+    
+    filtered_bank_account_number = request.args.get('bank_account')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     if start_date is None or end_date is None:
@@ -416,10 +420,15 @@ def payments_archive_list():
     payments = StudentPayment.query.filter(
         StudentPayment.payment_date.between(start_date, (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat())).all() #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
     print(f'{payments=}')
+    print(f'{filtered_bank_account_number=}')
+    if filtered_bank_account_number:
+        payments = [payment for payment in payments if payment.bank_account == filtered_bank_account_number]
     return render_template('payments_archive_list.html', 
+                            bank_accounts=bank_accounts,
                             payments=payments,
                             start_date=start_date,
                             end_date=end_date,
+                            filtered_bank_account_number=filtered_bank_account_number,
                             legend="Arhiva izvoda")
 
 
@@ -623,16 +632,16 @@ def payment_archive(payment_id):
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
 def posting_payment():
     def provera_validnosti_poziva_na_broj(podaci):
-        if len(podaci['PozivOdobrenja']) == 7:
+        if len(podaci['PozivNaBrojApp']) == 7:
             # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-            formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
+            formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
             if formated_poziv_odobrenja in all_reference_numbers:
                 podaci['Validnost'] = True
             else:
                 podaci['Validnost'] = False
-        elif len(podaci['PozivOdobrenja']) == 8:
+        elif len(podaci['PozivNaBrojApp']) == 8:
             # proverava da li je forma '0001-001'
-            if podaci['PozivOdobrenja'] in all_reference_numbers:
+            if podaci['PozivNaBrojApp'] in all_reference_numbers:
                 podaci['Validnost'] = True
             else:
                 podaci['Validnost'] = False
@@ -640,6 +649,24 @@ def posting_payment():
             # nije dobar poziv na broj
             podaci['Validnost'] = False
         return podaci
+    
+    
+    def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
+        if input_string[0].isdigit():
+            pattern = r'\d{4}-\d{3}|\d{7}'
+            brojevi = re.findall(pattern, input_string[:8])
+        elif input_string[0] == '[':
+            # Ako je prvi karakter '[', pronađi poziciju ']' i traži broj u sledećih 8 karaktera
+            end_bracket_pos = input_string.find(']')
+            if end_bracket_pos != -1:
+                brojevi = re.findall(r'\d{4}-\d{3}|\d{7}', input_string[end_bracket_pos+1:end_bracket_pos+9])
+            else:
+                brojevi = []
+        else:
+            brojevi = []
+        return brojevi[0] if brojevi else '-' #! namerno umest None
+    
+    
     school = School.query.first()
     if request.method == 'POST' and ('submitBtnImportData' in request.form):
         file = request.files['fileInput']
@@ -651,11 +678,12 @@ def posting_payment():
         tree = ET.parse(file)
         root = tree.getroot()
 
-        racun_skole = School.query.get(1).school_bank_account
+        racun_skole = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
         datum_izvoda_element = root.find('.//DatumIzvoda').text
         racun_izvoda_element = root.find('.//RacunIzvoda').text
         broj_izvoda_element = root.find('.//BrojIzvoda').text
         iznos_potrazuje_element = root.find('.//IznosPotrazuje').text
+        print(f'{racun_izvoda_element=}')
         # Pronalaženje broja pojavljivanja elementa <Stavka>
         broj_pojavljivanja = len(root.findall('.//Stavka'))
         
@@ -680,7 +708,7 @@ def posting_payment():
         print(f'{broj_izvoda_element=}')
         print(f'{iznos_potrazuje_element=}')
         print(f'{racun_skole=}, {racun_izvoda_element=}')
-        if racun_izvoda_element != racun_skole:
+        if racun_izvoda_element not in racun_skole:
             error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
             print('racuni nisu isti')
             flash(error_mesage, 'danger')
@@ -702,17 +730,20 @@ def posting_payment():
             podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
             podaci['ModelPozivaOdobrenja'] = stavka.find('ModelPozivaOdobrenja').text
             podaci['PozivOdobrenja'] = stavka.find('PozivOdobrenja').text if stavka.find('PozivOdobrenja').text else "-" #! ako nije None onda preuzmi vrednost iz xml, akoj je None onda mu dodeli "-"
-            podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text if stavka.find('SvrhaDoznake').text else "-" #! isti princip kao gornji red
+            podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text if stavka.find('SvrhaDoznake').text else "-" #! isti princip kao gornji red 
+            podaci['PozivNaBrojApp'] = izvuci_poziv_na_broj_iz_svrhe_uplate(podaci['SvrhaDoznake']) #! ovde dodati kod koji će da iz SVRHE UPLATE povlači POZIV NA BROJ za APP
             podaci['DatumValute'] = stavka.find('DatumValute').text
             podaci['PodatakZaReklamaciju'] = stavka.find('PodatakZaReklamaciju').text
             podaci['VremeUnosa'] = stavka.find('VremeUnosa').text
             podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
             podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
             podaci['TipSloga'] = stavka.find('TipSloga').text
+            
+            print(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
             #! provera da li je poziv na broj validan
             provera_validnosti_poziva_na_broj(podaci)
-            if podaci['RacunZaduzenja'] == school.school_bank_account:
+            if podaci['RacunZaduzenja'] in school.school_bank_accounts:
                 print('Ovo je isplata')
                 podaci['Iznos'] = -float(podaci['Iznos'])
                 # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
@@ -728,7 +759,7 @@ def posting_payment():
                 # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
                 # else:
                 #     continue
-            print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_account=}')
+            print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
 
             print(f'pre appenda: {podaci=}')
             stavke.append(podaci)
@@ -744,6 +775,7 @@ def posting_payment():
                                 datum_izvoda_element=datum_izvoda_element,
                                 broj_izvoda_element=broj_izvoda_element,
                                 iznos_potrazuje_element=iznos_potrazuje_element,
+                                racun_izvoda_element=racun_izvoda_element,
                                 broj_pojavljivanja=broj_pojavljivanja)
     if request.method == 'POST' and ('submitBtnSaveData' in request.form):
         print(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
@@ -752,13 +784,15 @@ def posting_payment():
         statment_nubmer = int(request.form['statment_nubmer'])
         total_payment_amount = float(request.form['total_payment_amount'].replace(',', '.'))
         number_of_items = int(request.form['number_of_items'])
+        bank_account = request.form['bank_account']
         print(f'{payment_date=}')
         print(f'{statment_nubmer=}')
         print(f'{total_payment_amount=}')
         print(f'{number_of_items=}')
         existing_payments = StudentPayment.query.filter_by(
                                                 payment_date=payment_date,
-                                                statment_nubmer=statment_nubmer).first()
+                                                statment_nubmer=statment_nubmer,
+                                                bank_account=bank_account).first()
         print(f'{existing_payments=}')
         if existing_payments:
             print('postoji vec uplata u bazi')
@@ -768,6 +802,7 @@ def posting_payment():
         else:
             # čuvanje podataka u bazu
             new_payment = StudentPayment(payment_date=payment_date,
+                                            bank_account=bank_account,
                                             statment_nubmer=statment_nubmer,
                                             total_payment_amount=total_payment_amount,
                                             number_of_items=number_of_items,

@@ -99,19 +99,19 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             new_data = {
                 'student_id': record.transaction_record_student.id,
                 'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
-                'svrha_uplate': purpose_of_payment,
+                'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
                 'primalac': school_info,
                 'sifra_placanja': 189,
                 'valuta': 'RSD', #! proveri da li je zbog QR koda potrebno drugačije definisati valutu
                 'iznos': record.student_debt_total,
-                'racun_primaoca': school.school_bank_account,
-                'model': '00', #! proveriti koji je model zbog QR koda 
-                'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
+                'racun_primaoca': record.transaction_record_service_item.bank_account,
+                'model': '97', #'00', #! proveriti koji je model zbog QR koda 
+                'poziv_na_broj': record.transaction_record_service_item.reference_number_spiri, # f"{record.student_id:04d}-{record.service_item_id:03d}",
                 'slanje_mejla_roditelju': record.transaction_record_student.send_mail
             }
             data_list.append(new_data)
             
-            racun = school.school_bank_account
+            racun = record.transaction_record_service_item.bank_account
             racun = racun.replace('-', '')  # Uklanja sve crtice iz računa
             racun = racun[:3] + racun[3:].zfill(15)  # Dodaje nule posle prvih 3 cifre računa do ukupne dužine od 18 cifara
             print(f'test računa za QR kod: {racun=}')
