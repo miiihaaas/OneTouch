@@ -440,7 +440,7 @@ def single_payment_slip(record_id):
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
     if not file_name:
         flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
-        return redirect(url_for('transactions.single_payment_slip', record_id=record_id))
+        return redirect(url_for('main.home'))
     print(f'{file_name=}')
     file_path = f'static/payment_slips/{file_name}'
     print(f'{file_path=}')
