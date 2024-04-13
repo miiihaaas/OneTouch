@@ -210,7 +210,9 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         pdf.set_x(2*170/3)
         if i < len(qr_code_images):
             pdf.image(f'{project_folder}/static/payment_slips/qr_code/{qr_code_images[i]}' , w=25)
-        # else:
+        else:
+            pdf.set_y(y+8)
+            pdf.cell(2*190/3,8, f"Greška pri generisanju QR koda", new_y='LAST', align='R', border=0)
         #     flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
         #     return redirect(url_for('main.home'))
         pdf.set_y(y+8)
