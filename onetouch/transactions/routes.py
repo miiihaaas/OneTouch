@@ -438,9 +438,9 @@ def single_payment_slip(record_id):
     single = True
     send = False
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    if not file_name:
-        flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
-        return redirect(url_for('main.home'))
+    # if not file_name:
+    #     flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
+    #     return redirect(url_for('main.home'))
     print(f'{file_name=}')
     file_path = f'static/payment_slips/{file_name}'
     print(f'{file_path=}')
@@ -471,9 +471,9 @@ def debt_archive(debt_id):
     single = False
     send = False
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    if not file_name:
-        flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
-        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    # if not file_name:
+    #     flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
+    #     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
     
     gen_dept_report(records)
 
@@ -498,9 +498,9 @@ def send_payment_slips(debt_id):
     single = True
     send = True
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    if not file_name:
-        flash('Doslo je do greške prilikom generisanja uplatnica. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
-        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    # if not file_name:
+    #     flash('Doslo je do greške prilikom generisanja uplatnica. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
+    #     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
     flash('Uspešno ste poslali mejlove roditeljima.', 'success')
     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
@@ -518,9 +518,9 @@ def send_single_payment_slip(record_id):
     single = True
     send = True
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    if not file_name:
-        print('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.')
-        return redirect(url_for('transactions.send_single_payment_slip', record_id=record_id))
+    # if not file_name:
+    #     print('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.')
+    #     return redirect(url_for('transactions.send_single_payment_slip', record_id=record_id))
     flash('Uspešno ste poslali mejl roditelju.', 'success')
     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
