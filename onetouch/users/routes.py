@@ -1,4 +1,4 @@
-import os
+import os, logging
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt, mail, app
@@ -22,7 +22,7 @@ def login():
         if user and bcrypt.check_password_hash(user.user_password, form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
-            print(user.user_name)
+            logging.debug(user.user_name)
             flash(f'Dobro došli, {user.user_name}!', 'success')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:

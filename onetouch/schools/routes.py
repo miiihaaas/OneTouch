@@ -16,7 +16,6 @@ def school_profile():
         
     form = EditSchoolForm()
     if form.validate_on_submit():
-        print('validna forma!!!')
         school.school_bank_accounts = {"bank_accounts": []}
         for bank_account_form in form.school_bank_accounts.entries:
             if bank_account_form.bank_account_number.data.strip() and bank_account_form.reference_number_spiri.data.strip():

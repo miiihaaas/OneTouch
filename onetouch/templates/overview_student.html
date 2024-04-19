@@ -27,6 +27,7 @@
     {% if service['service_debt_id'] is not none %}
         <a class="btn btn-info loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
         <a class="btn btn-primary loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{ service['service_name'] }}</a>
+        <a href="" class="btn btn-secondary">Generiši uplatnicu na osnovu salda</a>
     {% else %}
         <span class="btn btn-info loading disabled">{{'{:03d}'.format(service['id'])}}</span>
         <span class="btn btn-primary loading disabled">{{ service['service_name'] }}</span>

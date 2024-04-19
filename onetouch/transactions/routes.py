@@ -1,4 +1,4 @@
-import json
+import json, logging
 import requests, os, io, re
 import xml.etree.ElementTree as ET
 from PIL import Image
@@ -29,8 +29,8 @@ def student_debts():
     teachers = Teacher.query.all()
     students = Student.query.all()
     service_items = ServiceItem.query.all()
-    print(f'{service_items=}')
-    print(f'{teachers=}')
+    logging.debug(f'{service_items=}')
+    logging.debug(f'{teachers=}')
     return render_template('student_debts.html', 
                             legend = 'Zaduživanje učenika',
                             title = 'Zaduživanje učenika',
@@ -65,7 +65,7 @@ def testing():
         students_query = Student.query.filter(Student.student_class < 9)
         service_name = f'{service_item.service_item_service.service_name} - {service_item.service_item_name}'
     
-    print(f'debug: {search=} {student_class=} {student_section=} {service_item_id=} {installment=} {installment_attr=} {installment_value_result=}')
+    logging.debug(f'debug: {search=} {student_class=} {student_section=} {service_item_id=} {installment=} {installment_attr=} {installment_value_result=}')
     if search:
         students_query = students_query.filter(db.or_(
             Student.student_name.like(f'%{search}%'),
@@ -133,7 +133,7 @@ def add_new_student():
     student_debt_installment_number = request.form.get('student_debt_installment_number')
     studetn_debt_installment_value = request.form.get('studetn_debt_installment_value')
     student_id = request.form.get('student_id')
-    print(f'{student_debt_id=} {service_item_id=} {student_debt_installment_number=} {studetn_debt_installment_value=} {student_id=}')
+    logging.debug(f'{student_debt_id=} {service_item_id=} {student_debt_installment_number=} {studetn_debt_installment_value=} {student_id=}')
     new_student_record = TransactionRecord(student_debt_id=student_debt_id,
                                             student_id=student_id,
                                             service_item_id=service_item_id,
@@ -152,14 +152,14 @@ def add_new_student():
 @transactions.route('/get_service_items', methods=['POST'])
 def get_service_items():
     service_item_class = request.form.get('classes', 0, type=int)
-    print(f'from AJAX service items: {service_item_class=}')
+    logging.debug(f'from AJAX service items: {service_item_class=}')
     options = [(0, "Selektujte uslugu")]
     service_items = ServiceItem.query.filter_by(archived=False).all()
     service_items = [item for item in service_items if item.id != 0] #! treba da eliminiše uslugu sa id=0 koji se koristi za "grešku"
     for service_item in service_items:
         if str(service_item_class) in service_item.service_item_class:
             options.append((service_item.id, service_item.service_item_service.service_name + " - " + service_item.service_item_name))
-            print(options)
+            logging.debug(options)
     html = ''
     for option in options:
         html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
@@ -168,9 +168,9 @@ def get_service_items():
 
 @transactions.route('/get_installments', methods=['POST'])
 def get_installments():
-    print(request.form)
+    logging.debug(request.form)
     service_item_id = int(request.form.get('installments'))
-    print(f'from AJAX installments: {service_item_id=}')
+    logging.debug(f'from AJAX installments: {service_item_id=}')
     options = [(0, "Selektujte ratu")]
     service_item = ServiceItem.query.get_or_404(service_item_id)
     if service_item.service_item_service.payment_per_unit == 'kom':
@@ -178,19 +178,19 @@ def get_installments():
     else:
         komadno = False
     
-    print(f'{komadno=}')
+    logging.debug(f'{komadno=}')
     
     if service_item.installment_number == 1:
         options.append((1, f'Rata 1'))
         installment_attr = f'price'
         installment_option = getattr(service_item, installment_attr)
-        print(f'{installment_option=}')
+        logging.debug(f'{installment_option=}')
     else:
         for i in range(1, service_item.installment_number + 1):
             options.append((i, f'Rata {i}'))
             installment_attr = f'installment_{i}'
             installment_option = getattr(service_item, installment_attr)
-            print(f'{installment_option=}')
+            logging.debug(f'{installment_option=}')
     
     html = ''
     for option in options:
@@ -200,35 +200,34 @@ def get_installments():
 
 @transactions.route('/get_installment_values', methods=['POST'])
 def get_installment_values():
-    print(request.form)
+    logging.debug(request.form)
     service_item_id = int(request.form.get('installments'))
     installment_number = int(request.form.get('installment_values'))
-    print(f'{service_item_id=} {installment_number=}')
+    logging.debug(f'{service_item_id=} {installment_number=}')
     service_item = ServiceItem.query.get_or_404(service_item_id)
-    print(service_item)
+    logging.debug(service_item)
     if service_item.installment_number == 1:
         installment_attr = 'price'
     else:
         installment_attr = f'installment_{installment_number}'
     installment_value_result = {"result" : getattr(service_item,installment_attr)} 
-    print(f'{installment_value_result=}')
+    logging.debug(f'{installment_value_result=}')
     return installment_value_result
 
 
 @transactions.route('/submit_records', methods=['post'])
 def submit_records():
     data = request.get_json()
-    print(f'{data=}')
-    print(f'{type(data)=}')
+    logging.debug(f'{type(data)=}')
     
     if 'service_item' in data: 
-        print('dodavanje novog zaduženja')
+        logging.debug('dodavanje novog zaduženja')
         service_item_id = int(data['service_item'])
         debt_class = int(data['class'])
         debt_section = None if data['section'] == '' else int(data['section'])
         installment_number = int(data['installment'])
         purpose_of_payment = data['purpose_of_payment'] #todo: uvezi iz frontenda uz pomoć ajaksa preko data objekta :)
-        print(f'{service_item_id=}, {debt_class=}, {debt_section=}, {installment_number=}')
+        logging.debug(f'{service_item_id=}, {debt_class=}, {debt_section=}, {installment_number=}')
         
         existing_debt = StudentDebt.query.filter_by(
             service_item_id=service_item_id,
@@ -238,12 +237,10 @@ def submit_records():
         ).first()
         
         if existing_debt:
-            print(f'Već postoji ovo zaduženje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.')
             flash(f'Već postoji ovo zaduženje: {existing_debt.id}. Ukoliko ima potrebe, možete editovati podatke.', 'info')
             return str(existing_debt.id)
         
         if len(data['records']) == 0:
-            print('Nema zaduženih studenta')
             return 'Nema zaduženih studenta'
             
         
@@ -254,11 +251,11 @@ def submit_records():
                                 installment_number=installment_number,
                                 purpose_of_payment=purpose_of_payment)
         
-        print(f'{new_debt=}')
+        logging.debug(f'{new_debt=}')
         db.session.add(new_debt)
         db.session.commit()
         
-        print(f'{new_debt.id=}')
+        logging.debug(f'{new_debt.id=}')
         
         
         
@@ -268,17 +265,17 @@ def submit_records():
             student_id = data['records'][i]['student_id']
             #! service_item_id = ima već definisano na početku funkcije, ako bude trebalo napiši kod za to
             student_debt_installment_number = int(data['installment'])
-            print(f'{student_debt_installment_number=}')
+            logging.debug(f'{student_debt_installment_number=}')
             student_debt_amount = data['records'][i]['amount']
-            print(f'prečekiranje pred dodele vrednosti za "studetn_debt_installment_value": {service_item_id=}; {ServiceItem.query.get_or_404(service_item_id)}')
+            logging.debug(f'prečekiranje pred dodele vrednosti za "studetn_debt_installment_value": {service_item_id=}; {ServiceItem.query.get_or_404(service_item_id)}')
             studetn_debt_installment_value = getattr(ServiceItem.query.get_or_404(service_item_id), f'installment_{student_debt_installment_number}')
-            print(f'{studetn_debt_installment_value=}')
+            logging.debug(f'{studetn_debt_installment_value=}')
             student_debt_discount = float(data['records'][i]['discount'])
-            print(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
-            print(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
+            logging.debug(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
+            logging.debug(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
             student_debt_total = student_debt_amount * studetn_debt_installment_value - student_debt_discount
-            print(f'{student_debt_id=}, {student_payment_id=}, {student_id=}, {service_item_id=}, {student_debt_installment_number=}, {student_debt_amount=}')
-            print(f'{studetn_debt_installment_value=}, {student_debt_discount=}, {student_debt_total=}')
+            logging.debug(f'{student_debt_id=}, {student_payment_id=}, {student_id=}, {service_item_id=}, {student_debt_installment_number=}, {student_debt_amount=}')
+            logging.debug(f'{studetn_debt_installment_value=}, {student_debt_discount=}, {student_debt_total=}')
             new_record = TransactionRecord(student_debt_id = student_debt_id,
                                             student_payment_id = student_payment_id,
                                             student_id = student_id,
@@ -294,10 +291,10 @@ def submit_records():
         return str(student_debt_id)
 
     elif 'student_debt_id' in data:
-        print('izmena postojećeg zaduženja')
+        logging.debug('izmena postojećeg zaduženja')
         student_debt_id = int(data['student_debt_id'])
         purpose_of_payment = data['purpose_of_payment']
-        print(f'{student_debt_id=}, {purpose_of_payment=}')
+        logging.debug(f'{student_debt_id=}, {purpose_of_payment=}')
         debt = StudentDebt.query.get_or_404(student_debt_id)
         debt.purpose_of_payment = purpose_of_payment
         db.session.commit()
@@ -310,7 +307,7 @@ def submit_records():
                 TransactionRecord.student_debt_id == student_debt_id,
                 TransactionRecord.student_id == student_id).first()
             student_debt_total = student_debt_amount * record_for_edit.studetn_debt_installment_value - student_debt_discount
-            print(f'{record_for_edit=}')
+            logging.debug(f'{record_for_edit=}')
             record_for_edit.student_debt_amount = student_debt_amount
             record_for_edit.student_debt_discount = student_debt_discount
             record_for_edit.student_debt_total = student_debt_total
@@ -319,7 +316,7 @@ def submit_records():
         return str(student_debt_id)
     
     elif 'student_payment_id' in data: #! izmena pregleda izvoda (payment_archive/<int:>)
-        print('izmena postojećeg izvoda')
+        logging.debug('izmena postojećeg izvoda')
         transaction_records = TransactionRecord.query.all()
         all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records if record.student_debt_id is not None]
         all_reference_numbers.append('0000-000')
@@ -333,16 +330,16 @@ def submit_records():
             student_id = data['records'][i]['student_id']
             service_item_id = data['records'][i]['service_item_id']
             # payment_error = False
-            print(f'{student_ids=}')
-            print(f'{service_item_ids=}')
-            print(f'{student_id=}, {service_item_id=}')
+            logging.debug(f'{student_ids=}')
+            logging.debug(f'{service_item_ids=}')
+            logging.debug(f'{student_id=}, {service_item_id=}')
             if (student_id not in student_ids) or (service_item_id not in service_item_ids):
                 student_id = 1
                 service_item_id = 0
-                print(f'promenjeni su student_id i service item id!!!')
+                logging.debug(f'promenjeni su student_id i service item id!!!')
             record_for_edit = TransactionRecord.query.get_or_404(record_id)
-            print(f'{record_for_edit=}')
-            print(f'{record_id=}, {student_id=}, {service_item_id=},')
+            logging.debug(f'{record_for_edit=}')
+            logging.debug(f'{record_id=}, {student_id=}, {service_item_id=},')
             record_for_edit.student_id = student_id #if student_id in [record.student_id for record in transaction_records] else 0
             record_for_edit.service_item_id = service_item_id #if service_item_id in [record.service_item_id for record in transaction_records] else 0
             
@@ -351,15 +348,15 @@ def submit_records():
                 number_of_errors += 1
                 record_for_edit.payment_error = True
             elif reference_number in all_reference_numbers:
-                print(f'{reference_number=} {all_reference_numbers=}')
-                print('validan poziv na broj! dodaj kod za ažuriranje podatka u db!')
+                logging.debug(f'{reference_number=} {all_reference_numbers=}')
+                logging.info('validan poziv na broj! dodaj kod za ažuriranje podatka u db!')
                 record_for_edit.payment_error = False
             else:
-                print('nije validan poziv na broj! dodaj kod za ažuriranje podataka u db!')
-                print(f'poziv na broj: {reference_number=} ne postoji u listi poziva na broj: {all_reference_numbers=}')
+                logging.info('nije validan poziv na broj! dodaj kod za ažuriranje podataka u db!')
+                logging.info(f'poziv na broj: {reference_number=} ne postoji u listi poziva na broj: {all_reference_numbers=}')
                 number_of_errors += 1
                 record_for_edit.payment_error = True
-            print(f'broj grešaka: {number_of_errors}')
+            logging.debug(f'broj grešaka: {number_of_errors}')
             db.session.commit()
             
         payment = StudentPayment.query.get_or_404(student_payment_id)
@@ -386,7 +383,7 @@ def debts_archive_list():
         else:
             start_date = danas.replace(month=9, day=1)
             end_date = danas.replace(month=8, day=31, year=danas.year+1)
-    print(f'{start_date=}, {end_date=}')
+    logging.debug(f'{start_date=}, {end_date=}')
     if type(start_date) is str:
         # Konvertuj start_date i end_date u datetime.date objekte
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -395,7 +392,7 @@ def debts_archive_list():
             (StudentDebt.student_debt_date >= start_date) &
             (StudentDebt.student_debt_date <= (end_date + timedelta(days=1)).isoformat()) #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
         ).all()
-    print(f'{debts=}')
+    logging.debug(f'{debts=}')
     return render_template('debts_archive_list.html', 
                             debts=debts,
                             start_date=start_date,
@@ -419,8 +416,8 @@ def payments_archive_list():
         end_date = date.today().isoformat()
     payments = StudentPayment.query.filter(
         StudentPayment.payment_date.between(start_date, (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat())).all() #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
-    print(f'{payments=}')
-    print(f'{filtered_bank_account_number=}')
+    logging.debug(f'{payments=}')
+    logging.debug(f'{filtered_bank_account_number=}')
     if filtered_bank_account_number:
         payments = [payment for payment in payments if payment.bank_account == filtered_bank_account_number]
     return render_template('payments_archive_list.html', 
@@ -436,20 +433,20 @@ def payments_archive_list():
 def single_payment_slip(record_id):
     records = []
     record = TransactionRecord.query.get_or_404(record_id)
-    print(f'{record=}') #! uvek mora da bude samo jedan record
+    logging.debug(f'{record=}') #! uvek mora da bude samo jedan record
     debt = StudentDebt.query.get_or_404(record.student_debt_id)
     purpose_of_payment = debt.purpose_of_payment
     school = School.query.first()
     school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
     records.append(record)
-    print(f'{records=}')
+    logging.debug(f'{records=}')
     #! promenjiva single koja indikuje da se generiše samo jedna uplatnica 'uplatnica.pdf'
     single = True
     send = False
     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    print(f'{file_name=}')
+    logging.debug(f'{file_name=}')
     file_path = f'static/payment_slips/{file_name}'
-    print(f'{file_path=}')
+    logging.debug(f'{file_path=}')
     return send_file(file_path, as_attachment=False)
 
 
@@ -457,22 +454,22 @@ def single_payment_slip(record_id):
 def debt_archive(debt_id):
     debt = StudentDebt.query.get_or_404(debt_id)
     purpose_of_payment = debt.purpose_of_payment
-    print(f'{purpose_of_payment=}')
+    logging.debug(f'{purpose_of_payment=}')
     school = School.query.first()
     school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
     teacher = Teacher.query.filter_by(teacher_class=debt.debt_class).filter_by(teacher_section=debt.debt_section).first()
     
     records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-    print(f'provera broja đaka: {records=}, {len(records)=}')
+    logging.debug(f'provera broja đaka: {records=}, {len(records)=}')
     
     students = Student.query.filter_by(student_class=debt.debt_class).filter_by(student_section=debt.debt_section).all()
-    print(f'provera broja đaka: {students=}, {len(students)=}')
+    logging.debug(f'provera broja đaka: {students=}, {len(students)=}')
     
     new_students = []
     if len(students) > len(records):
         record_ids = set([record.transaction_record_student.id for record in records])
         new_students = [student for student in students if student.id not in record_ids]
-        print(f'{record_ids=}; {new_students=}')
+        logging.debug(f'{record_ids=}; {new_students=}')
     
     single = False
     send = False
@@ -586,19 +583,16 @@ def payment_archive(payment_id):
             'service_debt': service.service_item_service.service_name,
         }
         services_data.append(service_data)
-    
-    print(f'{records=}')
+
     unique_service_item_ids = []
     for record in records:
         if record.service_item_id not in unique_service_item_ids:
             unique_service_item_ids.append(record.service_item_id)
-    print(f'{unique_service_item_ids=}')
     export_data = []
     record_data = {}
     for unique_service_item_id in unique_service_item_ids:
         # Filtrirajte zapise samo za trenutni unique_service_item_id
         filtered_records = [record for record in records if record.service_item_id == unique_service_item_id]
-        print(f'{filtered_records=}')
         # Sabiranje svih vrednosti student_debt_total za trenutni unique_service_item_id
         sum_amount = sum(record.student_debt_total for record in filtered_records)
         
@@ -608,7 +602,6 @@ def payment_archive(payment_id):
             'service_item_id': unique_service_item_id,
             'sum_amount': sum_amount,
         }
-        print(f'{filtered_records[0].service_item_id=}')
         if filtered_records[0].transaction_record_service_item is not None:
             record_data['name'] = filtered_records[0].transaction_record_service_item.service_item_service.service_name + ' - ' + filtered_records[0].transaction_record_service_item.service_item_name
         else:
@@ -616,9 +609,6 @@ def payment_archive(payment_id):
         export_data.append(record_data)
         
         gen_file = export_payment_stats(export_data)
-        print(f'{gen_file=}')
-        print(f'{record_data=}')
-    print(f'{export_data=}')
     return render_template('payment_archive.html', 
                             records=records, #! ovo je za prvu tabelu
                             payment=payment,
@@ -672,7 +662,6 @@ def posting_payment():
         file = request.files['fileInput']
         if file.filename == '':
             error_mesage = 'Niste izabrali XML fajl'
-            print('niste izabrali XML fajl.')
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', error_mesage=error_mesage)
         tree = ET.parse(file)
@@ -683,7 +672,7 @@ def posting_payment():
         racun_izvoda_element = root.find('.//RacunIzvoda').text
         broj_izvoda_element = root.find('.//BrojIzvoda').text
         iznos_potrazuje_element = root.find('.//IznosPotrazuje').text
-        print(f'{racun_izvoda_element=}')
+        logging.debug(f'{racun_izvoda_element=}')
         # Pronalaženje broja pojavljivanja elementa <Stavka>
         broj_pojavljivanja = len(root.findall('.//Stavka'))
         
@@ -693,24 +682,22 @@ def posting_payment():
         # spisak svih izvoda koji postoje u data bazi
         transaction_records = TransactionRecord.query.all()
         all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records  if record.student_debt_id is not None]
-        print(f'{all_reference_numbers=}')
+        logging.debug(f'{all_reference_numbers=}')
         
-        print(f'{existing_payments=}')
+        logging.debug(f'{existing_payments=}')
         if existing_payments:
-            print('postoji vec uplata u bazi')
             error_mesage = f'Izabrani izvod ({broj_izvoda_element}) već postoji u bazi.'
             flash(error_mesage, 'danger')
             # return render_template('posting_payment.html', error_mesage=error_mesage) #todo izmeniti atribute u render_template tako da se učitaju stavke i error mesage
 
         # Ispis rezultata
-        print("Broj pojavljivanja elementa <Stavka>: ", broj_pojavljivanja)
-        print(f'{datum_izvoda_element=}')
-        print(f'{broj_izvoda_element=}')
-        print(f'{iznos_potrazuje_element=}')
-        print(f'{racun_skole=}, {racun_izvoda_element=}')
+        logging.debug("Broj pojavljivanja elementa <Stavka>: ", broj_pojavljivanja)
+        logging.debug(f'{datum_izvoda_element=}')
+        logging.debug(f'{broj_izvoda_element=}')
+        logging.debug(f'{iznos_potrazuje_element=}')
+        logging.debug(f'{racun_skole=}, {racun_izvoda_element=}')
         if racun_izvoda_element not in racun_skole:
             error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
-            print('racuni nisu isti')
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
 
@@ -739,12 +726,12 @@ def posting_payment():
             podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
             podaci['TipSloga'] = stavka.find('TipSloga').text
             
-            print(f'testiranje: {podaci["PozivNaBrojApp"]=}')
+            logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
             #! provera da li je poziv na broj validan
             provera_validnosti_poziva_na_broj(podaci)
             if podaci['RacunZaduzenja'] in school.school_bank_accounts:
-                print('Ovo je isplata')
+                logging.info('Ovo je isplata')
                 podaci['Iznos'] = -float(podaci['Iznos'])
                 # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
                 # if len(podaci['PozivOdobrenja']) == 7:
@@ -759,11 +746,11 @@ def posting_payment():
                 # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
                 # else:
                 #     continue
-            print(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
+            logging.debug(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
 
-            print(f'pre appenda: {podaci=}')
+            logging.debug(f'pre appenda: {podaci=}')
             stavke.append(podaci)
-        print(f'{stavke=}')
+        logging.debug(f'{stavke=}')
         
         
         
@@ -778,24 +765,23 @@ def posting_payment():
                                 racun_izvoda_element=racun_izvoda_element,
                                 broj_pojavljivanja=broj_pojavljivanja)
     if request.method == 'POST' and ('submitBtnSaveData' in request.form):
-        print(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
+        logging.debug(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
         # Dohvaćanje vrijednosti iz obrasca
         payment_date = datetime.strptime(request.form['payment_date'], '%d.%m.%Y')
         statment_nubmer = int(request.form['statment_nubmer'])
         total_payment_amount = float(request.form['total_payment_amount'].replace(',', '.'))
         number_of_items = int(request.form['number_of_items'])
         bank_account = request.form['bank_account']
-        print(f'{payment_date=}')
-        print(f'{statment_nubmer=}')
-        print(f'{total_payment_amount=}')
-        print(f'{number_of_items=}')
+        logging.debug(f'{payment_date=}')
+        logging.debug(f'{statment_nubmer=}')
+        logging.debug(f'{total_payment_amount=}')
+        logging.debug(f'{number_of_items=}')
         existing_payments = StudentPayment.query.filter_by(
                                                 payment_date=payment_date,
                                                 statment_nubmer=statment_nubmer,
                                                 bank_account=bank_account).first()
-        print(f'{existing_payments=}')
+        logging.debug(f'{existing_payments=}')
         if existing_payments:
-            print('postoji vec uplata u bazi')
             error_mesage = f'Uplata za dati datum ({payment_date}) i broj računa ({statment_nubmer}) već postoji u bazi. Izaberite novi XML fajl i pokušajte ponovo.'
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
@@ -810,16 +796,14 @@ def posting_payment():
                                         )
             db.session.add(new_payment)
             db.session.commit()
-            # print('dodato u db - proveri')
-            # print(f'{new_payment.id=}')
             
             uplatioci = request.form.getlist('uplatilac')
             iznosi = request.form.getlist('iznos')
             pozivi_na_broj = request.form.getlist('poziv_na_broj')
             svrha_uplate = request.form.getlist('svrha_uplate')
-            print(f'{iznosi=}')
-            print(f'{pozivi_na_broj=}')
-            print(f'{svrha_uplate=}')
+            logging.debug(f'{iznosi=}')
+            logging.debug(f'{pozivi_na_broj=}')
+            logging.debug(f'{svrha_uplate=}')
             records = []
             for i in range(len(iznosi)):
                 records.append({
@@ -828,7 +812,7 @@ def posting_payment():
                         'poziv_na_broj': pozivi_na_broj[i],
                         'svrha_uplate': svrha_uplate[i]
                     })
-            print(f'{records=}')
+            logging.debug(f'{records=}')
             number_of_errors = 0
             student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
             service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
@@ -840,12 +824,12 @@ def posting_payment():
                 service_item_id = record['poziv_na_broj'][-3:]
                 student_debt_total = float(record['iznos'].replace(',', '.'))
                 payment_error = False
-                print(f'{student_ids=}')
-                print(f'{service_item_ids=}')
-                print(f'{student_id=}')
-                print(f'{service_item_id=}')
+                logging.debug(f'{student_ids=}')
+                logging.debug(f'{service_item_ids=}')
+                logging.debug(f'{student_id=}')
+                logging.debug(f'{service_item_id=}')
                 if (student_id not in student_ids) or (service_item_id not in service_item_ids):
-                    print(f'nije u listi student_ids: {student_id=}')
+                    logging.debug(f'nije u listi student_ids: {student_id=}')
                     student_id = 1
                     service_item_id = 0
                     payment_error = True
@@ -863,11 +847,11 @@ def posting_payment():
                                                 payer=payer,
                                                 reference_number=reference_number,
                                                 payment_error=payment_error)
-                print(f'{new_record.student_id=}')
-                print(f'{new_record.service_item_id=}')
-                print(f'{new_record.student_debt_total=}')
-                print(f'{new_record.purpose_of_payment=}')
-                print(f'{new_record.reference_number=}')
+                logging.debug(f'{new_record.student_id=}')
+                logging.debug(f'{new_record.service_item_id=}')
+                logging.debug(f'{new_record.student_debt_total=}')
+                logging.debug(f'{new_record.purpose_of_payment=}')
+                logging.debug(f'{new_record.reference_number=}')
                 db.session.add(new_record)
                 db.session.commit()
             new_payment.number_of_errors = number_of_errors
