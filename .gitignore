@@ -5,12 +5,14 @@
 # Manualy added
 #TODO: komanda za brisanje fajlova sa gita: git rm -r --cached .\your\file\destination\file.extension
 instance/
+run.py
 onetouch/site.db
 onetouch/__pycache__/
 onetouch/main/__pycache__/
 onetouch/school/__pycache__/
 # onetouch/static/payment_slips/
 onetouch/static/reports/
+onetouch/static/payment_slips/
 onetouch/students/__pycache__/
 onetouch/services/__pycache__/
 onetouch/suppliers/__pycache__/
