@@ -57,5 +57,15 @@ app.register_blueprint(transactions)
 app.register_blueprint(overviews)
 app.register_blueprint(users)
 
+# logging.basicConfig(filename='app.log', level=logging.INFO, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logging.basicConfig(level=logging.INFO, format=f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logging.info('App started')
+#! podsetnik za hijerarkiju
+#! logging.debug('This is a debug message')
+#! logging.info('This is an info message')
+#! logging.warning('This is a warning message')
+#! logging.error('This is an error message')
+#! logging.critical('This is a critical message')
+
 
 
