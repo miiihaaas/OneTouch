@@ -3,6 +3,7 @@ from datetime import datetime
 from PIL import Image
 from fpdf import FPDF
 from flask import flash, redirect, url_for
+from flask_login import current_user
 from flask_mail import Message
 from onetouch.models import School, Student, StudentPayment
 from onetouch import mail, app
@@ -12,6 +13,7 @@ current_file_path = os.path.abspath(__file__)
 logging.debug(f'{current_file_path=}')
 project_folder = os.path.dirname(os.path.dirname((current_file_path)))
 logging.debug(f'{project_folder=}')
+
 font_path = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed.ttf')
 font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed-Bold.ttf')
 
@@ -100,6 +102,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     logging.debug(f'{records=}')
     path = f'{project_folder}/static/payment_slips/'
     
+    logging.debug(f'{current_user.id=}')
     #! Generiše QR kodove
     for i, record in enumerate(records):
         if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
@@ -155,8 +158,10 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             if response.status_code == 200:
                 qr_code_image = Image.open(io.BytesIO(response.content))
                 qr_code_filename = f'qr_{i}.png'
-                qr_code_image.save(os.path.join(project_folder, 'static', 'payment_slips', 'qr_code', qr_code_filename))
-                qr_code_filepath = os.path.join(project_folder, 'static', 'payment_slips', 'qr_code', qr_code_filename)
+                folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+                os.makedirs(folder_path, exist_ok=True)  # Ako folder ne postoji, kreira ga
+                qr_code_filepath = os.path.join(folder_path, qr_code_filename)
+                qr_code_image.save(qr_code_filepath)
                 with open(qr_code_filepath, 'wb') as file:
                     file.write(response.content)
                 qr_code_images.append(qr_code_filename)
@@ -216,7 +221,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         pdf.set_font('DejaVuSansCondensed', 'B', 16)
         pdf.set_y(y_qr)
         pdf.set_x(2*170/3)
-        pdf.image(f'{project_folder}/static/payment_slips/qr_code/{qr_code_images[i]}' , w=25)
+        pdf.image(f'{project_folder}/static/payment_slips/qr_code_{current_user.id}/{qr_code_images[i]}' , w=25)
         pdf.set_y(y+8)
         pdf.cell(2*190/3,8, f"NALOG ZA UPLATU", new_y='LAST', align='R', border=0)
         pdf.cell(190/3,8, f"IZVEŠTAJ O UPLATI", new_y='NEXT', new_x='LMARGIN', align='R', border=0)

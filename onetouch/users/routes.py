@@ -49,15 +49,15 @@ Ako Vi niste napavili ovaj zahtev, molim Vas ignorišite ovaj mejl i neće biti 
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
-        if current_user.is_authenticated:
-            return redirect(url_for('main.home'))
-        form = RequestResetForm()
-        if form.validate_on_submit():
-            user  = User.query.filter_by(user_mail=form.email.data).first()
-            send_reset_email(user)
-            flash('Mejl je poslat na Vašu adresu sa instrukcijama za resetovanje lozinke. ', 'info')
-            return redirect(url_for('users.login'))
-        return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='Resetovanje lozinke')
+    if current_user.is_authenticated:
+        return redirect(url_for('main.home'))
+    form = RequestResetForm()
+    if form.validate_on_submit():
+        user  = User.query.filter_by(user_mail=form.email.data).first()
+        send_reset_email(user)
+        flash('Mejl je poslat na Vašu adresu sa instrukcijama za resetovanje lozinke. ', 'info')
+        return redirect(url_for('users.login'))
+    return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='Resetovanje lozinke')
 
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
