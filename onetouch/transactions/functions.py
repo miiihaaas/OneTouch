@@ -1,4 +1,5 @@
 from datetime import datetime
+from flask_login import current_user
 import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
@@ -145,12 +146,15 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                     print(f"Error message: {error_message}")
 
             if response.status_code == 200:
-                qr_code_image = Image.open(io.BytesIO(response.content))
                 qr_code_filename = f'qr_{i}.png'
-                qr_code_image.save(os.path.join(project_folder, 'static', 'payment_slips', 'qr_code', qr_code_filename))
-                qr_code_filepath = os.path.join(project_folder, 'static', 'payment_slips', 'qr_code', qr_code_filename)
-                with open(qr_code_filepath, 'wb') as file:
-                    file.write(response.content)
+                folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+                os.makedirs(folder_path, exist_ok=True)  # Kreira folder ako ne postoji
+                qr_code_filepath = os.path.join(folder_path, qr_code_filename)
+                
+                # Otvori sliku i sačuvaj je direktno na putanju
+                Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
+                
+                # Dodaj naziv fajla u listu
                 qr_code_images.append(qr_code_filename)
             else:
                 pass
@@ -342,20 +346,18 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         file_name = f'uplatnica.pdf'
 
     #! briše QR kodove nakon dodavanja na uplatnice
-    folder_path = f'{project_folder}/static/payment_slips/qr_code/'
-    # Provjeri da li je putanja zaista direktorijum
+    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+
+    # Proveri da li je folder direktorijum i obriši sve fajlove u njemu
     if os.path.isdir(folder_path):
-        # Prolazi kroz sve fajlove u direktorijumu
         for filename in os.listdir(folder_path):
             file_path = os.path.join(folder_path, filename)
-            # Provjeri da li je trenutni element fajl
-            if os.path.isfile(file_path) and os.path.exists(file_path):
-                # Obriši fajl
+            if os.path.isfile(file_path):
                 os.remove(file_path)
-                print(f"Fajl '{file_path}' je uspješno obrisan.")
-        print("Svi QR kodovi su uspješno obrisani.")
+                print(f"Fajl '{file_path}' je uspešno obrisan.")
+        print("Svi QR kodovi su uspešno obrisani.")
     else:
-        print("Navedena putanja nije direktorijum.")
+        print(f"Navedena putanja '{folder_path}' nije direktorijum.")
     # file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
     # file_name = f'uplatnice.pdf' #!
 
