@@ -213,7 +213,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         pdf.set_y(y_qr)
         pdf.set_x(2*170/3)
         if i < len(qr_code_images):
-            pdf.image(f'{project_folder}/static/payment_slips/qr_code/{qr_code_images[i]}' , w=25)
+            pdf.image(f'{project_folder}/static/payment_slips/qr_code_{current_user.id}/{qr_code_images[i]}' , w=25)
         else:
             raise ValueError(f'Ne postoji QR kod slika za uplatnicu broj {counter}.')
         pdf.set_y(y+8)
