@@ -1,5 +1,7 @@
 import requests, os, io, time, logging
 from datetime import datetime
+from flask_login import current_user
+import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
 from flask import flash, redirect, url_for
@@ -165,6 +167,14 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
                 
                 # Dodaj naziv fajla u listu
+                folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+                os.makedirs(folder_path, exist_ok=True)  # Kreira folder ako ne postoji
+                qr_code_filepath = os.path.join(folder_path, qr_code_filename)
+                
+                # Otvori sliku i sačuvaj je direktno na putanju
+                Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
+                
+                # Dodaj naziv fajla u listu
                 qr_code_images.append(qr_code_filename)
             else:
                 pass
@@ -224,7 +234,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         pdf.set_x(2*170/3)
         pdf.image(f'{project_folder}/static/payment_slips/qr_code_{current_user.id}/{qr_code_images[i]}' , w=25)
         if i < len(qr_code_images):
-            pdf.image(f'{project_folder}/static/payment_slips/qr_code/{qr_code_images[i]}' , w=25)
+            pdf.image(f'{project_folder}/static/payment_slips/qr_code_{current_user.id}/{qr_code_images[i]}' , w=25)
         else:
             raise ValueError(f'Ne postoji QR kod slika za uplatnicu broj {counter}.')
         pdf.set_y(y+8)
@@ -360,6 +370,9 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         file_name = f'uplatnica.pdf'
 
     #! briše QR kodove nakon dodavanja na uplatnice
+    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+
+    # Proveri da li je folder direktorijum i obriši sve fajlove u njemu
     folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
 
     # Proveri da li je folder direktorijum i obriši sve fajlove u njemu
