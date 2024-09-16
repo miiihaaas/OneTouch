@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nalog za uplatu</title>
+    <style>
+        body {
+            background: url('/static/img/loginbg.jpg') center center no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
+            font-family: 'Montserrat', sans-serif;
+            padding: 20px;
+            color: #333;
+        }
+        .content {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1, h2, p {
+            margin: 10px 0;
+        }
+        h1 {
+            color: #104e97;
+            font-size: 1.8rem;
+        }
+        p {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #999;
+        }
+        .footer a {
+            color: #009dde;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .oval-div {
+            background-color: #f0f0f0;  /* Boja pozadine */
+            border-radius: 25px;        /* Ovalne ivice */
+            padding: 20px;              /* Unutrašnja margina */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Senka */
+            max-width: 400px;           /* Maksimalna širina div-a */
+            margin: 20px auto;          /* Poravnanje po sredini sa spoljnim marginama */
+        }
+    </style>
+</head>
+<body>    
+    <div class="oval-div">
+        <h1>Poštovani,</h1>
+        <p>Šaljemo Vam nalog za uplatu koji možete naći u prilogu ovog mejla.</p>
+        <p>Molimo Vas da uplatu izvršite u skladu sa uplatnicom iz prologa.</p>
+        <p>Ako imate bilo kakvih pitanja, slobodno nas kontaktirajte.</p>
+        <div class="footer">
+            <p>S poštovanjem,</p>
+            <p><strong>{{ school.school_name }}</strong></p>
+            <p>{{ school.school_address }}</p>
+        </div>
+    </div>
+</body>
+</html>
