@@ -7,6 +7,7 @@
             <th>ID tipa usluge</th>
             <th>Naziv usluge</th>
             <th>Naziv dobavljača</th>
+            <th>Tip plaćanja</th>
             <th></th>
         </tr>
     </thead>
@@ -20,6 +21,15 @@
                 {{ service.service_name }} 
             {% endif %}</td>
             <td>{{ service.service_supplier.supplier_name }}</td>
+            <td>
+                {% if service.payment_per_unit == 'kom' %}
+                Plaćanje po jedinici
+                {% elif service.payment_per_unit == 'mes' %}
+                Mesečno plaćanje
+                {% elif service.payment_per_unit == 'god' %}
+                Plaćanje po obračunskom periodu
+                {% endif %}
+            </td>
             <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{service.id}}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if service.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}</td>
         </tr>
         <!-- Modal Edit -->

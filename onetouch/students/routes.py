@@ -28,7 +28,7 @@ def require_login():
 def student_list():
     danas = datetime.now()
     active_date_start = danas.replace(month=8, day=15)
-    active_date_end = danas.replace(month=9, day=15)
+    active_date_end = danas.replace(month=9, day=30)
     register_form = RegisterStudentModalForm()
     edit_form = EditStudentModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
