@@ -39,7 +39,7 @@ class School(db.Model):
     school_zip_code = db.Column(db.Integer, nullable=False)
     school_city = db.Column(db.String(255), nullable=False)
     school_municipality = db.Column(db.String(255), nullable=False)
-    school_bank_account = db.Column(db.String(255), nullable=False)
+    school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
     users = db.relationship('User', backref='user_school', lazy=True)
 
 
@@ -67,6 +67,8 @@ class ServiceItem(db.Model):
     service_item_date = db.Column(db.DateTime, nullable=False) #! neka ostane samo datum radi evidencije, ali ćemo dodati atribu arhivirano: true vs false
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
+    bank_account = db.Column(db.String(255), nullable=False) #todo doraj u SPIRI MYSQL tabele na serveru
+    reference_number_spiri = db.Column(db.String(255), nullable=False) #todo doraj u SPIRI MYSQL tabele na serveru
     service_item_class = db.Column(db.Integer, nullable=True) #! ovo treba da je dropdown meni sa cekbox itemima koji kada se čekiraju imaju listu kao input
     price = db.Column(db.Float, nullable=False)
     # discount = db.Column(db.Float, nullable=False)
@@ -124,6 +126,7 @@ class StudentDebt(db.Model):
 class StudentPayment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     payment_date = db.Column(db.DateTime, nullable=False) #! izvlači iz XML fajla (<DatumIzvoda>20.05.2021</DatumIzvoda>)
+    bank_account = db.Column(db.String(255), nullable=False) #! izvlači iz XML fajla (<Poverilac>BANKA</Poverilac>) 
     statment_nubmer = db.Column(db.Integer, nullable=False) #! izvlači iz XML fajla (<BrojIzvoda>108</BrojIzvoda>)
     total_payment_amount = db.Column(db.Float, nullable=False) #! izvlači iz XML fajla (<IznosPotrazuje>40824,00</IznosPotrazuje>)
     number_of_items = db.Column(db.Integer, nullable=False) #! izvlači iz XML fajla (for loop bi trebalo da uradi routes.py)

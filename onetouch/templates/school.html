@@ -75,23 +75,36 @@
                         {{ form.school_municipality(class="form-control form-control-lg") }} 
                     {% endif %}
                 </div>
+            </div>
+            {% for bank_account in form.school_bank_accounts %}
+            {{ bank_account.hidden_tag() }}
+            <div class="row">
                 <div class="col form-group">
-                    {{ form.school_bank_account.label(class="form-control-label") }} 
-                    {% if form.school_bank_account.errors %} 
-                        {{ form.school_bank_account(class="form-control form-control-lg is-invalid") }}
+                    {{ bank_account.bank_account_number.label(class="form-control-label") }}
+                    {% if bank_account.bank_account_number.errors %}
                         <div class="invalid-feedback">
-                            {% for error in form.school_bank_account.errors %}
+                            {% for error in bank_account.bank_account_number.errors %}
                                 <span>{{ error }}</span>
                             {% endfor %}
                         </div>
-                    {% else %} 
-                        {{ form.school_bank_account(class="form-control form-control-lg") }} 
                     {% endif %}
+                    {{ bank_account.bank_account_number(class="form-control form-control-lg", value=bank_account.bank_account_number.data) }}
+                </div>
+                <div class="col form-group">
+                    {{ bank_account.reference_number_spiri.label(class="form-control-label") }}
+                    {% if bank_account.reference_number_spiri.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in bank_account.reference_number_spiri.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {{ bank_account.reference_number_spiri(class="form-control form-control-lg", value=bank_account.reference_number_spiri.data) }}
                 </div>
             </div>
+            {% endfor %}
             {{ form.submit(class="btn btn-outline-info") }}
         </fieldset>
     </form>
 </div>
-
 {% endblock content%}

@@ -1,20 +1,28 @@
+import requests, os, io, time, logging
 from datetime import datetime
 from flask_login import current_user
 import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
 from flask import flash, redirect, url_for
+from flask_login import current_user
 from flask_mail import Message
 from onetouch.models import School, Student, StudentPayment
 from onetouch import mail, app
 
 
 current_file_path = os.path.abspath(__file__)
-print(f'{current_file_path=}')
+logging.debug(f'{current_file_path=}')
 project_folder = os.path.dirname(os.path.dirname((current_file_path)))
-print(f'{project_folder=}')
+logging.debug(f'{project_folder=}')
+
 font_path = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed.ttf')
 font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed-Bold.ttf')
+
+
+def add_fonts(pdf):
+    pdf.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+    pdf.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
 
 
 def send_mail(uplatnica, path, file_name):
@@ -23,7 +31,7 @@ def send_mail(uplatnica, path, file_name):
     if student.parent_email == None or student.send_mail == False:
         return 
     parent_email = student.parent_email
-    print(f'Poslao bi mejl roditelju na: {parent_email}')
+    logging.debug(f'Poslao bi mejl roditelju na: {parent_email}')
     sender_email = 'noreply@uplatnice.online'
     recipient_email = parent_email #!'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
@@ -56,24 +64,27 @@ def send_mail(uplatnica, path, file_name):
 
 
 def export_payment_stats(data):
-    print(f'{data=}')
+    logging.debug(f'{data=}')
     student_payment = StudentPayment.query.get_or_404(data[0]['payment_id'])
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
-            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+            # self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            # self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+        def header(self) -> None:
+            self.set_font('DejaVuSansCondensed', 'B', 22)
+            self.cell(0, 10, f'Izvod podataka uplatnice: {student_payment.statment_nubmer} ({student_payment.payment_date.strftime("%d.%m.%Y.")})', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
+            self.cell(0, 10, '', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
+            self.set_font('DejaVuSansCondensed', 'B', 14)
+            self.set_fill_color(200, 200, 200)
+            self.cell(30, 10, 'ID usluge', new_y='LAST', align='C', border=1, fill=True)
+            self.cell(120, 10, 'Detalji usluge', new_y='LAST', align='C', border=1, fill=True)
+            self.cell(40, 10, 'Ukupan iznos', new_y='NEXT', new_x='LMARGIN', align='C', border=1, fill=True)
+            
+            
     pdf = PDF()
+    add_fonts(pdf)
     pdf.add_page()
-    pdf.set_font('DejaVuSansCondensed', 'B', 22)
-    pdf.set_y(10)
-    pdf.cell(0, 10, f'Izvod podataka uplatnice: {student_payment.statment_nubmer} ({student_payment.payment_date.strftime("%d.%m.%Y.")})', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
-    pdf.cell(0, 10, '', new_y='NEXT', new_x='LMARGIN', align='C', border=0)
-    pdf.set_font('DejaVuSansCondensed', 'B', 14)
-    pdf.set_fill_color(200, 200, 200)
-    pdf.cell(30, 10, 'ID usluge', new_y='LAST', align='C', border=1, fill=True)
-    pdf.cell(120, 10, 'Detalji usluge', new_y='LAST', align='C', border=1, fill=True)
-    pdf.cell(40, 10, 'Ukupan iznos', new_y='NEXT', new_x='LMARGIN', align='C', border=1, fill=True)
     pdf.set_font('DejaVuSansCondensed', '', 12)
     for record in data:
         if record['service_item_id'] != 0:
@@ -90,9 +101,10 @@ def export_payment_stats(data):
 def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send):
     data_list = []
     qr_code_images = []
-    print(f'{records=}')
+    logging.debug(f'{records=}')
     path = f'{project_folder}/static/payment_slips/'
     
+    logging.debug(f'{current_user.id=}')
     #! Generiše QR kodove
     for i, record in enumerate(records):
         if record.student_debt_total > 0: #! u ovom IF bloku dodati kod koji će da generiše ili ne uplatnicu ako je čekirano polje za slanje roditelju na mejl.
@@ -100,22 +112,22 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             new_data = {
                 'student_id': record.transaction_record_student.id,
                 'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
-                'svrha_uplate': purpose_of_payment,
+                'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
                 'primalac': school_info,
                 'sifra_placanja': 189,
                 'valuta': 'RSD', #! proveri da li je zbog QR koda potrebno drugačije definisati valutu
                 'iznos': record.student_debt_total,
-                'racun_primaoca': school.school_bank_account,
-                'model': '00', #! proveriti koji je model zbog QR koda 
-                'poziv_na_broj': f"{record.student_id:04d}-{record.service_item_id:03d}",
+                'racun_primaoca': record.transaction_record_service_item.bank_account,
+                'model': '97', #'00', #! proveriti koji je model zbog QR koda 
+                'poziv_na_broj': record.transaction_record_service_item.reference_number_spiri, # f"{record.student_id:04d}-{record.service_item_id:03d}",
                 'slanje_mejla_roditelju': record.transaction_record_student.send_mail
             }
             data_list.append(new_data)
             
-            racun = school.school_bank_account
+            racun = record.transaction_record_service_item.bank_account
             racun = racun.replace('-', '')  # Uklanja sve crtice iz računa
             racun = racun[:3] + racun[3:].zfill(15)  # Dodaje nule posle prvih 3 cifre računa do ukupne dužine od 18 cifara
-            print(f'test računa za QR kod: {racun=}')
+            logging.debug(f'test računa za QR kod: {racun=}')
             dug = new_data['iznos']
             dug = "RSD" + str(dug).replace('.', ',')
             qr_data = {
@@ -130,20 +142,20 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 "S": new_data['svrha_uplate'] if len(new_data['svrha_uplate']) < 36 else new_data['svrha_uplate'][:35], #! za generisanje QR koda maksimalno može da bude 35 karaktera
                 "RO": new_data['model'] + new_data['poziv_na_broj']
             }
-            print(f'{qr_data=}')
+            logging.debug(f'{qr_data=}')
             #! dokumentacija: https://ips.nbs.rs/PDF/Smernice_Generator_Validator_latinica_feb2023.pdf
             #! dokumentacija: https://ips.nbs.rs/PDF/pdfPreporukeNovoLat.pdf
             url = 'https://nbs.rs/QRcode/api/qr/v1/gen/250'
             headers = { 'Content-Type': 'application/json' }
             response = requests.post(url, headers=headers, json=qr_data)
-            print(f'{response=}')
+            logging.info(f'{response=}')
             if response.status_code == 500:
-                print(response.content)
-                print(response.headers)
+                logging.info(response.content)
+                logging.info(response.headers)
                 response_data = response.json()
                 if 'error_message' in response_data:
                     error_message = response_data['error_message']
-                    print(f"Error message: {error_message}")
+                    logging.debug(f"Error message: {error_message}")
 
             if response.status_code == 200:
                 qr_code_filename = f'qr_{i}.png'
@@ -155,33 +167,41 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
                 
                 # Dodaj naziv fajla u listu
+                folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+                os.makedirs(folder_path, exist_ok=True)  # Kreira folder ako ne postoji
+                qr_code_filepath = os.path.join(folder_path, qr_code_filename)
+                
+                # Otvori sliku i sačuvaj je direktno na putanju
+                Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
+                
+                # Dodaj naziv fajla u listu
                 qr_code_images.append(qr_code_filename)
             else:
                 pass
-            print(f'{qr_code_images=}')
+            logging.debug(f'{qr_code_images=}')
     time.sleep(2)
-    print (f'{data_list=}')
-    print(f'{len(data_list)=}')
+    logging.debug (f'{data_list=}')
+    logging.debug(f'{len(data_list)=}')
     # gen_file = uplatnice_gen(data_list, qr_code_images) #! prilagodi ovu funciju
 
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
-            print(f'{font_path=}')
-            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+            # self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            # self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     pdf = PDF()
+    add_fonts(pdf)
     printed_on_uplatnice = 0
     counter = 1
     #!
     for i, uplatnica in enumerate(data_list):
-        print(f'{uplatnica=}')
-        print(f'ulazni parametrii funkcije: {single=} {send=}')
+        logging.debug(f'{uplatnica=}')
+        logging.debug(f'ulazni parametrii funkcije: {single=} {send=}')
         if not uplatnica['slanje_mejla_roditelju'] and not single:
-            print('generisati sve uplatnice, OSIM onih koje se šalju roditelju na mejl!')
+            logging.info('generisati sve uplatnice, OSIM onih koje se šalju roditelju na mejl!')
             pass #! ovo bi trebalo da preskoči elif i da nastavi u redu if counter % 3 == 1...
         elif single:
-            print('odabrano da se generiše samo jedna uplatnica')
+            logging.info('odabrano da se generiše samo jedna uplatnica')
             pass
         else:
             continue
@@ -189,22 +209,22 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         #     pass
         # elif not uplatnica['slanje_mejla_roditelju']:
         #     continue #! završava se ovde iteracija for loopa i počinje sledeća iteracija; donji kod neće biti aktiviran
-        print(f'izašao iz IF petlje, red pred if petlju koja određuje u kojoj trećini će se generisati uplatnica')
+        logging.debug(f'izašao iz IF petlje, red pred if petlju koja određuje u kojoj trećini će se generisati uplatnica')
         if counter % 3 == 1:
-            print(f'prva trećina')
+            logging.debug(f'prva trećina')
             pdf.add_page()
             y = 0
             y_qr = 50
             pdf.line(210/3, 10, 210/3, 237/3)
             pdf.line(2*210/3, 10, 2*210/3, 237/3)
         elif counter % 3 == 2:
-            print(f'druga trećina')
+            logging.debug(f'druga trećina')
             y = 99
             y_qr = 149
             pdf.line(210/3, 110, 210/3, 99+237/3)
             pdf.line(2*210/3, 110, 2*210/3, 99+237/3)
         elif counter % 3 == 0:
-            print(f'treća trećina')
+            logging.debug(f'treća trećina')
             y = 198
             y_qr = 248
             pdf.line(210/3, 210, 210/3, 198+237/3)
@@ -212,6 +232,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         pdf.set_font('DejaVuSansCondensed', 'B', 16)
         pdf.set_y(y_qr)
         pdf.set_x(2*170/3)
+        pdf.image(f'{project_folder}/static/payment_slips/qr_code_{current_user.id}/{qr_code_images[i]}' , w=25)
         if i < len(qr_code_images):
             pdf.image(f'{project_folder}/static/payment_slips/qr_code_{current_user.id}/{qr_code_images[i]}' , w=25)
         else:
@@ -319,41 +340,47 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         #! ukoliko je generisanje uplatnica za više đaka (gen sve) da se čuva na 'uplatnice.pdf', 
         #! a ukoliko je za jednog đaka (generišite uplatnicu) da se čuva na 'uplatnica.pdf'
         if single:
-            print('if blok koji potvrđuje da je single')
-            print(f'{uplatnica["uplatilac"]=}')
+            logging.debug('if blok koji potvrđuje da je single')
+            logging.debug(f'{uplatnica["uplatilac"]=}')
             file_name = f'uplatnica.pdf'
             pdf.output(path + file_name)
             if uplatnica['slanje_mejla_roditelju'] and send:
-                print(f'poslat je mejl za {uplatnica["uplatilac"]}')
+                logging.info(f'poslat je mejl za {uplatnica["uplatilac"]}')
                 send_mail(uplatnica, path, file_name)
                 pdf = PDF()
+                add_fonts(pdf)
                 if counter % 3 != 1:
                 # if counter % 3 != 1:
                     pdf.add_page()
             elif not uplatnica['slanje_mejla_roditelju'] and send:
-                print(f'NIJE poslat mejl za {uplatnica["uplatilac"]}. Kreiraj početak pdf stranice za sledeću uplatnicu koja se šalje')
+                logging.info(f'NIJE poslat mejl za {uplatnica["uplatilac"]}. Kreiraj početak pdf stranice za sledeću uplatnicu koja se šalje')
                 pdf = PDF()
+                add_fonts(pdf)
                 if counter % 3 != 1:
                     pdf.add_page()
         else:
             printed_on_uplatnice += 1
-    print(f'{printed_on_uplatnice=}')
+    logging.debug(f'{printed_on_uplatnice=}')
     if not single:
-        print(f'debug: ušao sam u "if not single:": {printed_on_uplatnice=}')
+        logging.debug(f'debug: ušao sam u "if not single:": {printed_on_uplatnice=}')
         if printed_on_uplatnice == 0:
-            print(f'debug: ušao sam u "if not single: // if printed_on_uplatnice == 0:": {printed_on_uplatnice=}')
+            logging.debug(f'debug: ušao sam u "if not single: // if printed_on_uplatnice == 0:": {printed_on_uplatnice=}')
             # nije bilo štampe na uplatnicama
             pdf = PDF()
+            add_fonts(pdf)
             pdf.add_page()
             pdf.set_font('DejaVuSansCondensed', 'B', 16)
             pdf.multi_cell(0, 20, 'Nema zaduženih učenika ili je svim zaduženim učenicima aktivirana opcija slanja generisanih uplatnica putem e-maila. \nMolimo Vas da prvo proverite da li u nalogu barem jedan učenik ima zaduženje. Ako ste omogućili opciju slanja generisanih uplatnica putem e-maila, ljubazno Vas molimo da se pobrinite da sve uplatnice budu poslate roditeljima elektronskim putem. \nOvim putem Vas molimo da ne štampate ovaj dokument.', align='C')
         file_name = f'uplatnice.pdf'
         pdf.output(path + file_name)
-        print(f'debug if not single: {file_name=}')
+        logging.debug(f'debug if not single: {file_name=}')
     else:
         file_name = f'uplatnica.pdf'
 
     #! briše QR kodove nakon dodavanja na uplatnice
+    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+
+    # Proveri da li je folder direktorijum i obriši sve fajlove u njemu
     folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
 
     # Proveri da li je folder direktorijum i obriši sve fajlove u njemu
@@ -362,14 +389,15 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             file_path = os.path.join(folder_path, filename)
             if os.path.isfile(file_path):
                 os.remove(file_path)
-                print(f"Fajl '{file_path}' je uspešno obrisan.")
-        print("Svi QR kodovi su uspešno obrisani.")
+                logging.info(f"Fajl '{file_path}' je uspešno obrisan.")
+        logging.debug("Svi QR kodovi su uspešno obrisani.")
     else:
-        print(f"Navedena putanja '{folder_path}' nije direktorijum.")
+        logging.debug(f"Navedena putanja '{folder_path}' nije direktorijum.")
+
     # file_name = f'{project_folder}static/payment_slips/uplatnice.pdf' #!
     # file_name = f'uplatnice.pdf' #!
 
-    print(f'debug na samom kraju uplatice_gen(): {file_name=}')
+    logging.info(f'debug na samom kraju uplatice_gen(): {file_name=}')
     return file_name
 
 
@@ -383,9 +411,8 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
     class PDF(FPDF):
         def __init__(self, **kwargs):
             super(PDF, self).__init__(**kwargs)
-            print(f'{font_path=}')
-            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+            # self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            # self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     
         def header(self):
             # Postavite font i veličinu teksta za zaglavlje
@@ -427,6 +454,7 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
             pdf.cell(30, 8, f"Saldo", 1, 1, 'C', 1)
     
     pdf = PDF()
+    add_fonts(pdf)
     pdf.add_page()
     
     sorted_data = sorted(export_data, key=lambda x: (x['student_class'], x['student_section']))
@@ -461,11 +489,10 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
 def gen_report_student(data, unique_services_list, student, start_date, end_date):
     school = School.query.first()
     class PDF(FPDF):
-        def __init__(self, **kwargs):
-            super(PDF, self).__init__(**kwargs)
-            print(f'{font_path=}')
-            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+        # def __init__(self, **kwargs):
+        #     super(PDF, self).__init__(**kwargs)
+        #     self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+        #     self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     
         def header(self):
             # Postavite font i veličinu teksta za zaglavlje
@@ -477,6 +504,7 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
             self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
     
     pdf = PDF()
+    add_fonts(pdf)
     pdf.add_page()
     
     pdf.set_font('DejaVuSansCondensed', 'B', 18)
@@ -518,7 +546,7 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
     pdf.cell(40, 8, 'Saldo:', 0, 0, 'R')
     pdf.cell(40, 8, f'{saldo:,.2f}', 0, 1, 'R')
 
-    print(f'{zaduzenje=} {uplate=} {saldo=}')
+    logging.debug(f'{zaduzenje=} {uplate=} {saldo=}')
     file_name = 'report_student.pdf'
     path = f'{project_folder}/static/reports/'
     pdf.output(path + file_name)
@@ -532,11 +560,10 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
             service_name = record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name
             continue
     class PDF(FPDF):
-        def __init__(self, **kwargs):
-            super(PDF, self).__init__(**kwargs)
-            print(f'{font_path=}')
-            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+        # def __init__(self, **kwargs):
+        #     super(PDF, self).__init__(**kwargs)
+        #     self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+        #     self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     
         def header(self):
             # Postavite font i veličinu teksta za zaglavlje
@@ -575,6 +602,7 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
             
     
     pdf = PDF()
+    add_fonts(pdf)
     pdf.add_page()
     
     zaduzenje = 0
@@ -604,16 +632,15 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
 
 
 def gen_dept_report(records):
-    print(f'records: {records=}')
+    logging.debug(f'records: {records=}')
     sorted_records = sorted(records, key=lambda x: x.student_debt_amount * x.studetn_debt_installment_value - x.student_debt_discount, reverse=True)
-    print(f'sorted_records: {sorted_records=}')
+    logging.debug(f'sorted_records: {sorted_records=}')
     school = School.query.first()
     class PDF(FPDF):
-        def __init__(self, **kwargs):
-            super(PDF, self).__init__(**kwargs)
-            print(f'{font_path=}')
-            self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-            self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+        # def __init__(self, **kwargs):
+        #     super(PDF, self).__init__(**kwargs)
+        #     self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+        #     self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     
         def header(self):
             # Postavite font i veličinu teksta za zaglavlje
@@ -637,6 +664,7 @@ def gen_dept_report(records):
             self.cell(15, 8, 'Olakšica', 1, 0, 'C', 1)
             self.cell(20, 8, 'Zaduženje', 1, 1, 'C', 1)
     pdf = PDF()
+    add_fonts(pdf)
     pdf.add_page()
     pdf.set_fill_color(255, 255, 255)
     total = 0

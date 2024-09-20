@@ -14,6 +14,8 @@
             <th>Cena</th>
             <th>Broj rata</th>
             <th>Razred</th>
+            <th>Račun</th>
+            <th>Poziv na broj</th>
             <th></th>
         </tr>
     </thead>
@@ -31,6 +33,8 @@
             <td>{{ "{:.2f}".format(service_profile.price) }}</td>
             <td>{{ service_profile.installment_number }}</td>
             <td>{{ service_profile.service_item_class }}</td>
+            <td>{{ service_profile.bank_account }}</td>
+            <td>{{ service_profile.reference_number_spiri }}</td>
             <td><a href="#" data-toggle="modal" data-target="#EditModal{{service_profile.id}}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
                 <a href="#" data-toggle="modal" data-target="#DeleteModal{{service_profile.id}}" title="Obrišite uslugu"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
                 {% if service_profile.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}
@@ -105,6 +109,20 @@
                                     {% else %}
                                         {% set z = edit_form.service_id.process_data(service_profile.service_id) %}
                                         {{ edit_form.service_id(class="form-select form-select-lg", type="date", id="service_id-" + service_profile.id|string) }}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ edit_form.bank_account.label(class="form-control-label") }}
+                                    {% if edit_form.bank_account.errors %}
+                                        {{ edit_form.bank_account(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in edit_form.bank_account.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {% set z = edit_form.bank_account.process_data(service_profile.bank_account) %}
+                                        {{ edit_form.bank_account(class="form-select form-select-lg") }}
                                     {% endif %}
                                 </div>
                                 <div class="form-group">
@@ -459,6 +477,19 @@
                 {% endif %}
             </div>
             <div class="form-group">
+                {{ register_form.bank_account.label(class="form-control-label") }}
+                {% if register_form.bank_account.errors %}
+                    {{ register_form.bank_account(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in register_form.bank_account.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ register_form.bank_account(class="form-select form-select-lg") }}
+                {% endif %}
+            </div>
+            <div class="form-group">
                 {{ register_form.service_item_name.label(class="form-control-label") }}
                 {% if register_form.service_item_name.errors %}
                     {{ register_form.service_item_name(class="form-control form-control-lg is-invalid") }}
@@ -710,6 +741,7 @@
     $(document).ready(function () {
         const selectFieldSupplier = $('#supplier_id');
         const selectFieldService = $('#service_id');
+        const inputReferenceNumber = $('#reference_number_spiri')
         const serviceItemNameField = $('#service_item_name');
         const selectFieldClass = $('#classes')
         const inputPriceField = $('#price');
@@ -727,6 +759,7 @@
                 console.log('vrednost usluge: ', selectFieldService.val());
                 selectFieldService.prop('disabled', true);
                 selectFieldService.prop('value', 0);
+                inputReferenceNumber.prop('disabled', true)
                 serviceItemNameField.prop('disabled', true);
                 selectFieldClass.prop('disabled', true);
                 inputPriceField.prop('disabled', true);
@@ -754,6 +787,8 @@
             if(selectFieldService.val() == 0) {
                 console.log('selektovana vrednost usluge je nula, treba da datum i detalji usluge budu onesposobljena polja');
                 console.log('vrednost usluge: ', selectFieldService.val());
+                inputReferenceNumber.prop('disabled', true);
+                inputReferenceNumber.prop('value', '');
                 serviceItemNameField.prop('disabled', true);
                 serviceItemNameField.prop('value', '');
                 inputPriceField.prop('disabled', true);
@@ -788,6 +823,7 @@
                             option.val(1).text(1);
                             selectInstallmentNumberField.append(option);
                         }
+                        inputReferenceNumber.prop('disabled', false)
                         serviceItemNameField.prop('disabled', false);
                         selectFieldClass.prop('disabled', false);
                         inputPriceField.prop('disabled', false);

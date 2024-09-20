@@ -10,13 +10,27 @@
         <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
     <div class="col">
-        <a class="btn btn-primary" href="{{url_for('transactions.posting_payment')}}">Uvezite novi izvod</a>
+        <label for="bank_accounts_numbers">Podračun:</label>
+        <select class="form-select mb-2" name="bank_accounts_numbers" id="bank_accounts_numbers">
+            <option value="">Svi podračuni</option>
+            {% for bank_account in bank_accounts %}
+                {% if bank_account == filtered_bank_account_number %}
+                    <option value="{{ bank_account }}" selected>{{ bank_account }}</option>
+                {% else %}
+                    <option value="{{ bank_account }}">{{ bank_account }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col">
+        <a class="btn btn-primary mt-4" href="{{url_for('transactions.posting_payment')}}">Uvezite novi izvod</a>
     </div>
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
     <thead>
         <tr>
             <th>Datum izvoda</th>
+            <th>Podračun</th>
             <th>Broj izvoda</th>
             <th>Iznos potražuje</th>
             <th>Broj uplatnica (Broj grešaka)</th>
@@ -27,6 +41,7 @@
         {% for payment in payments %}
         <tr>
             <td data-order="{{ payment.payment_date.strftime('%Y%m%d') }}">{{ payment.payment_date.strftime('%d.%m.%Y.') }}</td>
+            <td>{{ payment.bank_account }}</td>
             <td>{{ payment.statment_nubmer }}</td>
             <td>{{ "{:.2f}".format(payment.total_payment_amount) }}</td>
             <td>{{ payment.number_of_items }} ({{ payment.number_of_errors }})</td>
@@ -53,16 +68,23 @@
 </script>
 <script>
     // Funkcija koja se poziva pri promeni datuma
-    function handleDateChange() {
+    function handleChange() {
         var startDate = document.getElementById("start-date").value;
         var endDate = document.getElementById("end-date").value;
+        var selectAccount = document.getElementById("bank_accounts_numbers").value;
+        
         var url = "{{ url_for('transactions.payments_archive_list') }}?start_date=" + startDate + "&end_date=" + endDate;
+        if (selectAccount) {
+            url += "&bank_account=" + selectAccount;
+        }
         window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
     }
 
     // Dodavanje osluškivača događaja za promenu datuma
-    document.getElementById("start-date").addEventListener("change", handleDateChange);
-    document.getElementById("end-date").addEventListener("change", handleDateChange);
+    document.getElementById("start-date").addEventListener("change", handleChange);
+    document.getElementById("end-date").addEventListener("change", handleChange);
+    document.getElementById("bank_accounts_numbers").addEventListener("change", handleChange);
+
 </script>
 <script>
         const rows = document.querySelectorAll('#data tbody tr');

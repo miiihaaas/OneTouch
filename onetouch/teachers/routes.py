@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
@@ -29,7 +30,6 @@ def teacher_list():
     edit_form = EditTeacherModalForm()
     register_form = RegisterTeacherModalForm() 
     if register_form.validate_on_submit() and request.form.get('submit_register'):
-        print('register form validation')
         teacher=Teacher(teacher_name=register_form.teacher_name.data.capitalize(),
                         teacher_surname=register_form.teacher_surname.data.capitalize(),
                         teacher_class=register_form.teacher_class.data,
@@ -39,7 +39,7 @@ def teacher_list():
         flash(f'Dodat novi profil odeljanskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'success')
         return redirect(url_for('teachers.teacher_list'))
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        print(f'edit form validation: {request.form.get("teacher_id")=}')
+        logging.debug(f'edit form validation: {request.form.get("teacher_id")=}')
         teacher = Teacher.query.get(request.form.get('teacher_id'))
         
         teacher.teacher_name = edit_form.teacher_name.data.capitalize()
@@ -50,7 +50,7 @@ def teacher_list():
         flash(f'Izmenjen je profil odeljanskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'success')
         return redirect(url_for('teachers.teacher_list'))
     elif request.method == 'GET' and request.form.get('teacher_id') != None:
-        print(f'get: {request.form.get("teacher_id")}')
+        logging.debug(f'get: {request.form.get("teacher_id")}')
         teacher = Teacher.query.get(request.form.get('teacher_id'))
         
         #edit_form.teacher_name.data = teacher.teacher_name
@@ -72,7 +72,7 @@ def delete_teacher(teacher_id):
         flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
-        print ('nije dobar password')
+        logging.debug ('nije dobar password')
         flash(f'Pogrešna lozinka! Nije obrisan profil odeljenskog starešine: {teacher.teacher_name} {teacher.teacher_surname}', 'danger')
         return redirect(url_for('teachers.teacher_list'))
     else:

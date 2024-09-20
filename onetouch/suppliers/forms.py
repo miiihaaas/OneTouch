@@ -2,8 +2,10 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, BooleanField, SelectField, DecimalField, DateField
 from wtforms.validators import DataRequired, Optional, ValidationError
 from onetouch import db
-from onetouch.models import Supplier
+from onetouch.models import Supplier, School
 
+
+school=School.query.first()
 
 class RegisterSupplierModalForm(FlaskForm):
     supplier_name = StringField('Naziv dobavljača', validators=[DataRequired()])
@@ -42,6 +44,8 @@ class RegisterServiceProfileModalForm(FlaskForm):
     service_item_date = DateField('Datum: ', format='%Y-%m-%d', validators=[Optional()])
     supplier_id = SelectField('Dobavljač', choices=[])
     service_id = SelectField('Tip usluge', choices=[])
+    bank_account = SelectField('Broj bankovnog računa', choices=[account['bank_account_number'] for account in school.school_bank_accounts['bank_accounts']])
+    # reference_number_spiri = StringField('Poziv na broj')
     service_item_class = StringField('Razred') #! morada bude strin koji će da čuva listu odabranih razleda
     price = DecimalField('Cena', validators=[DataRequired()])
     installment_number = SelectField('Broj rata', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
@@ -57,7 +61,6 @@ class RegisterServiceProfileModalForm(FlaskForm):
     installment_10 = DecimalField('Rata 10', validators=[Optional()])
     installment_11 = DecimalField('Rata 11', validators=[Optional()])
     installment_12 = DecimalField('Rata 12', validators=[Optional()])
-    # archived = BooleanField('Usluga arhivirana')
     submit_register = SubmitField('Kreirajte uslugu')
 
 
@@ -66,6 +69,8 @@ class EditServiceProfileModalForm(FlaskForm):
     service_item_date = DateField('Datum: ', format='%Y-%m-%d', validators=[Optional()])
     supplier_id = SelectField('Dobavljač', choices=[])
     service_id = SelectField('Tip usluge', choices=[])
+    bank_account = SelectField('Broj bankovnog računa', choices=[account['bank_account_number'] for account in school.school_bank_accounts['bank_accounts']])
+    # reference_number_spiri = StringField('Poziv na broj')
     service_item_class = StringField('Razred')
     price = DecimalField('Cena', validators=[DataRequired()])
     installment_number = SelectField('Broj rata', choices=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])

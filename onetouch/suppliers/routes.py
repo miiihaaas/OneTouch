@@ -1,9 +1,10 @@
+import logging
 from datetime import date
 from flask import Blueprint, jsonify
 from flask import render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
-from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord
+from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord, School
 from onetouch.suppliers.forms import RegisterSupplierModalForm, EditSupplierModalForm, EditServiceModalForm, RegisterServiceModalForm, RegisterServiceProfileModalForm, EditServiceProfileModalForm
 from onetouch.suppliers.functions import convert_to_latin
 
@@ -26,12 +27,10 @@ def supplier_list():
     suppliers = Supplier.query.filter(Supplier.id != 0).all()
     edit_form = EditSupplierModalForm()
     register_form = RegisterSupplierModalForm()
-    print(f'test submit dugmeta: {request.form.get("submit_edit")=} ili {request.form.get("submit_register")=}')
-    print('--------------------------------------------------------')
     if request.form.get('submit_edit'):
         if edit_form.validate_on_submit():
             supplier = Supplier.query.get(request.form.get('supplier_id'))
-            print(f'{supplier.supplier_name=}; {supplier.archived=}')
+            logging.debug(f'{supplier.supplier_name=}; {supplier.archived=}')
             suppliers = Supplier.query.all()
             suppliers.remove(Supplier.query.get(supplier.id))
             
@@ -80,10 +79,9 @@ def service_list():
     register_form.reset()
     register_form.supplier_id.choices = suppliers_chices
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
-        print('edit form triggered.')
         service = Service.query.get(request.form.get('service_id'))
-        print(request.form.get('service_id'))
-        print(service)
+        logging.debug(request.form.get('service_id'))
+        logging.debug(service)
         
         service.service_name = convert_to_latin(edit_form.service_name.data)
         service.payment_per_unit = edit_form.payment_per_unit.data
@@ -113,27 +111,21 @@ def service_list():
                             register_form=register_form)
 
 
-
-# @suppliers.route('/service/<int:service_id>/delete', methods=['POST'])
-# @login_required
-# def delete_service(service_id):
-#     service = Service.query.get(service_id)
-#     if not current_user.is_authenticated:
-#         flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
-#         return redirect(url_for('users.login'))
-#     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
-#         print ('nije dobar password')
-#         abort(403)
-#     else:
-#         flash(f'Uspešno je obrisana usluga "{service.service_name}"', 'success')
-#         db.session.delete(service)
-#         db.session.commit()
-#         return redirect(url_for("suppliers.service_list"))
-
-
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
 @login_required
 def service_profile_list():
+    school = School.query.first()
+    school_bank_accounts = school.school_bank_accounts.get('bank_accounts', [])
+    logging.debug(f'{school_bank_accounts=}')
+    
+    def get_reference_number(school_bank_accounts, edit_bank_account):
+        for bank_account in school_bank_accounts:
+            if bank_account['bank_account_number'] == edit_bank_account:
+                return bank_account['reference_number_spiri']
+        return None
+    
+    
+    
     # service_profiles = ServiceItem.query.all()
     service_profiles = ServiceItem.query.filter(ServiceItem.id != 0).all() #! svi koji nemaju id=0 koji je rezervisan za grešku
 
@@ -151,23 +143,25 @@ def service_profile_list():
         print('porlazi submit edit dugme')
         
     if not edit_form.validate_on_submit():
-        print('nije validna edit forma')
+        logging.debug('nije validna edit forma')
         for field, errors in edit_form.errors.items():
             for error in errors:
-                print(f'{field}: {error}')
+                logging.debug(f'{field}: {error}')
     
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
         service_profile = ServiceItem.query.get(request.form.get('get_service_profile'))
-        print('validation, edit from, service profile')
-        print(f"klasa je: classes-{service_profile.id}") #todo: probaj 'beautifulsoup4'
+        logging.debug('validation, edit from, service profile')
+        logging.debug(f"klasa je: classes-{service_profile.id}") #todo: probaj 'beautifulsoup4'
         class_list = request.form.getlist(f"classes-{service_profile.id}")
-        print(f'{class_list=}')
+        logging.debug(f'{class_list=}')
         class_list_string = ', '.join(class_list)
-        print(f'classes string: {class_list_string}')
-        print(f'validacija edit forme: {service_profile}')
+        logging.debug(f'classes string: {class_list_string}')
+        logging.debug(f'validacija edit forme: {service_profile}')
         service_profile.service_item_name = convert_to_latin(edit_form.service_item_name.data)
         service_profile.service_item_date = date.today()
         service_profile.supplier_id = edit_form.supplier_id.data
+        service_profile.bank_account = edit_form.bank_account.data
+        service_profile.reference_number_spiri = get_reference_number(school_bank_accounts, edit_form.bank_account.data)
         service_profile.service_id = edit_form.service_id.data
         service_profile.service_item_class = class_list_string
         service_profile.price = edit_form.price.data
@@ -185,19 +179,19 @@ def service_profile_list():
         service_profile.installment_11 = edit_form.installment_11.data
         service_profile.installment_12 = edit_form.installment_12.data
         service_profile.archived = edit_form.archived.data
-        print(f'debug installment_number: {service_profile.installment_number=}; {type(service_profile.installment_number)=}')
+        logging.debug(f'debug installment_number: {service_profile.installment_number=}; {type(service_profile.installment_number)=}')
         if service_profile.installment_number == "1":
             service_profile.installment_1 = service_profile.price
-            print(f'dodeljena je ukupna cena u prvu vrednost polja prverate!')
+            logging.debug(f'dodeljena je ukupna cena u prvu vrednost polja prverate!')
         db.session.commit()
         return redirect(url_for("suppliers.service_profile_list"))
         
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
-        print('validation, register from, service profile')
+        logging.debug('validation, register from, service profile')
         class_list = request.form.getlist("classes")
         class_list_string = ', '.join(class_list)
-        print(f'classes string: {class_list_string}')
+        logging.debug(f'classes string: {class_list_string}')
         
         if register_form.installment_number.data == '1':
             register_form.installment_1.data = register_form.price.data
@@ -206,6 +200,8 @@ def service_profile_list():
                                         service_item_date=date.today(),
                                         supplier_id=register_form.supplier_id.data,
                                         service_id=register_form.service_id.data,
+                                        bank_account=register_form.bank_account.data,
+                                        reference_number_spiri=get_reference_number(school_bank_accounts, register_form.bank_account.data),
                                         service_item_class=class_list_string,
                                         price=register_form.price.data,
                                         installment_number=register_form.installment_number.data,
@@ -222,7 +218,7 @@ def service_profile_list():
                                         installment_11=register_form.installment_11.data,
                                         installment_12=register_form.installment_12.data,
                                         archived=False)
-        print(f'{service_profile.installment_number=}')
+        logging.debug(f'{service_profile.installment_number=}')
         if service_profile.installment_number == '1':
             service_profile.installment_1 = service_profile.price
         flash(f'Kreirana je usluga "{service_profile.service_item_name}"', 'success')
@@ -243,7 +239,7 @@ def service_profile_list():
 def get_services():
     supplier_id = request.form.get('supplier_id', 0, type=int)
     services = Service.query.filter_by(supplier_id=supplier_id, archived=False).filter(Service.id != 0).all()
-    print(f'services: {[s.archived for s in services]}')
+    logging.debug(f'services: {[s.archived for s in services]}')
     options = [(0, "Selektujte uslugu")] + [(s.id, s.service_name) for s in services]
     html = ''
     for option in options:
@@ -261,14 +257,14 @@ def get_payment():
 @suppliers.route('/service_profile/<int:service_profile_id>/delete', methods=['POST'])
 @login_required
 def delete_service_profile(service_profile_id):
-    print(f'delete profile section: {service_profile_id}')
+    logging.debug(f'delete profile section: {service_profile_id}')
     service_profile = ServiceItem.query.get_or_404(service_profile_id)
     transactions = TransactionRecord.query.filter_by(service_item_id=service_profile_id).all()
     if not current_user.is_authenticated:
         flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
-        print ('nije dobar password')
+        logging.debug ('nije dobar password')
         flash('Uneliste pogrešnu lozinku.', 'danger')
         return redirect(url_for('suppliers.service_profile_list'))
     elif transactions:

@@ -30,7 +30,7 @@ body.Login fieldset.form-group { max-width: 100%; }
 body.Login .row form > div.form-group { margin-top: 30px; }
 body.Login .login-screen form > div.form-group { display: flex; justify-content: space-between; }
 .login-logo { margin: 0px 0 0px 0; max-width: 300px; /*width: 100%;*/ }
-main.login-screen .content-section { background: transparent; padding: 0; border: none; border-radius: unset; margin-bottom: 0; max-width: 350px; margin: auto; }
+main.login-screen .content-section { background: transparent; padding: 0; border: none; border-radius: unset; margin-bottom: 0; max-width: 650px; margin: auto; }
 main.login-screen .subtitle { text-align: center; }
 main.login-screen i { color: #bbb; }
 .login-screen input.form-control { border: 0; border-bottom: 1px solid #ccc; border-radius: 0; }

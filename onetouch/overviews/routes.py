@@ -1,4 +1,4 @@
-import itertools, json
+import itertools, json, logging
 from datetime import datetime, date
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
@@ -32,9 +32,9 @@ def overview_students():
     dugovanje = request.args.get('debts')
     preplata = request.args.get('overpayments')
     
-    print(f'debug: {start_date=} {end_date=} {service_id=} {razred=} {odeljenje=} {dugovanje=} {preplata=}')
+    logging.debug(f'debug: {start_date=} {end_date=} {service_id=} {razred=} {odeljenje=} {dugovanje=} {preplata=}')
     
-    print(f'pri uvoženju podataka: {razred=} {odeljenje=}')
+    logging.debug(f'pri uvoženju podataka: {razred=} {odeljenje=}')
     if not service_id:
         service_id = '0' # ako nije definisana promenjiva na početku, dodeli joj '0' što predstavlja sve usluge
     if not razred:
@@ -49,8 +49,8 @@ def overview_students():
         preplata = True
     else:
         preplata = False
-    print(f'nakon prilagođavanja: {razred=} {odeljenje=}')
-    print(f'{start_date=} {end_date=} {service_id=}')
+    logging.debug(f'nakon prilagođavanja: {razred=} {odeljenje=}')
+    logging.debug(f'{start_date=} {end_date=} {service_id=}')
     if start_date is None or end_date is None:
         if danas.month < 9:
             start_date = danas.replace(month=9, day=1, year=danas.year-1)
@@ -58,15 +58,15 @@ def overview_students():
         else:
             start_date = danas.replace(month=9, day=1)
             end_date = danas.replace(month=8, day=31, year=danas.year+1)
-    print(f'posle if bloka: {start_date=} {end_date=}')
+    logging.debug(f'posle if bloka: {start_date=} {end_date=}')
     if type(start_date) is str:
         # Konvertuj start_date i end_date u datetime.date objekte
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-    print(f'posle if ako je string: {start_date=} {end_date=}')
+    logging.debug(f'posle if ako je string: {start_date=} {end_date=}')
     # records = TransactionRecord.query.all()
     records = TransactionRecord.query.join(Student).filter(Student.student_class < 9).all()
-    print(f'sve transakcije: {len(records)=}')
+    logging.info(f'sve transakcije: {len(records)=}')
     
     filtered_records = []
     if razred == '' and odeljenje == '': #! ako nisu definisani raztrd i odeljenje, izlistaj sve razrede i odeljenja
@@ -82,11 +82,9 @@ def overview_students():
             current_class = record.transaction_record_student.student_class
             if current_class == int(razred):
                 if record.student_debt_id:
-                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                     if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                         filtered_records.append(record)
                 elif record.student_payment_id:
-                    # print(f'{record.transaction_record_student_payment.payment_date=}')
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
     elif odeljenje != '' and razred == '': #! ako je definisana odeljenja, izlistaj sve studente tog odeljenja
@@ -94,30 +92,25 @@ def overview_students():
             current_section = record.transaction_record_student.student_section
             if current_section == int(odeljenje):
                 if record.student_debt_id:
-                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                     if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                         filtered_records.append(record)
                 elif record.student_payment_id:
-                    # print(f'{record.transaction_record_student_payment.payment_date=}')
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
     else:
         for record in records:
-            # print(f'{start_date=} {end_date=}')
             current_class = record.transaction_record_student.student_class
             current_section = record.transaction_record_student.student_section
-            print(f'{current_class=} {current_section=}')
-            print(f'{razred=} {odeljenje=}')
+            logging.debug(f'{current_class=} {current_section=}')
+            logging.debug(f'{razred=} {odeljenje=}')
             if current_class == int(razred) and current_section == int(odeljenje):
                 if record.student_debt_id:
-                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                     if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                         filtered_records.append(record)
                 elif record.student_payment_id:
-                    # print(f'{record.transaction_record_student_payment.payment_date=}')
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
-    print(f'nakon filtriranja: {len(filtered_records)=}')
+    logging.debug(f'nakon filtriranja: {len(filtered_records)=}')
     
     options = []
     for record in filtered_records:
@@ -126,22 +119,19 @@ def overview_students():
                 'value': record.service_item_id,
                 'label': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name
             })
-    print(f'{options=}')
+    logging.debug(f'{options=}')
     
     export_data = []
     for record in filtered_records:
         if service_id == '0' or int(service_id) == record.service_item_id:
-            # print(f'debug mode: {record.student_id=}')
             if record.student_id in [student['student_id'] for student in export_data]:
                 existing_record = next((item for item in export_data if item["student_id"] == record.student_id), None)
-                # print(f'{existing_record=}')
                 existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
                 existing_record['student_payment'] += record.student_debt_total if record.student_payment_id else 0
                 existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
 
             else:
-                # print(f'{record.student_id=} {record.transaction_record_student.student_name=} {record.transaction_record_student.student_surname=} {record.transaction_record_student.student_class=} {record.transaction_record_student.student_section}')
-                print(f'{record=}')
+                logging.debug(f'{record=}')
                 new_record = {
                     'student_id': record.student_id,
                     'student_name': record.transaction_record_student.student_name,
@@ -152,12 +142,12 @@ def overview_students():
                     'student_payment': record.student_debt_total if record.student_payment_id else 0,
                 }
                 new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
-                print(f'{new_record=}')
+                logging.debug(f'{new_record=}')
                 if int(new_record['student_id']) > 1:
                     export_data.append(new_record)
     # export_data = [dict(t) for t in {tuple(d.items()) for d in export_data}]
 
-    print(f'{export_data=}')
+    logging.info(f'{export_data=}')
     
     filtered_export_data = []
     for record in export_data:
@@ -204,12 +194,12 @@ def overview_student(student_id):
         else:
             start_date = danas.replace(month=9, day=1)
             end_date = danas.replace(month=8, day=31, year=danas.year+1)
-    print(f'posle if bloka: {start_date=} {end_date=}')
+    logging.debug(f'posle if bloka: {start_date=} {end_date=}')
     if type(start_date) is str:
         # Konvertuj start_date i end_date u datetime.date objekte
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-    print(f'posle if ako je string: {start_date=} {end_date=}')
+    logging.debug(f'posle if ako je string: {start_date=} {end_date=}')
     # Prvo morate dohvatiti sve transakcije (zaduženja i uplate) za odabranog učenika
     transaction_records = TransactionRecord.query.filter_by(student_id=student_id).all()
 
@@ -226,12 +216,12 @@ def overview_student(student_id):
                 'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
                 'date': record.transaction_record_student_debt.student_debt_date if record.student_debt_id else record.transaction_record_student_payment.payment_date,
             }
-            print(f'{start_date=} {end_date=} {service_data["date"].date()=}')
+            logging.debug(f'{start_date=} {end_date=} {service_data["date"].date()=}')
             if service_data['date'].date() >= start_date and service_data['date'].date() <= end_date:
                 unique_services_list.append(service_data)
         if record.student_debt_id:
             rata = sum(1 for item in data if item["service_item_id"] == record.service_item_id) + 1 #! služi da bi definisao broj rate
-            print(f'{rata=}')
+            logging.debug(f'{rata=}')
             description = record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name + ' / Rata ' + str(rata)
             date_ = record.transaction_record_student_debt.student_debt_date
         elif record.student_payment_id:
@@ -248,23 +238,23 @@ def overview_student(student_id):
                 'payment_amount': record.student_debt_total if record.student_payment_id else 0,
             }
             if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
-                print(f'postoji zapis sa service_item_id: {test_data["service_item_id"]}, napravi sumu svih ključeva "saldo"')
+                logging.debug(f'postoji zapis sa service_item_id: {test_data["service_item_id"]}, napravi sumu svih ključeva "saldo"')
                 saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == test_data['service_item_id']]
-                print(f'saldo_sum: {saldo_sum=}')
+                logging.debug(f'saldo_sum: {saldo_sum=}')
                 test_data['saldo'] = saldo_sum[-1] + test_data['debt_amount'] - test_data['payment_amount'] #! iz liste 'saldo' uzima poslenju vrednost i na to dodaje razliku zaduženja i uplata
             else:
-                print(f'ovo je prvi zapis sa service_item_id: {test_data["service_item_id"]}, ključ "saldo" je "debt_amount" - "payment_amount')
+                logging.debug(f'ovo je prvi zapis sa service_item_id: {test_data["service_item_id"]}, ključ "saldo" je "debt_amount" - "payment_amount')
                 test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
             data.append(test_data)
     # unique_services_list.sort()
+
     
-    # print(f'{data=}')
     data.sort(key=lambda x: x['service_item_id'])
-    print(f'{data=}')
-    print(f'{len(data)=}')
+    logging.info(f'{data=}')
+    logging.info(f'{len(data)=}')
     # Sortiranje rečnika po ključu 'id'
     unique_services_list = sorted(unique_services_list, key=lambda x: x['id'])
-    print(f'{unique_services_list=}')
+    logging.debug(f'{unique_services_list=}')
 
     report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
         
@@ -288,15 +278,15 @@ def overview_sections():
     service_id = request.args.get('service_id')
     razred = request.args.get('razred')
     odeljenje = request.args.get('odeljenje')
-    print(f'pri uvoženju podataka: {razred=} {odeljenje=}')
+    logging.debug(f'pri uvoženju podataka: {razred=} {odeljenje=}')
     if not service_id:
         service_id = '0' # ako nije definisana promenjiva na početku, dodeli joj '0' što predstavlja sve usluge
     if not razred:
         razred = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve razrede
     if not odeljenje:
         odeljenje = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve odeljenja
-    print(f'nakon prilagođavanja: {razred=} {odeljenje=}')
-    print(f'{start_date=} {end_date=} {service_id=}')
+    logging.debug(f'nakon prilagođavanja: {razred=} {odeljenje=}')
+    logging.debug(f'{start_date=} {end_date=} {service_id=}')
     if start_date is None or end_date is None:
         if danas.month < 9:
             start_date = danas.replace(month=9, day=1, year=danas.year-1)
@@ -304,25 +294,22 @@ def overview_sections():
         else:
             start_date = danas.replace(month=9, day=1)
             end_date = danas.replace(month=8, day=31, year=danas.year+1)
-    print(f'posle if bloka: {start_date=} {end_date=}')
+    logging.debug(f'posle if bloka: {start_date=} {end_date=}')
     if type(start_date) is str:
         # Konvertuj start_date i end_date u datetime.date objekte
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-    print(f'posle if ako je string: {start_date=} {end_date=}')
+    logging.debug(f'posle if ako je string: {start_date=} {end_date=}')
     records = TransactionRecord.query.all()
-    print(f'sve transakcije: {len(records)=}')
+    logging.debug(f'sve transakcije: {len(records)=}')
     
     filtered_records = []
     if razred == '' and odeljenje == '': #! ako nisu definisani raztrd i odeljenje, izlistaj sve razrede i odeljenja
         for record in records:
-            # print(f'{start_date=} {end_date=}')
             if record.student_debt_id:
-                # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                 if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                     filtered_records.append(record)
             elif record.student_payment_id:
-                # print(f'{record.transaction_record_student_payment.payment_date=}')
                 if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                     filtered_records.append(record)
     elif razred != '' and odeljenje == '': #! ako je definisan razred, izlistaj sva odeljenja tog razreda
@@ -330,11 +317,9 @@ def overview_sections():
             current_class = record.transaction_record_student.student_class
             if current_class == int(razred):
                 if record.student_debt_id:
-                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                     if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                         filtered_records.append(record)
                 elif record.student_payment_id:
-                    # print(f'{record.transaction_record_student_payment.payment_date=}')
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
     elif odeljenje != '' and razred == '': #! ako je definisana odeljenja, izlistaj sve studente tog odeljenja
@@ -342,32 +327,25 @@ def overview_sections():
             current_section = record.transaction_record_student.student_section
             if current_section == int(odeljenje):
                 if record.student_debt_id:
-                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                     if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                         filtered_records.append(record)
                 elif record.student_payment_id:
-                    # print(f'{record.transaction_record_student_payment.payment_date=}')
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
     else:
         for record in records:
-            # print(f'{start_date=} {end_date=}')
             current_class = record.transaction_record_student.student_class
             current_section = record.transaction_record_student.student_section
-            print(f'{current_class=} {current_section=}')
-            print(f'{razred=} {odeljenje=}')
+            logging.debug(f'{current_class=} {current_section=}')
+            logging.debug(f'{razred=} {odeljenje=}')
             if current_class == int(razred) and current_section == int(odeljenje):
                 if record.student_debt_id:
-                    # print(f'{record.transaction_record_student_debt.student_debt_date=}')
                     if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
                         filtered_records.append(record)
                 elif record.student_payment_id:
-                    # print(f'{record.transaction_record_student_payment.payment_date=}')
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
-    print(f'nakon filtriranja: {len(filtered_records)=}')
-    # for filtered_record in filtered_records:
-    #     print(f'{filtered_record.id=}')
+    logging.debug(f'nakon filtriranja: {len(filtered_records)=}')
     
     students = Student.query.filter(Student.student_class < 9).all()
     teachers = Teacher.query.all()
@@ -380,14 +358,14 @@ def overview_sections():
             'surname': teacher.teacher_surname,
         }
         teacher_clasroom_list.append(new_teacher)
-    print(f'{teacher_clasroom_list=}')
+    logging.debug(f'{teacher_clasroom_list=}')
     
     unique_sections = []
     for student in students:
         if str(student.student_class) + '/' + str(student.student_section) not in [(section['section']) for section in unique_sections]:
             unique_sections.append({'section': str(student.student_class) + '/' + str(student.student_section)})
     unique_sections.sort(key=lambda x: x['section'])
-    print(f'{unique_sections=}')
+    logging.debug(f'{unique_sections=}')
     options = []
     for record in filtered_records:
         if record.service_item_id not in [option['value'] for option in options]:
@@ -395,7 +373,7 @@ def overview_sections():
                 'value': record.service_item_id,
                 'label': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name
             })
-    print(f'{options=}')
+    logging.debug(f'{options=}')
     
     data = []
     for section in unique_sections:
@@ -404,7 +382,6 @@ def overview_sections():
             if section['section'] == section_key:
                 if service_id == '0' or int(service_id) == record.service_item_id:
                     if section_key in [(f"{existing_record['class']}/{existing_record['section']}") for existing_record in data]:
-                        # print(f"Postoji zapis sa ključem 'class' i 'section': {record.transaction_record_student.student_class}/{record.transaction_record_student.student_section}. Treba sumirati zaduženja, uplate i saldo.")
                         existing_record = next((item for item in data if item['class'] == record.transaction_record_student.student_class and item['section'] == record.transaction_record_student.student_section), None)
                         if existing_record:
                             existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
@@ -421,7 +398,7 @@ def overview_sections():
                         new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
                         new_record['teacher'] = next((item['name'] + ' ' + item['surname'] for item in teacher_clasroom_list if item['class'] == new_record['class'] and item['section'] == new_record['section']), None)
                         data.append(new_record)
-    print(f'{data=}')
+    logging.info(f'{data=}')
 
     report_school = gen_report_school(data, start_date, end_date, filtered_records, service_id, razred, odeljenje)
     
