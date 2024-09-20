@@ -138,14 +138,19 @@
     saldoSum = zaduzenjeSum - uplateSum;
     saldoFilterSum = zaduzenjeFilterSum - uplateFilterSum;
 
-    // Prikazivanje suma u HTML-u
-    zaduzenjeSumElement.textContent = zaduzenjeSum;
-    uplateSumElement.textContent = uplateSum;
-    saldoSumElement.textContent = saldoSum;
+    // Formatiranje vrednosti na dve decimale
+    function formatNumber(value) {
+        return value.toFixed(2);
+    }
 
-    zaduzenjeFilterSumElement.textContent = zaduzenjeFilterSum;
-    uplateFilterSumElement.textContent = uplateFilterSum;
-    saldoFilterSumElement.textContent = saldoFilterSum;
+    // Prikazivanje suma u HTML-u
+    zaduzenjeSumElement.textContent = formatNumber(zaduzenjeSum);
+    uplateSumElement.textContent = formatNumber(uplateSum);
+    saldoSumElement.textContent = formatNumber(saldoSum);
+
+    zaduzenjeFilterSumElement.textContent = formatNumber(zaduzenjeFilterSum);
+    uplateFilterSumElement.textContent = formatNumber(uplateFilterSum);
+    saldoFilterSumElement.textContent = formatNumber(saldoFilterSum);
 
 
     // Funkcija koja se poziva pri promeni datuma
