@@ -135,7 +135,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 "V": "01",
                 "C": "1",
                 "R": racun,
-                "N": school_info,
+                "N": school_info if len(school_info) < 70 else school_info[:70],
                 "I": dug,
                 "P": new_data['uplatilac'],
                 "SF": new_data['sifra_placanja'],
