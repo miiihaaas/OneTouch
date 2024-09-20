@@ -1,10 +1,11 @@
 from datetime import date
 from flask import Blueprint, jsonify
 from flask import render_template, url_for, flash, redirect, request, abort
+from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord
 from onetouch.suppliers.forms import RegisterSupplierModalForm, EditSupplierModalForm, EditServiceModalForm, RegisterServiceModalForm, RegisterServiceProfileModalForm, EditServiceProfileModalForm
-from flask_login import login_required, current_user
+from onetouch.suppliers.functions import convert_to_latin
 
 
 suppliers = Blueprint('suppliers', __name__)
@@ -34,7 +35,7 @@ def supplier_list():
             suppliers = Supplier.query.all()
             suppliers.remove(Supplier.query.get(supplier.id))
             
-            supplier.supplier_name = edit_form.supplier_name.data
+            supplier.supplier_name = convert_to_latin(edit_form.supplier_name.data)
             supplier.archived = edit_form.archived.data
             if supplier.supplier_name in [s.supplier_name for s in suppliers]:
                 flash(f'Dobavljač sa nazivom "{supplier.supplier_name}" već postoji.', 'danger')
@@ -50,7 +51,7 @@ def supplier_list():
             if existing_supplier:
                 flash(f'Dobavljač sa nazivom "{existing_supplier.supplier_name}" već postoji.', 'danger')
                 return redirect(url_for('suppliers.supplier_list'))
-            supplier = Supplier(supplier_name=register_form.supplier_name.data,
+            supplier = Supplier(supplier_name=convert_to_latin(register_form.supplier_name.data),
                                 archived=False)
             db.session.add(supplier)
             db.session.commit()
@@ -84,7 +85,7 @@ def service_list():
         print(request.form.get('service_id'))
         print(service)
         
-        service.service_name = edit_form.service_name.data
+        service.service_name = convert_to_latin(edit_form.service_name.data)
         service.payment_per_unit = edit_form.payment_per_unit.data
         service.supplier_id = edit_form.supplier_id.data
         service.archived = edit_form.archived.data
@@ -95,7 +96,7 @@ def service_list():
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
         print('register form triggered.')
-        service = Service(service_name=register_form.service_name.data, 
+        service = Service(service_name=convert_to_latin(register_form.service_name.data), 
                             payment_per_unit=register_form.payment_per_unit.data,
                             supplier_id=register_form.supplier_id.data,
                             archived=False)
@@ -164,7 +165,7 @@ def service_profile_list():
         class_list_string = ', '.join(class_list)
         print(f'classes string: {class_list_string}')
         print(f'validacija edit forme: {service_profile}')
-        service_profile.service_item_name = edit_form.service_item_name.data
+        service_profile.service_item_name = convert_to_latin(edit_form.service_item_name.data)
         service_profile.service_item_date = date.today()
         service_profile.supplier_id = edit_form.supplier_id.data
         service_profile.service_id = edit_form.service_id.data
@@ -201,7 +202,7 @@ def service_profile_list():
         if register_form.installment_number.data == '1':
             register_form.installment_1.data = register_form.price.data
         
-        service_profile = ServiceItem(service_item_name=register_form.service_item_name.data,
+        service_profile = ServiceItem(service_item_name=convert_to_latin(register_form.service_item_name.data),
                                         service_item_date=date.today(),
                                         supplier_id=register_form.supplier_id.data,
                                         service_id=register_form.service_id.data,
