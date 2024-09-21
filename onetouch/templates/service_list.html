@@ -1,11 +1,13 @@
 {% extends "layout.html" %}
 {% block content %}
-<a href="#" class="btn btn-info mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+<div>
+    <a href="#" class="btn btn-info mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+</div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID tipa usluge</th>
-            <th>Naziv usluge</th>
+            <th>Naziv tipa usluge</th>
             <th>Naziv dobavljača</th>
             <th>Tip plaćanja</th>
             <th></th>
@@ -78,7 +80,7 @@
                         {% endif %}
                     </div>
                     <div class="form-group">
-                        {{ edit_form.payment_per_unit.label(class="form-control-label") }}
+                        {{ edit_form.payment_per_unit.label(class="form-control-label") }} <a href="{{ url_for('main.instructions', _anchor='payment_type')}}" target="_blank">Upustvo</a>
                         {% if edit_form.payment_per_unit.errors %}
                             {{ edit_form.payment_per_unit(class="form-control form-control-lg is-invalid") }}
                             <div class="invalid-feedback">
@@ -151,7 +153,7 @@
                 {% endif %}
             </div>
             <div class="form-group">
-                {{ register_form.payment_per_unit.label(class="form-control-label", title="some text to explain all 3 options") }} *
+                {{ register_form.payment_per_unit.label(class="form-control-label", title="some text to explain all 3 options") }} <a href="{{ url_for('main.instructions', _anchor='payment_type')}}" target="_blank">Upustvo</a>
                 {% if register_form.payment_per_unit.errors %}
                     {{ register_form.payment_per_unit(class="form-control form-control-lg is-invalid") }}
                     <div class="invalid-feedback">
@@ -188,7 +190,7 @@
                         searchable: true,
                     },
                 ],
-                order: [[2, 'asc'], [1, 'asc'],],
+                order: [[4, 'asc'], [2, 'asc'], [1, 'asc'],],
                 language: {
                     url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
                 }

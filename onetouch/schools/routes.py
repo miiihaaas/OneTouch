@@ -31,7 +31,7 @@ def school_profile():
         school.school_municipality = form.school_municipality.data
         db.session.commit()
         flash('Podaci škole su ažurirani.', 'success')
-        return redirect(url_for('main.home'))
+        # return redirect(url_for('main.home'))
     elif request.method == 'GET':
         form.school_name.data = school.school_name
         form.school_address.data = school.school_address
