@@ -25,6 +25,7 @@
     <div class="col form-group">
         {% if danas >= active_date_start and danas <= active_date_end %}
             <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
+            <a href="{{ url_for('main.instructions', _anchor='plus_one')}}" target="_blank">Upustvo</a>
         {% endif %}
     </div>
 </div>
@@ -390,6 +391,7 @@
                     },
                 }
             ],
+            order: [[3, 'asc'], [4, 'asc'], [2, 'asc'],],
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             }
