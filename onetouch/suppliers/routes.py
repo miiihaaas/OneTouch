@@ -1,3 +1,4 @@
+import builtins
 import logging
 from datetime import date
 from flask import Blueprint, jsonify
@@ -149,10 +150,11 @@ def service_profile_list():
                 logging.debug(f'{field}: {error}')
     
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
+        print(f'{request.form=}')
         service_profile = ServiceItem.query.get(request.form.get('get_service_profile'))
         logging.debug('validation, edit from, service profile')
         logging.debug(f"klasa je: classes-{service_profile.id}") #todo: probaj 'beautifulsoup4'
-        class_list = request.form.getlist(f"classes-{service_profile.id}")
+        class_list = request.form.getlist(f"service_item_class_")
         logging.debug(f'{class_list=}')
         class_list_string = ', '.join(class_list)
         logging.debug(f'classes string: {class_list_string}')
@@ -184,6 +186,7 @@ def service_profile_list():
             service_profile.installment_1 = service_profile.price
             logging.debug(f'dodeljena je ukupna cena u prvu vrednost polja prverate!')
         db.session.commit()
+        flash(f'Uspesno ste izmenili podatke o usluzi: { service_profile.service_item_service.service_name } - { service_profile.service_item_name }', 'success')
         return redirect(url_for("suppliers.service_profile_list"))
         
     
@@ -232,7 +235,7 @@ def service_profile_list():
                             legend = 'Detalji usluge',
                             service_profiles= service_profiles,
                             register_form = register_form,
-                            edit_form = edit_form)
+                            edit_form = edit_form, getattr=builtins.getattr)
 
 #! AJAX routes
 @suppliers.route('/get_services', methods=['POST'])

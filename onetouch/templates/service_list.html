@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <div>
-    <a href="#" class="btn btn-info mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija nove usluge</a>
+    <a href="#" class="btn btn-info mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija novog tipa usluge</a>
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
@@ -39,13 +39,13 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="EditModalLabel">Detalji usluge</h5>
+                        <legend>Izmena tipa usluge: {{service.service_name}}</legend>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                 <div class="modal-body">
-                <legend>Izmena usluge: {{service.service_name}}</legend>
+                
                 <form action="" method="POST">
                     {{ edit_form.hidden_tag() }}
                     <div><!-- ideja je da se objekat studetn povuče u bekend na submitu -->
@@ -117,7 +117,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="RegisterModalLabel">Registracija nove usluge</h5>
+                <legend class="modal-title" id="RegisterModalLabel">Registracija novog tipa usluge</legend>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
