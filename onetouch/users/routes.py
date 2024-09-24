@@ -14,6 +14,7 @@ users = Blueprint('users', __name__)
 
 @users.route("/login", methods=['GET', 'POST'])
 def login():
+    route_name = request.endpoint
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = LoginForm()
@@ -27,7 +28,7 @@ def login():
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
             flash('Neispravni podaci za prijavu.', 'danger')
-    return render_template('login.html', title='Login', form=form)
+    return render_template('login.html', title='Login', form=form, route_name=route_name)
 
 
 @users.route("/logout")
@@ -49,6 +50,7 @@ Ako Vi niste napavili ovaj zahtev, molim Vas ignorišite ovaj mejl i neće biti 
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
+    route_name = request.endpoint
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = RequestResetForm()
@@ -57,23 +59,24 @@ def reset_request():
         send_reset_email(user)
         flash('Mejl je poslat na Vašu adresu sa instrukcijama za resetovanje lozinke. ', 'info')
         return redirect(url_for('users.login'))
-    return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='Resetovanje lozinke')
+    return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='Resetovanje lozinke', route_name=route_name)
 
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
 def reset_token(token):
-        if current_user.is_authenticated:
-            return redirect(url_for('main.home'))
-        user = User.verify_reset_token(token)
-        if user is None:
-            flash('Ovo je nevažeći ili istekli token.', 'warning')
-            return redirect(url_for('users.reset_request'))
-        form = ResetPasswordForm()
-        if form.validate_on_submit():
-            hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-            user.user_password = hashed_password
-            db.session.commit()
-            flash(f'Vaša lozinka je ažurirana!', 'success')
-            return redirect(url_for('users.login'))
+    route_name = request.endpoint
+    if current_user.is_authenticated:
+        return redirect(url_for('main.home'))
+    user = User.verify_reset_token(token)
+    if user is None:
+        flash('Ovo je nevažeći ili istekli token.', 'warning')
+        return redirect(url_for('users.reset_request'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.user_password = hashed_password
+        db.session.commit()
+        flash(f'Vaša lozinka je ažurirana!', 'success')
+        return redirect(url_for('users.login'))
 
-        return render_template('reset_token.html', title='Resetovanje lozinke', form=form)
+    return render_template('reset_token.html', title='Resetovanje lozinke', form=form, legend='Resetovanje lozinke', route_name=route_name)

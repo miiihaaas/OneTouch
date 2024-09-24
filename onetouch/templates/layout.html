@@ -53,7 +53,7 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   </head>
-  <body>
+  <body class="{{ route_name }}">
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel">
         {% if current_user.is_authenticated %}
@@ -70,7 +70,7 @@
             <div class="navbar-nav">
               {% if current_user.is_authenticated %}
                 <li class="nav-item dropdown dropdown--align-right">
-                  <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Unos podataka</a>
+                  <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Podaci</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
                     <a class="dropdown-item" href="{{ url_for('students.student_list') }}">Učenici</a>
                     <a class="dropdown-item" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
@@ -124,7 +124,7 @@
             <div class="accordion-item">
               <h2 class="accordion-header" id="headingOne">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                  Unos podataka
+                  Podaci
                 </button>
               </h2>
               <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionMenu">

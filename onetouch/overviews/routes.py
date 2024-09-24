@@ -23,6 +23,7 @@ def require_login():
 
 @overviews.route("/overview_students", methods=['GET', 'POST'])
 def overview_students():
+    route_name = request.endpoint
     danas = date.today()
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -178,11 +179,13 @@ def overview_students():
                             razred=razred,
                             odeljenje=odeljenje,
                             dugovanje=dugovanje,
-                            preplata=preplata,)
+                            preplata=preplata,
+                            route_name=route_name,)
 
 
 @overviews.route("/overview_student/<int:student_id>", methods=['GET', 'POST'])
 def overview_student(student_id):
+    route_name = request.endpoint
     student = Student.query.get_or_404(student_id)
     danas = date.today()
     start_date = request.args.get('start_date')
@@ -267,11 +270,13 @@ def overview_student(student_id):
                             transaction_records=transaction_records,
                             data=data,
                             unique_services_list=unique_services_list,
-                            danas=danas)
+                            danas=danas,
+                            route_name=route_name,)
 
 
 @overviews.route("/overview_sections", methods=['GET', 'POST']) # odeljenja
 def overview_sections():
+    route_name = request.endpoint
     danas = date.today()
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -412,10 +417,12 @@ def overview_sections():
                             service_id=service_id,
                             options=options,
                             razred=razred,
-                            odeljenje=odeljenje,)
+                            odeljenje=odeljenje,
+                            route_name=route_name,)
 
 @overviews.route("/overview_services", methods=['GET', 'POST'])
 def overview_services():
+    route_name = request.endpoint
     danas = datetime.now()
     active_date_start = danas.replace(month=4, day=15)
     active_date_end = danas.replace(month=9, day=15)
@@ -426,4 +433,5 @@ def overview_services():
                             services=services,
                             active_date_start=active_date_start,
                             active_date_end=active_date_end,
-                            danas=danas)
+                            danas=danas,
+                            route_name=route_name,)

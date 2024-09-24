@@ -11,19 +11,22 @@ main = Blueprint('main', __name__)
 @main.route("/")
 @main.route("/home")
 def home():
+    route_name = request.endpoint
     if current_user.is_authenticated:
         pass
     else:
         flash('Morate da budete prijavljeni da biste pristupili ovoj stranici.', 'info')
         return redirect(url_for('users.login'))
-    return render_template('home.html', title="Početna", legend="Početna")
+    return render_template('home.html', title="Početna", legend="Početna", route_name=route_name)
 
 
 @main.route("/about")
 def about():
-    return render_template('about.html', title='O softveru')
+    route_name = request.endpoint
+    return render_template('about.html', title='O softveru', route_name=route_name)
 
 
 @main.route("/instructions", methods=['GET'])
 def instructions():
-    return render_template('instructions.html')
+    route_name = request.endpoint
+    return render_template('instructions.html', title='Upustva', route_name=route_name)

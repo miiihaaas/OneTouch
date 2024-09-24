@@ -9,6 +9,7 @@ schools = Blueprint('schools', __name__)
 
 @schools.route('/school', methods=['GET', 'POST'])
 def school_profile():
+    route_name = request.endpoint
     school = School.query.first()
     if not current_user.is_authenticated:
         flash('Morate da budete prijavljeni da biste pristupili ovoj stranici.', 'info')
@@ -52,5 +53,5 @@ def school_profile():
             for error in errors:
                 flash(f'{field}: {error}', 'danger')
 
-    return render_template('school.html', title='Podaci škole', legend="Podaci škole", form=form)
+    return render_template('school.html', title='Podaci škole', legend="Podaci škole", form=form, route_name=route_name)
 

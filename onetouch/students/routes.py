@@ -26,6 +26,7 @@ def require_login():
 
 @students.route('/student_list', methods=['GET', 'POST'])
 def student_list():
+    route_name = request.endpoint
     danas = datetime.now()
     active_date_start = danas.replace(month=8, day=15)
     active_date_end = danas.replace(month=9, day=30)
@@ -67,7 +68,8 @@ def student_list():
                             edit_form=edit_form,
                             active_date_start=active_date_start,
                             active_date_end=active_date_end,
-                            danas=danas)
+                            danas=danas,
+                            route_name=route_name)
 
 
 @students.route('/api/students_list')

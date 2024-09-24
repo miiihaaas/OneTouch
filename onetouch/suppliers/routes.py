@@ -25,6 +25,7 @@ def require_login():
 
 @suppliers.route('/supplier_list', methods=['GET', 'POST'])
 def supplier_list():
+    route_name = request.endpoint
     suppliers = Supplier.query.filter(Supplier.id != 0).all()
     edit_form = EditSupplierModalForm()
     register_form = RegisterSupplierModalForm()
@@ -64,11 +65,13 @@ def supplier_list():
                             legend = 'Dobavljači',
                             suppliers=suppliers,
                             edit_form=edit_form,
-                            register_form=register_form)
+                            register_form=register_form,
+                            route_name=route_name)
 
 
 @suppliers.route('/service_list', methods=['GET', 'POST'])
 def service_list():
+    route_name = request.endpoint
     services=Service.query.filter(Service.id != 0).all()
     edit_form = EditServiceModalForm()
     edit_form.reset()
@@ -109,12 +112,14 @@ def service_list():
                             suppliers_chices=suppliers_chices,
                             services=services,
                             edit_form=edit_form,
-                            register_form=register_form)
+                            register_form=register_form,
+                            route_name=route_name)
 
 
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
 @login_required
 def service_profile_list():
+    route_name = request.endpoint
     school = School.query.first()
     school_bank_accounts = school.school_bank_accounts.get('bank_accounts', [])
     logging.debug(f'{school_bank_accounts=}')
@@ -235,7 +240,8 @@ def service_profile_list():
                             legend = 'Detalji usluge',
                             service_profiles= service_profiles,
                             register_form = register_form,
-                            edit_form = edit_form, getattr=builtins.getattr)
+                            edit_form = edit_form, getattr=builtins.getattr,
+                            route_name = route_name)
 
 #! AJAX routes
 @suppliers.route('/get_services', methods=['POST'])

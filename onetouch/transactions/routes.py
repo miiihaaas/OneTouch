@@ -26,6 +26,7 @@ def require_login():
 @transactions.route('/student_debts', methods=['POST', 'GET'])
 @login_required
 def student_debts():
+    route_name = request.endpoint
     teachers = Teacher.query.all()
     students = Student.query.all()
     service_items = ServiceItem.query.all()
@@ -36,7 +37,8 @@ def student_debts():
                             title = 'Zaduživanje učenika',
                             students=students, 
                             service_items=service_items, 
-                            teachers=teachers)
+                            teachers=teachers,
+                            route_name=route_name)
 
 
 @transactions.route('/test', methods=['POST', 'GET'])
@@ -373,6 +375,7 @@ def submit_records():
 
 @transactions.route('/debts_archive_list', methods=['get', 'post'])
 def debts_archive_list():
+    route_name = request.endpoint
     danas = date.today()
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -397,10 +400,12 @@ def debts_archive_list():
                             debts=debts,
                             start_date=start_date,
                             end_date=end_date,
-                            legend="Arhiva naloga")
+                            legend="Arhiva naloga",
+                            route_name=route_name)
 
 @transactions.route('/payments_archive_list', methods=['get', 'post'])
 def payments_archive_list():
+    route_name = request.endpoint
     school = School.query.first()
     bank_accounts = [bank_account['bank_account_number'] for bank_account in school.school_bank_accounts['bank_accounts']]
     
@@ -426,7 +431,8 @@ def payments_archive_list():
                             start_date=start_date,
                             end_date=end_date,
                             filtered_bank_account_number=filtered_bank_account_number,
-                            legend="Arhiva izvoda")
+                            legend="Arhiva izvoda",
+                            route_name=route_name)
 
 
 @transactions.route('/single_payment_slip/<int:record_id>', methods=['get', 'post'])
@@ -452,6 +458,7 @@ def single_payment_slip(record_id):
 
 @transactions.route('/debt_archive/<int:debt_id>', methods=['GET', 'POST'])
 def debt_archive(debt_id):
+    route_name = request.endpoint
     debt = StudentDebt.query.get_or_404(debt_id)
     purpose_of_payment = debt.purpose_of_payment
     logging.debug(f'{purpose_of_payment=}')
@@ -487,7 +494,8 @@ def debt_archive(debt_id):
                             new_students=new_students,
                             purpose_of_payment=purpose_of_payment,
                             legend=f"Pregled zaduženja: {debt.id}",
-                            title="Pregled zaduženja")
+                            title="Pregled zaduženja",
+                            route_name=route_name)
 
 
 @transactions.route('/send_payment_slips/<int:debt_id>', methods=['get', 'post'])
@@ -554,12 +562,13 @@ def debt_archive_delete(debt_id):
     debt = StudentDebt.query.get_or_404(debt_id)
     db.session.delete(debt)
     db.session.commit()
-    flash(f'Nalog {debt_id} je uspešno obrisan, kao i sva zaduženja učenika iz tog nalogas.', 'success')
+    flash(f'Nalog {debt_id} je uspešno obrisan, kao i sva zaduženja učenika iz tog naloga.', 'success')
     return redirect(url_for('transactions.debts_archive_list'))
 
 
 @transactions.route('/payment_archive/<int:payment_id>', methods=['get', 'post'])
 def payment_archive(payment_id):
+    route_name = request.endpoint
     payment = StudentPayment.query.get_or_404(payment_id)
     records = TransactionRecord.query.filter_by(student_payment_id=payment_id).all()
     students = Student.query.all()
@@ -624,12 +633,14 @@ def payment_archive(payment_id):
                             students=json.dumps(students_data),
                             services=json.dumps(services_data),
                             export_data = export_data, #! ovo je za treću tabelu
-                            legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})")
+                            legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})",
+                            route_name=route_name,)
 
 
 
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
 def posting_payment():
+    route_name = request.endpoint
     def provera_validnosti_poziva_na_broj(podaci):
         if len(podaci['PozivNaBrojApp']) == 7:
             # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
@@ -708,7 +719,7 @@ def posting_payment():
         if racun_izvoda_element not in racun_skole:
             error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
             flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
+            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
 
         stavke = []
         for stavka in root.findall('Stavka'):
@@ -772,7 +783,8 @@ def posting_payment():
                                 broj_izvoda_element=broj_izvoda_element,
                                 iznos_potrazuje_element=iznos_potrazuje_element,
                                 racun_izvoda_element=racun_izvoda_element,
-                                broj_pojavljivanja=broj_pojavljivanja)
+                                broj_pojavljivanja=broj_pojavljivanja,
+                                route_name=route_name)
     if request.method == 'POST' and ('submitBtnSaveData' in request.form):
         logging.debug(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
         # Dohvaćanje vrijednosti iz obrasca
@@ -867,4 +879,4 @@ def posting_payment():
             db.session.commit()
             flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer}), od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
             return redirect(url_for('transactions.payments_archive_list'))
-    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
+    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
