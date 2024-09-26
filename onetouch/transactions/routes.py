@@ -407,7 +407,9 @@ def debts_archive_list():
 def payments_archive_list():
     route_name = request.endpoint
     school = School.query.first()
-    bank_accounts = [bank_account['bank_account_number'] for bank_account in school.school_bank_accounts['bank_accounts']]
+    
+    # bank_accounts = [bank_account['bank_account_number'] for bank_account in school.school_bank_accounts['bank_accounts']]
+    bank_accounts = [bank_account['reference_number_spiri'][2:11] for bank_account in school.school_bank_accounts['bank_accounts']]
     
     filtered_bank_account_number = request.args.get('bank_account')
     start_date = request.args.get('start_date')
@@ -687,7 +689,15 @@ def posting_payment():
         tree = ET.parse(file)
         root = tree.getroot()
 
-        racun_skole = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
+        #! nova logika za SPIRI .xml fajl
+        pozivi_na_broj = [bank_account['reference_number_spiri'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
+        print(f'{pozivi_na_broj=}')
+        pozivi_na_broj = [broj[2:11] for broj in pozivi_na_broj]
+        print(f'{pozivi_na_broj=}')
+        
+
+
+        # racun_skole = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
         datum_izvoda_element = root.find('.//DatumIzvoda').text
         racun_izvoda_element = root.find('.//RacunIzvoda').text
         broj_izvoda_element = root.find('.//BrojIzvoda').text
@@ -715,9 +725,10 @@ def posting_payment():
         logging.debug(f'{datum_izvoda_element=}')
         logging.debug(f'{broj_izvoda_element=}')
         logging.debug(f'{iznos_potrazuje_element=}')
-        logging.debug(f'{racun_skole=}, {racun_izvoda_element=}')
-        if racun_izvoda_element not in racun_skole:
-            error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {racun_skole}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
+        logging.debug(f'{pozivi_na_broj=}, {racun_izvoda_element=}')
+        # if racun_izvoda_element not in racun_skole:
+        if racun_izvoda_element not in pozivi_na_broj:
+            error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {pozivi_na_broj}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
             flash(error_mesage, 'danger')
             return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
 
@@ -739,12 +750,12 @@ def posting_payment():
             podaci['PozivOdobrenja'] = stavka.find('PozivOdobrenja').text if stavka.find('PozivOdobrenja').text else "-" #! ako nije None onda preuzmi vrednost iz xml, akoj je None onda mu dodeli "-"
             podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text if stavka.find('SvrhaDoznake').text else "-" #! isti princip kao gornji red 
             podaci['PozivNaBrojApp'] = izvuci_poziv_na_broj_iz_svrhe_uplate(podaci['SvrhaDoznake']) #! ovde dodati kod koji će da iz SVRHE UPLATE povlači POZIV NA BROJ za APP
-            podaci['DatumValute'] = stavka.find('DatumValute').text
+            # podaci['DatumValute'] = stavka.find('DatumValute').text
             podaci['PodatakZaReklamaciju'] = stavka.find('PodatakZaReklamaciju').text
-            podaci['VremeUnosa'] = stavka.find('VremeUnosa').text
-            podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
+            # podaci['VremeUnosa'] = stavka.find('VremeUnosa').text
+            # podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
             podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
-            podaci['TipSloga'] = stavka.find('TipSloga').text
+            # podaci['TipSloga'] = stavka.find('TipSloga').text
             
             logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
@@ -792,7 +803,7 @@ def posting_payment():
         statment_nubmer = int(request.form['statment_nubmer'])
         total_payment_amount = float(request.form['total_payment_amount'].replace(',', '.'))
         number_of_items = int(request.form['number_of_items'])
-        bank_account = request.form['bank_account']
+        bank_account = request.form['bank_account'] #! obezbedi da bude string a ne int, mora i u db da se ispravi
         logging.debug(f'{payment_date=}')
         logging.debug(f'{statment_nubmer=}')
         logging.debug(f'{total_payment_amount=}')
@@ -877,6 +888,6 @@ def posting_payment():
                 db.session.commit()
             new_payment.number_of_errors = number_of_errors
             db.session.commit()
-            flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer}), od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
+            flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer} na podračunu {new_payment.bank_account}, od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
             return redirect(url_for('transactions.payments_archive_list'))
     return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
