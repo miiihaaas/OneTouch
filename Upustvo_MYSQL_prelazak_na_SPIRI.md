@@ -4,13 +4,14 @@ Ovo uputstvo daje instrukcije koje promene treba uraditi u MySQL bazi na serveru
 
 ## 1. Izmene u `school` tabeli
 
-Potrebno je dodati novu kolonu `school_bank_accounts` koja će čuvati informacije u JSON formatu. 
+Potrebno je dodati novu kolonu `school_bank_accounts` koja će čuvati informacije u JSON formatu  i `class_plus_one` koji će da čuva datum kada su svi učenici prebačeni u sledeći razred. 
 
 SQL naredba za ovu izmenu:
 
 ```sql
 ALTER TABLE `school`
-ADD COLUMN `school_bank_accounts` JSON;
+ADD COLUMN `school_bank_accounts` JSON
+ADD COLUMN `class_plus_one` DATE;
 ```
 
 ## 2. Izmene u `service_item` tabeli

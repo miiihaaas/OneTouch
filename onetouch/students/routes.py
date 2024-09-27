@@ -27,9 +27,29 @@ def require_login():
 @students.route('/student_list', methods=['GET', 'POST'])
 def student_list():
     route_name = request.endpoint
+    school = School.query.first()
     danas = datetime.now()
     active_date_start = danas.replace(month=8, day=15)
     active_date_end = danas.replace(month=9, day=30)
+    
+    # školska godina počinje u septembru tekuće godine
+    if danas.month >= 9:
+        # ako smo nakon septembra, tekuća školska godina je od septembra ove godine do septembra sledeće
+        start_of_school_year = datetime(danas.year, 9, 1).date()
+        end_of_school_year = datetime(danas.year + 1, 8, 31).date()
+    else:
+        # ako smo pre septembra, tekuća školska godina je od septembra prošle godine do septembra ove godine
+        start_of_school_year = datetime(danas.year - 1, 9, 1).date()
+        end_of_school_year = datetime(danas.year, 8, 31).date()
+
+    # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
+    if start_of_school_year <= school.class_plus_one <= end_of_school_year:
+        plus_one_button = False
+    else:
+        plus_one_button = True
+    
+    
+    
     register_form = RegisterStudentModalForm()
     edit_form = EditStudentModalForm()
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
@@ -37,8 +57,8 @@ def student_list():
         logging.debug(f'debug- edit mode: {student.student_name=} {student.student_surname=}')
         logging.debug(f'{edit_form.student_name.data=} {edit_form.student_surname.data=} {edit_form.send_mail.data=}')
         logging.debug(f'{request.form.get("send_mail")=}')
-        student.student_name = edit_form.student_name.data.capitalize()
-        student.student_surname = edit_form.student_surname.data.capitalize()
+        student.student_name = edit_form.student_name.data.strip().capitalize()
+        student.student_surname = " ".join(word.capitalize() for word in edit_form.student_surname.data.strip().split())
         student.student_class = edit_form.student_class.data
         student.student_section = edit_form.student_section.data
         student.parent_email = edit_form.parent_email.data
@@ -48,13 +68,16 @@ def student_list():
         flash(f'Podaci o učeniku "{student.student_name} {student.student_surname}" su ažurirani.', 'success')
         return redirect(url_for('students.student_list'))
     if register_form.validate_on_submit() and request.form.get('submit_register'):
-        student = Student(student_name=register_form.student_name.data.capitalize(),
-                        student_surname=register_form.student_surname.data.capitalize(),
-                        student_class=str(register_form.student_class.data),
-                        student_section=register_form.student_section.data,
-                        parent_email=register_form.parent_email.data,
-                        send_mail=0,
-                        print_payment=0)
+        student = Student(
+            student_name=register_form.student_name.data.strip().capitalize(),
+            student_surname=" ".join(word.capitalize() for word in register_form.student_surname.data.strip().split()),
+            student_class=str(register_form.student_class.data),
+            student_section=register_form.student_section.data,
+            parent_email=register_form.parent_email.data,
+            send_mail=0,
+            print_payment=0
+        )
+
         logging.debug(student.student_name, student.student_surname, student.student_class)
         db.session.add(student)
         db.session.commit()
@@ -66,6 +89,7 @@ def student_list():
                             legend="Učenici",
                             register_form=register_form, 
                             edit_form=edit_form,
+                            plus_one_button=plus_one_button,
                             active_date_start=active_date_start,
                             active_date_end=active_date_end,
                             danas=danas,
@@ -209,11 +233,39 @@ def testingg():
 
 @students.route('/class_plus_one', methods=['GET', 'POST'])
 def class_plus_one():
-    students = Student.query.filter(Student.student_class < 9).all()
-    for student in students:
-        student.student_class = int(student.student_class) + 1
+    students = Student.query.filter(Student.student_class < 100).all() # da bi 9 razred sledeće godine posta 10 i tako se razlikovao od 8 koji je postao 9. U suprotnom bi svi bili 9 razred i ne bi smo razlikovali generacije
+    school = School.query.first()
+    
+    # primer promenljive koja dolazi iz baze podataka
+    class_plus_one = school.class_plus_one
+
+    # trenutni datum
+    now = datetime.now()
+    
+    if now.month >= 9:
+        # ako smo nakon septembra, tekuća školska godina je od septembra ove godine do septembra sledeće
+        start_of_school_year = datetime(now.year, 9, 1).date()
+        end_of_school_year = datetime(now.year + 1, 8, 31).date()
+    else:
+        # ako smo pre septembra, tekuća školska godina je od septembra prošle godine do septembra ove godine
+        start_of_school_year = datetime(now.year - 1, 9, 1).date()
+        end_of_school_year = datetime(now.year, 8, 31).date()
+    
+    # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
+    if start_of_school_year <= class_plus_one <= end_of_school_year:
+        print('Ove godine, razred svih učenika je već promenjen putem masovne promene.')  # Unutar tekuće školske godine
+        flash('Ove godine, razred svih učenika je već promenjen putem masovne promene.', 'info')
+    elif class_plus_one < start_of_school_year:
+        print('Nisu prebačeni đaci u sledeći razred. treba uraditi +1 razred')  # Pre tekuće školske godine
+        for student in students:
+            student.student_class = int(student.student_class) + 1
+        school.class_plus_one = now
         db.session.commit()
-    flash('Učenici su uspešno promijenjeni u razred +1', 'success')
+        flash('Razred je uspešno promenjen za sve učenike. Za učenike koji su ponavljali razred, potrebno je ručno ažurirati njihove podatke.', 'success')
+    else:
+        print('Ovo je nemoguća opcija, neće se ništa uraditi.')  # Nakon tekuće školske godine
+        flash('Došlo je do greške. Nisu promenjeni razredi kod učenka.', 'danger')
+
     return redirect(url_for('students.student_list'))
 
 
@@ -233,8 +285,8 @@ def delete_student(student_id):
         list_of_students_with_debts = TransactionRecord.query.filter_by(student_id=student.id).all()
         logging.debug(f'{list_of_students_with_debts=}')
         if list_of_students_with_debts:
-            logging.debug('student ima zaduzenje, prebacujem ga u 9. razred')
-            student.student_class = 9
+            logging.debug('student ima zaduzenje, prebacujem ga u razred koji je za 100 veći od njegovog trenutnog razreda')
+            student.student_class += 100
         else:
             logging.debug('student nema zaduženje, brišem ga iz baze')
             db.session.delete(student)

@@ -25,7 +25,7 @@
             data-name="{{ service_profile.service_item_service.service_name }} - {{ service_profile.service_item_name }}"
             data-supplier-id="{{ service_profile.service_item_supplier.id }}"
             data-service-id="{{ service_profile.service_item_service.id }}"
-            data-bank-account="{{ service_profile.bank_account }}"
+            data-reference-number-spiri="{{ service_profile.reference_number_spiri }}"
             data-service-name="{{ service_profile.service_item_name }}"
             data-price="{{ service_profile.price }}"
             data-installment-number="{{ service_profile.installment_number }}"
@@ -725,7 +725,7 @@
                 const serviceName = row.getAttribute('data-name');
                 const serviceSupllierId = row.getAttribute('data-supplier-id');
                 const serviceServiceId = row.getAttribute('data-service-id');
-                const serviceBankAccount = row.getAttribute('data-bank-account');
+                const serviceReferenceNumberSpiri = row.getAttribute('data-reference-number-spiri');
                 const serviceItemName = row.getAttribute('data-service-name');
                 // multi select2 da se doda
                 const serviceItemClasses = row.getAttribute('data-service-item-classes');
@@ -752,8 +752,14 @@
                 selectedService.selected = true;
 
                 const selectBankAccount = document.getElementById('bank_account_');
-                const selectedBankAccount = Array.from(selectBankAccount.options).find(option => option.value === serviceBankAccount);
-                selectedBankAccount.selected = true;
+                const selectedBankAccount = Array.from(selectBankAccount.options).find(option => option.value === serviceReferenceNumberSpiri);
+
+                if (selectedBankAccount) {
+                    selectedBankAccount.selected = true;
+                } else {
+                    console.warn('Bank account option not found for value:', serviceReferenceNumberSpiri);
+                }
+
 
                 document.getElementById('service_item_name_').value = serviceItemName;
 
