@@ -125,7 +125,7 @@ def service_profile_list():
     school_reference_numbers_spiri = [bank_account['reference_number_spiri'][2:11] for bank_account in school_bank_accounts]
     logging.debug(f'{school_bank_accounts=}')
     
-    def get_reference_number(school_bank_accounts, edit_bank_account):
+    def get_bank_account(school_bank_accounts, edit_bank_account):
         for bank_account in school_bank_accounts:
             if bank_account['reference_number_spiri'] == edit_bank_account:
                 return bank_account['bank_account_number']
@@ -169,8 +169,8 @@ def service_profile_list():
         service_profile.service_item_date = date.today()
         service_profile.supplier_id = edit_form.supplier_id.data
         # service_profile.bank_account = edit_form.bank_account.data
-        # service_profile.reference_number_spiri = get_reference_number(school_bank_accounts, edit_form.bank_account.data)
-        service_profile.bank_account = get_reference_number(school_bank_accounts, edit_form.bank_account.data)
+        # service_profile.reference_number_spiri = get_bank_account(school_bank_accounts, edit_form.bank_account.data)
+        service_profile.bank_account = get_bank_account(school_bank_accounts, edit_form.bank_account.data)
         service_profile.reference_number_spiri = edit_form.bank_account.data
         service_profile.service_id = edit_form.service_id.data
         service_profile.service_item_class = class_list_string
@@ -212,8 +212,8 @@ def service_profile_list():
                                         supplier_id=register_form.supplier_id.data,
                                         service_id=register_form.service_id.data,
                                         # bank_account=register_form.bank_account.data,
-                                        # reference_number_spiri=get_reference_number(school_bank_accounts, register_form.bank_account.data),
-                                        bank_account=get_reference_number(school_bank_accounts, register_form.bank_account.data),
+                                        # reference_number_spiri=get_bank_account(school_bank_accounts, register_form.bank_account.data),
+                                        bank_account=get_bank_account(school_bank_accounts, register_form.bank_account.data),
                                         reference_number_spiri=register_form.bank_account.data,
                                         service_item_class=class_list_string,
                                         price=register_form.price.data,

@@ -9,6 +9,9 @@ from onetouch.students.forms import EditStudentModalForm, RegisterStudentModalFo
 from flask_login import login_required, current_user
 from flask import jsonify
 
+from onetouch.students.functons import check_if_plus_one
+from onetouch.suppliers.functions import convert_to_latin
+
 
 students = Blueprint('students', __name__)
 
@@ -29,26 +32,9 @@ def student_list():
     route_name = request.endpoint
     school = School.query.first()
     danas = datetime.now()
+    plus_one_button = check_if_plus_one(school)
     active_date_start = danas.replace(month=8, day=15)
     active_date_end = danas.replace(month=9, day=30)
-    
-    # školska godina počinje u septembru tekuće godine
-    if danas.month >= 9:
-        # ako smo nakon septembra, tekuća školska godina je od septembra ove godine do septembra sledeće
-        start_of_school_year = datetime(danas.year, 9, 1).date()
-        end_of_school_year = datetime(danas.year + 1, 8, 31).date()
-    else:
-        # ako smo pre septembra, tekuća školska godina je od septembra prošle godine do septembra ove godine
-        start_of_school_year = datetime(danas.year - 1, 9, 1).date()
-        end_of_school_year = datetime(danas.year, 8, 31).date()
-
-    # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
-    if start_of_school_year <= school.class_plus_one <= end_of_school_year:
-        plus_one_button = False
-    else:
-        plus_one_button = True
-    
-    
     
     register_form = RegisterStudentModalForm()
     edit_form = EditStudentModalForm()
@@ -57,8 +43,8 @@ def student_list():
         logging.debug(f'debug- edit mode: {student.student_name=} {student.student_surname=}')
         logging.debug(f'{edit_form.student_name.data=} {edit_form.student_surname.data=} {edit_form.send_mail.data=}')
         logging.debug(f'{request.form.get("send_mail")=}')
-        student.student_name = edit_form.student_name.data.strip().capitalize()
-        student.student_surname = " ".join(word.capitalize() for word in edit_form.student_surname.data.strip().split())
+        student.student_name = convert_to_latin(edit_form.student_name.data.strip().capitalize())
+        student.student_surname = convert_to_latin(" ".join(word.capitalize() for word in edit_form.student_surname.data.strip().split()))
         student.student_class = edit_form.student_class.data
         student.student_section = edit_form.student_section.data
         student.parent_email = edit_form.parent_email.data
@@ -69,14 +55,14 @@ def student_list():
         return redirect(url_for('students.student_list'))
     if register_form.validate_on_submit() and request.form.get('submit_register'):
         student = Student(
-            student_name=register_form.student_name.data.strip().capitalize(),
-            student_surname=" ".join(word.capitalize() for word in register_form.student_surname.data.strip().split()),
-            student_class=str(register_form.student_class.data),
-            student_section=register_form.student_section.data,
-            parent_email=register_form.parent_email.data,
-            send_mail=0,
-            print_payment=0
-        )
+                            student_name=convert_to_latin(register_form.student_name.data.strip().capitalize()),
+                            student_surname=convert_to_latin(" ".join(word.capitalize() for word in register_form.student_surname.data.strip().split())),
+                            student_class=str(register_form.student_class.data),
+                            student_section=register_form.student_section.data,
+                            parent_email=register_form.parent_email.data,
+                            send_mail=0,
+                            print_payment=0
+                        )
 
         logging.debug(student.student_name, student.student_surname, student.student_class)
         db.session.add(student)
