@@ -44,7 +44,7 @@ class RegisterServiceProfileModalForm(FlaskForm):
     service_item_date = DateField('Datum: ', format='%Y-%m-%d', validators=[Optional()])
     supplier_id = SelectField('Dobavljač', choices=[])
     service_id = SelectField('Tip usluge', choices=[])
-    bank_account = SelectField('Broj bankovnog računa', choices=[f'{account["bank_account_number"]} | {account["reference_number_spiri"]}' for account in school.school_bank_accounts['bank_accounts']])
+    bank_account = SelectField('Broj bankovnog računa', choices=[(f'{account["reference_number_spiri"]}', f'{account["reference_number_spiri"]} | {account["bank_account_number"]}') for account in school.school_bank_accounts['bank_accounts']])
     # reference_number_spiri = StringField('Poziv na broj')
     service_item_class = StringField('Razred') #! morada bude strin koji će da čuva listu odabranih razleda
     price = DecimalField('Cena', validators=[DataRequired()])
@@ -69,7 +69,7 @@ class EditServiceProfileModalForm(FlaskForm):
     service_item_date = DateField('Datum: ', format='%Y-%m-%d', validators=[Optional()])
     supplier_id = SelectField('Dobavljač', choices=[])
     service_id = SelectField('Tip usluge', choices=[])
-    bank_account = SelectField('Broj bankovnog računa', choices=[f'{account["bank_account_number"]} | {account["reference_number_spiri"]}' for account in school.school_bank_accounts['bank_accounts']])
+    bank_account = SelectField('Broj bankovnog računa', choices=[(f'{account["reference_number_spiri"]}', f'{account["reference_number_spiri"]} | {account["bank_account_number"]}') for account in school.school_bank_accounts['bank_accounts']])
     # reference_number_spiri = StringField('Poziv na broj')
     service_item_class = StringField('Razred')
     price = DecimalField('Cena', validators=[DataRequired()])

@@ -40,6 +40,7 @@ class School(db.Model):
     school_city = db.Column(db.String(255), nullable=False)
     school_municipality = db.Column(db.String(255), nullable=False)
     school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
+    class_plus_one = db.Column(db.Date, nullable=False)
     users = db.relationship('User', backref='user_school', lazy=True)
 
 
