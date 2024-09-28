@@ -56,8 +56,8 @@
             <td>{{ service_profile.service_item_class }}</td>
             <td>{{ service_profile.bank_account }}</td>
             <td>{{ service_profile.reference_number_spiri }}</td>
-            <td><a href="#" class="edit-btn" data-id="{{ service_profile.id }}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
-                <a href="#" class="delete-btn" data-id="{{ service_profile.id }}" title="Obrišite uslugu"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
+            <td><a class="edit-btn" data-id="{{ service_profile.id }}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
+                <a class="delete-btn" data-id="{{ service_profile.id }}" title="Obrišite uslugu"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
                 {% if service_profile.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}
             </td>
         </tr>
@@ -468,7 +468,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.price(class="form-control form-control-lg", disabled="disabled") }}
+                    {{ register_form.price(class="form-control form-control-lg fixed-input-register", disabled="disabled") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -494,7 +494,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_1(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_1(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -507,7 +507,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_2(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_2(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -520,7 +520,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_3(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_3(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -533,7 +533,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_4(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_4(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -546,7 +546,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_5(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_5(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -559,7 +559,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_6(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_6(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -572,7 +572,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_7(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_7(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -585,7 +585,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_8(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_8(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -598,7 +598,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_9(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_9(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -611,7 +611,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_10(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_10(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -624,7 +624,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_11(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_11(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             <div class="form-group">
@@ -637,15 +637,16 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    {{ register_form.installment_12(class="form-control form-control-lg", type="hidden") }}
+                    {{ register_form.installment_12(class="form-control form-control-lg calculation-input-register", type="hidden") }}
                 {% endif %}
             </div>
             </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    <div class="form-group"></div>
-                        {{ register_form.submit_register(class="btn btn-outline-info", disabled="disabled") }}
+                <div class="modal-footer d-flex justify-content-between">
+                    <div class="flex-grow-1 mr-3">
+                        <input class="form-control w-100" type="text" id="result-input-register" readonly value="" hidden>
                     </div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    {{ register_form.submit_register(class="btn btn-outline-info", disabled="disabled") }}
                 </div>
             </div>
         </form>
@@ -664,6 +665,7 @@
     });
 </script>
 <script>
+    // DataTable
     $(document).ready(function () {
         $('#data').DataTable({
                 columnDefs: [
@@ -680,6 +682,8 @@
         });
     });
 </script>
+
+<!--! DELETE i EDIT modal -->
 <script>
     // pokretanje i funkcionisanje delete modala
     document.addEventListener('DOMContentLoaded', function () {
@@ -744,8 +748,8 @@
                 document.getElementById('get_service_profile').value = serviceId;
 
                 const selectSupplier = document.getElementById('supplier_id_');
-                const selectedOption = Array.from(selectSupplier.options).find(option => option.value === serviceSupllierId);
-                selectedOption.selected = true;
+                const selectedSupplier = Array.from(selectSupplier.options).find(option => option.value === serviceSupllierId);
+                selectedSupplier.selected = true;
 
                 const selectService = document.getElementById('service_id_');
                 const selectedService = Array.from(selectService.options).find(option => option.value === serviceServiceId); // ovde dodati logiku da filtrira opcije prema selektovanom dobavljaču
@@ -844,7 +848,6 @@
 <script>
     // dinamički menja broj input polja za rate na osnovu izabranog broja rata u edit formama
     // get the installment number element
-
     function handleInstallmentNumberChange() {
         const installmentNumber = document.getElementById(`installment_number_`);
         installmentNumber.addEventListener('change', function() {
@@ -883,7 +886,7 @@
         const selectFieldClass = $('#classes_') //
         const inputPriceField = $('#price_');
         const selectInstallmentNumberField = $('#installment_number_');
-        const buttonSubmitRegister = $('#submit_register_'); //
+        const buttonSubmitEdit = $('#submit_edit'); //
         selectFieldSupplier.on('change', function () {
             const newValue = selectFieldSupplier.val();
             console.log('New value:', selectFieldSupplier.val());
@@ -901,6 +904,7 @@
                 selectFieldClass.prop('disabled', true);
                 inputPriceField.prop('disabled', true);
                 selectInstallmentNumberField.prop('disabled', true);
+                buttonSubmitEdit.prop('disabled', true);
             } else {
                 console.log('selektovana vrednost NIJE nula, treba da polje za usluge bude klikabilno...');
                 console.log('vrednost usluge: ', selectFieldService.val());
@@ -968,23 +972,24 @@
                 })
             }
         });
-        inputPriceField.on('change', function() {
+        inputPriceField.on('input', function() {
             console.log('input price: ', inputPriceField.val());
-            if (inputPriceField.val() == '') {
-                buttonSubmitRegister.prop('disabled', true);
-            } else {
-                buttonSubmitRegister.prop('disabled', false);
-                console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
-                console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
+            if (inputPriceField.val() < 0) {
+                console.log('negativna vrednost cene: ', inputPriceField.val());
+                inputPriceField.val(0);
             }
         })
-        buttonSubmitRegister.on('submit', function(event){
+        buttonSubmitEdit.on('submit', function(event){
             event.preventDefault();
             console.log('trebalo bi da uglavi remove disabled pre submita');
             selectInstallmentNumberField.removeAttr('disabled');
             $(this).submit();
         })
     });
+</script>
+<!--! Register modal -->
+<script>
+
 </script>
 <script>
     // skripta dependent dropdown liste (dobavljač -> tip usluge) za register modal
@@ -1081,16 +1086,75 @@
                 })
             }
         });
-        inputPriceField.on('change', function() {
+        inputPriceField.on('input', function() {
             console.log('input price: ', inputPriceField.val());
-            if (inputPriceField.val() == '') {
+            if (inputPriceField.val() < 0) {
+                inputPriceField.val(0);
                 buttonSubmitRegister.prop('disabled', true);
             } else {
-                buttonSubmitRegister.prop('disabled', false);
-                console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
-                console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
+                // buttonSubmitRegister.prop('disabled', false);
+                // console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
+                // console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
+
             }
         })
+        // proverava da li je suma svih rata jednaka ukupnoj ceni
+        const inputFields = document.querySelectorAll('.calculation-input-register');
+        const resultField = document.getElementById('result-input-register');
+        const fixedNumberInput = document.querySelector('.fixed-input-register');
+        const buttonSubmitEdit = document.getElementById('submit_register');
+        let sumOfInputs = 0;  // Ovo je numerička promenljiva, a ne element
+
+        // Dodaj event listener za sve inpute
+        inputFields.forEach(input => {
+            input.addEventListener('input', updateResult);
+        });
+
+        fixedNumberInput.addEventListener('input', updateResult);  // Provera prilikom promene fixedNumberInput
+
+        // Funkcija za ažuriranje rezultata
+        function updateResult() {
+            let total = 0;
+            inputFields.forEach(input => {
+                const numericValue = parseFloat(input.value) || 0;
+                total += numericValue;
+            });
+            sumOfInputs = total;  // Ažuriraj sumu
+            compareValues();  // Pozovi poređenje vrednosti
+        }
+
+        function compareValues() {
+            const fixedNumberValue = parseFloat(fixedNumberInput.value) || 0;
+            const selectFieldClasses = document.getElementById('classes');  // Redefiniši ovde, nakon select2 promene
+
+            // Proverava da li je suma unosa jednaka ukupnoj ceni i da li je selectFieldClasses popunjen
+            if (selectFieldClasses.value === "") {
+                resultField.removeAttribute('hidden');
+                resultField.classList.add('error-result');
+                resultField.value = `Nije izabran nijedan razred.`;
+                buttonSubmitEdit.disabled = true;
+            } else if (fixedNumberValue !== sumOfInputs) {
+                resultField.removeAttribute('hidden');
+                resultField.classList.add('error-result');
+                resultField.value = `Suma svih rata (${sumOfInputs}) nije jednaka ukupnoj ceni (${fixedNumberValue}).`;
+                buttonSubmitEdit.disabled = true;
+            } else {
+                resultField.setAttribute('hidden', '');
+                resultField.classList.remove('error-result');
+                buttonSubmitEdit.disabled = false;
+            }
+        }
+
+        // Kada je DOM spreman
+        $(document).ready(function() {
+            // Inicijalizacija select2 za razrede
+            $('.js-example-basic-multiple').select2();
+
+            // Dodaj event listener za select2 promene
+            $('.js-example-basic-multiple').on('change', function() {
+                updateResult();  // Poziva se kada se menja vrednost u select2
+            });
+        });
         buttonSubmitRegister.on('submit', function(event){
             event.preventDefault();
             console.log('trebalo bi da uglavi remove disabled pre submita');
@@ -1133,38 +1197,63 @@
     });
 </script>
 <script>
+    // proverava da li je suma svih rata jednaka ukupnoj ceni
     const inputFields = document.querySelectorAll('.calculation-input');
     const resultField = document.getElementById('result-input');
     const fixedNumberInput = document.querySelector('.fixed-input');
+    const buttonSubmitEdit = document.getElementById('submit_edit');
+    let sumOfInputs = 0;  // Ovo je numerička promenljiva, a ne element
 
+    // Dodaj event listener za sve inpute
     inputFields.forEach(input => {
         input.addEventListener('input', updateResult);
     });
 
-    fixedNumberInput.addEventListener('input', compareValues);
+    fixedNumberInput.addEventListener('input', updateResult);  // Provera prilikom promene fixedNumberInput
 
+    // Funkcija za ažuriranje rezultata
     function updateResult() {
         let total = 0;
         inputFields.forEach(input => {
             const numericValue = parseFloat(input.value) || 0;
             total += numericValue;
         });
-        resultField.value = total;
-        compareValues();
+        sumOfInputs = total;  // Ažuriraj sumu
+        compareValues();  // Pozovi poređenje vrednosti
     }
 
     function compareValues() {
         const fixedNumberValue = parseFloat(fixedNumberInput.value) || 0;
-        const resultFieldValue = parseFloat(resultField.value) || 0;
+        const selectFieldClasses = document.getElementById('service_item_class_');  // Redefiniši ovde, nakon select2 promene
 
-        if (fixedNumberValue !== resultFieldValue) {
-            resultField.removeAttribute('hidden')
+        // Proverava da li je suma unosa jednaka ukupnoj ceni i da li je selectFieldClasses popunjen
+        if (selectFieldClasses.value === "") {
+            resultField.removeAttribute('hidden');
             resultField.classList.add('error-result');
-            resultField.value = `Suma svih rata nije jednaka ukupnoj ceni (${resultField.value}<>${fixedNumberInput.value})`;
+            resultField.value = `Nije izabran nijedan razred.`;
+            buttonSubmitEdit.disabled = true;
+        } else if (fixedNumberValue !== sumOfInputs) {
+            resultField.removeAttribute('hidden');
+            resultField.classList.add('error-result');
+            resultField.value = `Suma svih rata (${sumOfInputs}) nije jednaka ukupnoj ceni (${fixedNumberValue}).`;
+            buttonSubmitEdit.disabled = true;
         } else {
-            resultField.setAttribute('hidden', '')
+            resultField.setAttribute('hidden', '');
             resultField.classList.remove('error-result');
+            buttonSubmitEdit.disabled = false;
         }
     }
+
+    // Kada je DOM spreman
+    $(document).ready(function() {
+        // Inicijalizacija select2 za razrede
+        $('.js-example-basic-multiple').select2();
+
+        // Dodaj event listener za select2 promene
+        $('.js-example-basic-multiple').on('change', function() {
+            updateResult();  // Poziva se kada se menja vrednost u select2
+        });
+    });
 </script>
+
 {% endblock %}
