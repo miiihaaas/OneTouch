@@ -422,11 +422,16 @@
                             console.log('vrednost rate-- posle izmene rednog broja rate: ', cell.innerText);
 
                             const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
-                            const selectedInstallmentText = selectFieldInstallment.find('option:selected').text(); // ovde treba dodati if form da ako ima samo jena rata da const bude "" (prazan string)
+                            // Nova logika za selectedInstallmentText
+                            let selectedInstallmentText = "";
+                            const options = selectFieldInstallment.find('option').not(':first'); // Izuzimamo prvu opciju ('selektujte ratu')
+                            if (options.length > 1) {
+                                selectedInstallmentText = ` / ${selectFieldInstallment.find('option:selected').text()}`;
+                            }
 
 
 
-                            inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / ' + selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
+                            inputFieldPurposeOfPayment.prop('value', (selectedServiceText + selectedInstallmentText).trim()); 
                             inputFieldPurposeOfPayment.prop('disabled', false);
                             inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
                             if (inputFieldPurposeOfPayment.val().length > 35) {
