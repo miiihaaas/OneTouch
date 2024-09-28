@@ -131,7 +131,7 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ edit_form.service_id(class="form-select form-select-lg", type="date", id="service_id_") }}
+                            {{ edit_form.service_id(class="form-select form-select-lg", id="service_id_") }}
                         {% endif %}
                     </div>
                     <div class="form-group">
@@ -874,7 +874,120 @@
     }
 </script>
 <script>
-    // skripta dependent dropdown liste (dobavljač -> usluga)
+    // skripta dependent dropdown liste (dobavljač -> tip usluge) za edit modal
+    $(document).ready(function () {
+        const selectFieldSupplier = $('#supplier_id_');
+        const selectFieldService = $('#service_id_');
+        const inputReferenceNumber = $('#reference_number_spiri_') //
+        const serviceItemNameField = $('#service_item_name_');
+        const selectFieldClass = $('#classes_') //
+        const inputPriceField = $('#price_');
+        const selectInstallmentNumberField = $('#installment_number_');
+        const buttonSubmitRegister = $('#submit_register_'); //
+        selectFieldSupplier.on('change', function () {
+            const newValue = selectFieldSupplier.val();
+            console.log('New value:', selectFieldSupplier.val());
+            serviceItemNameField.prop('value', '');
+            inputPriceField.prop('value', '');
+            selectInstallmentNumberField.prop('value', 1);
+
+            if(selectFieldSupplier.val() == 0) {
+                console.log('selektovana vrednost je nula, treba da ostane onesposobljeno polje za usluge...');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                selectFieldService.prop('disabled', true);
+                selectFieldService.prop('value', 0);
+                inputReferenceNumber.prop('disabled', true)
+                serviceItemNameField.prop('disabled', true);
+                selectFieldClass.prop('disabled', true);
+                inputPriceField.prop('disabled', true);
+                selectInstallmentNumberField.prop('disabled', true);
+            } else {
+                console.log('selektovana vrednost NIJE nula, treba da polje za usluge bude klikabilno...');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                $.ajax({
+                    url: 'get_services',
+                    data: {supplier_id: newValue},
+                    method: 'POST',
+                    success: function (data) {
+                        selectFieldService.html(data);
+                        selectFieldService.prop('disabled', false);
+                    } 
+                })
+                serviceItemNameField.prop('disabled', true);
+                selectFieldClass.prop('disabled', true);
+                inputPriceField.prop('disabled', true);
+                selectInstallmentNumberField.prop('disabled', true);
+            }
+        });
+        selectFieldService.on('change', function () {
+            console.log('vrednost usluge: ', selectFieldService.val());
+            if(selectFieldService.val() == 0) {
+                console.log('selektovana vrednost usluge je nula, treba da datum i detalji usluge budu onesposobljena polja');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                inputReferenceNumber.prop('disabled', true);
+                inputReferenceNumber.prop('value', '');
+                serviceItemNameField.prop('disabled', true);
+                serviceItemNameField.prop('value', '');
+                inputPriceField.prop('disabled', true);
+                inputPriceField.prop('value', '');
+                selectInstallmentNumberField.prop('disabled', true);
+                selectInstallmentNumberField.prop('value', 1);
+            } else {
+                console.log('selektovana vrednost usluge NIJE nula, treba da i detalji usluge, datum, razred i cena budu osposobljena polja');
+                console.log('vrednost usluge: ', selectFieldService.val());
+                $.ajax({
+                    url: 'get_payment',
+                    method: 'POST',
+                    data: {service_id: selectFieldService.val()},
+                    success: function (response) {
+                        var paymentPerUnit = response.payment_per_unit;
+                        if(paymentPerUnit == 'god') {
+                            console.log('god - datum je readonly i vrednost je današnji dan; mogu da se biraju rate (1-12)');
+                            selectInstallmentNumberField.prop('disabled', false);
+                            console.log('napraviti kod koji će da postavi da u select fileld bude izbor od 1-12 rate');
+                            selectInstallmentNumberField.html("");
+                            for (var i = 1; i <= 12; i++) {
+                                    var option = $("<option>");
+                                    option.val(i).text(i);
+                                    selectInstallmentNumberField.append(option); 
+                                }
+                        } else {
+                            console.log('mes ili kom - datum je editabilan; postoji samo izbor od jedne rate');
+                            selectInstallmentNumberField.prop('disabled', false);
+                            console.log('napraviti kod koji će da postavi da u select fileld bude samo izbor od jedne rate'); 
+                            selectInstallmentNumberField.html("");
+                            var option = $("<option>");
+                            option.val(1).text(1);
+                            selectInstallmentNumberField.append(option);
+                        }
+                        inputReferenceNumber.prop('disabled', false)
+                        serviceItemNameField.prop('disabled', false);
+                        selectFieldClass.prop('disabled', false);
+                        inputPriceField.prop('disabled', false);
+                    }
+                })
+            }
+        });
+        inputPriceField.on('change', function() {
+            console.log('input price: ', inputPriceField.val());
+            if (inputPriceField.val() == '') {
+                buttonSubmitRegister.prop('disabled', true);
+            } else {
+                buttonSubmitRegister.prop('disabled', false);
+                console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
+                console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
+            }
+        })
+        buttonSubmitRegister.on('submit', function(event){
+            event.preventDefault();
+            console.log('trebalo bi da uglavi remove disabled pre submita');
+            selectInstallmentNumberField.removeAttr('disabled');
+            $(this).submit();
+        })
+    });
+</script>
+<script>
+    // skripta dependent dropdown liste (dobavljač -> tip usluge) za register modal
     $(document).ready(function () {
         const selectFieldSupplier = $('#supplier_id');
         const selectFieldService = $('#service_id');
