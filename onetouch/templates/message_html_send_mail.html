@@ -26,6 +26,7 @@
         h1 {
             color: #104e97;
             font-size: 1.8rem;
+            text-align: center;
         }
         p {
             font-size: 1rem;
@@ -44,26 +45,45 @@
             text-decoration: underline;
         }
         .oval-div {
-            background-color: #f0f0f0;  /* Boja pozadine */
-            border-radius: 25px;        /* Ovalne ivice */
-            padding: 20px;              /* Unutrašnja margina */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Senka */
-            max-width: 400px;           /* Maksimalna širina div-a */
-            margin: 20px auto;          /* Poravnanje po sredini sa spoljnim marginama */
+            background-color: #f0f0f0;
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        .copyright {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 20px;
+        }
+        .auto-message {
+            font-style: italic;
+            text-align: center;
+            color: #777;
+            font-size: 12px;
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>    
     <div class="oval-div">
-        <h1>Poštovani,</h1>
+        <h1>Uplatnica: {{ uplatnica['uplatilac'] }} - Svrha uplate: {{uplatnica['svrha_uplate']}}</h1>
+        <p>Poštovani,</p>
         <p>Šaljemo Vam nalog za uplatu koji možete naći u prilogu ovog mejla.</p>
         <p>Molimo Vas da uplatu izvršite u skladu sa uplatnicom iz prologa.</p>
         <p>Ako imate bilo kakvih pitanja, slobodno nas kontaktirajte.</p>
+        
         <div class="footer">
             <p>S poštovanjem,</p>
             <p><strong>{{ school.school_name }}</strong></p>
             <p>{{ school.school_address }}</p>
         </div>
+        <p class="auto-message">Ovo je automatski generisana poruka. Molimo Vas da ne odgovarate na ovaj mejl.</p>
+    </div>
+    <div class="copyright">
+        <p>Softver izradio <a href="https://implicit.pro/" target="_blank">Studio Implicit</a> © 2024</p>
     </div>
 </body>
 </html>

@@ -198,7 +198,7 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            {{ edit_form.installment_number(class="form-select form-select-lg", id="installment_number_", onfocus="handleInstallmentNumberChange();") }}
+                            {{ edit_form.installment_number(class="form-select form-select-lg", id="installment_number_") }}
                         {% endif %}
                     </div>
                     <div class="form-group">
@@ -845,18 +845,18 @@
         });
     });
 </script>
+
+<!-- (EditModal) dinamički menja broj input polja za rate na osnovu izabranog broja rata u edit formama i proverava da li je suma svih rata jednaka ukupnoj ceni -->
 <script>
     // dinamički menja broj input polja za rate na osnovu izabranog broja rata u edit formama
-    // get the installment number element
     function handleInstallmentNumberChange() {
-        const installmentNumber = document.getElementById(`installment_number_`);
-        installmentNumber.addEventListener('change', function() {
-            const numInstallments = parseInt(installmentNumber.value);
-            console.log('broj rata: ', numInstallments);
+        const selectInstallmentNumberField = document.getElementById(`installment_number_`);
+        const numInstallments = parseInt(selectInstallmentNumberField.value);
+        console.log('edit form - broj rata: ', numInstallments);
 
-            for (let i = 1; i <= 12; i++) {
-            const installment = document.getElementById(`installment_${i}_`);
-            const label = installment.previousElementSibling;
+        for (let i = 1; i <= 12; i++) {
+        const installment = document.getElementById(`installment_${i}_`);
+        const label = installment.previousElementSibling;
             if (numInstallments > 1) {
                 if (i <= numInstallments) {
                     installment.type = "number";
@@ -872,21 +872,89 @@
                 installment.value = "";
                 label.style.display = "none";
             }
-            }
-        });
+        }
     }
+
+
+
+
+    const inputFields = document.querySelectorAll('.calculation-input');
+    const resultField = document.getElementById('result-input');
+    const fixedNumberInput = document.querySelector('.fixed-input');
+    const buttonSubmitEdit = document.getElementById('submit_edit');
+    const selectInstallmentNumberField = document.getElementById('installment_number_');
+    let sumOfInputs = 0;  // Ovo je numerička promenljiva, a ne element
+
+    // Dodaj event listener za sve inpute
+    inputFields.forEach(input => {
+        input.addEventListener('input', updateResult);
+    });
+
+    fixedNumberInput.addEventListener('input', updateResult);  // Provera prilikom promene fixedNumberInput
+    selectInstallmentNumberField.addEventListener('change', function() {
+        console.log('pokrenute funkcije: updateResult i handleInstallmentNumberChange');
+        handleInstallmentNumberChange();
+        console.log('izvršena funkcija: handleInstallmentNumberChange');
+        updateResult(); 
+        console.log('izvršena funkcija: updateResult');
+    });
+
+    // Funkcija za ažuriranje rezultata
+    function updateResult() {
+        let total = 0;
+        inputFields.forEach(input => {
+            const numericValue = parseFloat(input.value) || 0;
+            total += numericValue;
+        });
+        sumOfInputs = total;  // Ažuriraj sumu
+        compareValues();  // Pozovi poređenje vrednosti
+    }
+
+    function compareValues() {
+        const fixedNumberValue = parseFloat(fixedNumberInput.value) || 0;
+        const selectFieldClasses = document.getElementById('service_item_class_');  // Redefiniši ovde, nakon select2 promene
+
+        // Proverava da li je suma unosa jednaka ukupnoj ceni i da li je selectFieldClasses popunjen
+        if (selectFieldClasses.value === "") {
+            resultField.removeAttribute('hidden');
+            resultField.classList.add('error-result');
+            resultField.value = `Nije izabran nijedan razred.`;
+            buttonSubmitEdit.disabled = true;
+        } else if (fixedNumberValue !== sumOfInputs && selectInstallmentNumberField.value > 1) {  // dodati and uslov da je broj rata veći od 1, jer ako je jednak 1 - onda ne treba da poredi inputFields i fixedNumberInput
+            resultField.removeAttribute('hidden');
+            resultField.classList.add('error-result');
+            resultField.value = `Suma svih rata (${sumOfInputs}) nije jednaka ukupnoj ceni (${fixedNumberValue}).`;
+            buttonSubmitEdit.disabled = true;
+        } else {
+            resultField.setAttribute('hidden', '');
+            resultField.classList.remove('error-result');
+            buttonSubmitEdit.disabled = false;
+        }
+    }
+
+    // Kada je DOM spreman
+    $(document).ready(function() {
+        // Inicijalizacija select2 za razrede
+        $('.js-example-basic-multiple').select2();
+
+        // Dodaj event listener za select2 promene
+        $('.js-example-basic-multiple').on('change', function() {
+            updateResult();  // Poziva se kada se menja vrednost u select2
+        });
+    });
 </script>
+
+<!-- (EditModal) skripta dependent dropdown liste (dobavljač -> tip usluge) za edit modal -->
 <script>
-    // skripta dependent dropdown liste (dobavljač -> tip usluge) za edit modal
     $(document).ready(function () {
         const selectFieldSupplier = $('#supplier_id_');
         const selectFieldService = $('#service_id_');
         const inputReferenceNumber = $('#reference_number_spiri_') //
         const serviceItemNameField = $('#service_item_name_');
-        const selectFieldClass = $('#classes_') //
+        const selectFieldClass = $('#service_item_class_')
         const inputPriceField = $('#price_');
         const selectInstallmentNumberField = $('#installment_number_');
-        const buttonSubmitEdit = $('#submit_edit'); //
+        const buttonSubmitEdit = $('#submit_edit');
         selectFieldSupplier.on('change', function () {
             const newValue = selectFieldSupplier.val();
             console.log('New value:', selectFieldSupplier.val());
@@ -991,8 +1059,9 @@
 <script>
 
 </script>
+
+<!-- (RegisterModal) skripta dependent dropdown liste (dobavljač -> tip usluge) -->
 <script>
-    // skripta dependent dropdown liste (dobavljač -> tip usluge) za register modal
     $(document).ready(function () {
         const selectFieldSupplier = $('#supplier_id');
         const selectFieldService = $('#service_id');
@@ -1088,17 +1157,48 @@
         });
         inputPriceField.on('input', function() {
             console.log('input price: ', inputPriceField.val());
-            if (inputPriceField.val() < 0) {
+            if (inputPriceField.val() < 0 || inputPriceField.val() == '') {
                 inputPriceField.val(0);
                 buttonSubmitRegister.prop('disabled', true);
             } else {
-                // buttonSubmitRegister.prop('disabled', false);
-                // console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
-                // console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
+                buttonSubmitRegister.prop('disabled', false);
+                console.log('vrednost broja rata: ', selectInstallmentNumberField.val());
+                console.log('tip broja rata: ', typeof selectInstallmentNumberField.val())
 
             }
         })
-        // proverava da li je suma svih rata jednaka ukupnoj ceni
+        // (RegisterModal) menja broj input polja za rate na osnovu izabranog broja rata u register formi i proverava da li je suma svih rata jednaka ukupnoj ceni
+        function handleInstallmentNumberChangeRegister() {
+            const selectInstallmentNumberField = document.getElementById("installment_number");
+            const numInstallments = parseInt(selectInstallmentNumberField.value);
+            console.log('register form - broj rata: ', numInstallments);
+
+
+            for (let i = 1; i <= 12; i++) {
+                const installment = document.getElementById(`installment_${i}`);
+                const label = installment.previousElementSibling;
+
+                if (numInstallments === 1) {
+                    // Ishod 1: Sakrije sva polja
+                    installment.type = "hidden";
+                    installment.value = "";
+                    label.style.display = "none";
+                } else if (numInstallments >= 2 && numInstallments <= 12) {
+                    // Ishod 2: Prikazuje polja od 1 do numInstallments
+                    if (i <= numInstallments) {
+                        installment.type = "number";
+                        installment.value = "";
+                        label.style.display = "block";
+                    } else {
+                        installment.type = "hidden";
+                        installment.value = "";
+                        label.style.display = "none";
+                    }
+                }
+            }
+        }
+
+
         const inputFields = document.querySelectorAll('.calculation-input-register');
         const resultField = document.getElementById('result-input-register');
         const fixedNumberInput = document.querySelector('.fixed-input-register');
@@ -1111,9 +1211,17 @@
         });
 
         fixedNumberInput.addEventListener('input', updateResult);  // Provera prilikom promene fixedNumberInput
+        selectInstallmentNumberField.get(0).addEventListener('change', function() {
+            console.log('register - pokrenute funkcije: updateResult i handleInstallmentNumberChangeRegister');
+            handleInstallmentNumberChangeRegister();
+            console.log('izvršena funkcija: handleInstallmentNumberChangeRegister');
+            updateResult();
+            console.log('izvršena funkcija: updateResult');
+        })
 
         // Funkcija za ažuriranje rezultata
         function updateResult() {
+            console.log('register form - izvršena funkcija: updateResult');
             let total = 0;
             inputFields.forEach(input => {
                 const numericValue = parseFloat(input.value) || 0;
@@ -1122,10 +1230,12 @@
             sumOfInputs = total;  // Ažuriraj sumu
             compareValues();  // Pozovi poređenje vrednosti
         }
-
+        
         function compareValues() {
+            console.log('register form - izvršena funkcija: compareValues');
             const fixedNumberValue = parseFloat(fixedNumberInput.value) || 0;
             const selectFieldClasses = document.getElementById('classes');  // Redefiniši ovde, nakon select2 promene
+
 
             // Proverava da li je suma unosa jednaka ukupnoj ceni i da li je selectFieldClasses popunjen
             if (selectFieldClasses.value === "") {
@@ -1133,7 +1243,12 @@
                 resultField.classList.add('error-result');
                 resultField.value = `Nije izabran nijedan razred.`;
                 buttonSubmitEdit.disabled = true;
-            } else if (fixedNumberValue !== sumOfInputs) {
+            } else if ((fixedNumberValue < 1)) {
+                resultField.removeAttribute('hidden');
+                resultField.classList.add('error-result');
+                resultField.value = `Cena usluge je 0.`;
+                buttonSubmitEdit.disabled = true;
+            } else if ((fixedNumberValue !== sumOfInputs) && (selectInstallmentNumberField.val() > 1)) { 
                 resultField.removeAttribute('hidden');
                 resultField.classList.add('error-result');
                 resultField.value = `Suma svih rata (${sumOfInputs}) nije jednaka ukupnoj ceni (${fixedNumberValue}).`;
@@ -1163,97 +1278,4 @@
         })
     });
 </script>
-<script>
-    // menja broj input polja za rate na osnovu izabranog broja rata u register formi
-    const installmentNumber = document.getElementById("installment_number");
-
-    installmentNumber.addEventListener('change', function(){
-        const numInstallments = parseInt(installmentNumber.value);
-        console.log('broj rata: ', numInstallments);
-
-
-        for (let i = 1; i <= 12; i++) {
-            const installment = document.getElementById(`installment_${i}`);
-            const label = installment.previousElementSibling;
-
-            if (numInstallments === 1) {
-                // Ishod 1: Sakrije sva polja
-                installment.type = "hidden";
-                installment.value = "";
-                label.style.display = "none";
-            } else if (numInstallments >= 2 && numInstallments <= 12) {
-                // Ishod 2: Prikazuje polja od 1 do numInstallments
-                if (i <= numInstallments) {
-                    installment.type = "number";
-                    installment.value = "";
-                    label.style.display = "block";
-                } else {
-                    installment.type = "hidden";
-                    installment.value = "";
-                    label.style.display = "none";
-                }
-            }
-        }
-    });
-</script>
-<script>
-    // proverava da li je suma svih rata jednaka ukupnoj ceni
-    const inputFields = document.querySelectorAll('.calculation-input');
-    const resultField = document.getElementById('result-input');
-    const fixedNumberInput = document.querySelector('.fixed-input');
-    const buttonSubmitEdit = document.getElementById('submit_edit');
-    let sumOfInputs = 0;  // Ovo je numerička promenljiva, a ne element
-
-    // Dodaj event listener za sve inpute
-    inputFields.forEach(input => {
-        input.addEventListener('input', updateResult);
-    });
-
-    fixedNumberInput.addEventListener('input', updateResult);  // Provera prilikom promene fixedNumberInput
-
-    // Funkcija za ažuriranje rezultata
-    function updateResult() {
-        let total = 0;
-        inputFields.forEach(input => {
-            const numericValue = parseFloat(input.value) || 0;
-            total += numericValue;
-        });
-        sumOfInputs = total;  // Ažuriraj sumu
-        compareValues();  // Pozovi poređenje vrednosti
-    }
-
-    function compareValues() {
-        const fixedNumberValue = parseFloat(fixedNumberInput.value) || 0;
-        const selectFieldClasses = document.getElementById('service_item_class_');  // Redefiniši ovde, nakon select2 promene
-
-        // Proverava da li je suma unosa jednaka ukupnoj ceni i da li je selectFieldClasses popunjen
-        if (selectFieldClasses.value === "") {
-            resultField.removeAttribute('hidden');
-            resultField.classList.add('error-result');
-            resultField.value = `Nije izabran nijedan razred.`;
-            buttonSubmitEdit.disabled = true;
-        } else if (fixedNumberValue !== sumOfInputs) {
-            resultField.removeAttribute('hidden');
-            resultField.classList.add('error-result');
-            resultField.value = `Suma svih rata (${sumOfInputs}) nije jednaka ukupnoj ceni (${fixedNumberValue}).`;
-            buttonSubmitEdit.disabled = true;
-        } else {
-            resultField.setAttribute('hidden', '');
-            resultField.classList.remove('error-result');
-            buttonSubmitEdit.disabled = false;
-        }
-    }
-
-    // Kada je DOM spreman
-    $(document).ready(function() {
-        // Inicijalizacija select2 za razrede
-        $('.js-example-basic-multiple').select2();
-
-        // Dodaj event listener za select2 promene
-        $('.js-example-basic-multiple').on('change', function() {
-            updateResult();  // Poziva se kada se menja vrednost u select2
-        });
-    });
-</script>
-
 {% endblock %}

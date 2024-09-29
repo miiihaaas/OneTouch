@@ -1,16 +1,55 @@
+import re
 import requests, os, io, time, logging
 from datetime import datetime
 from flask_login import current_user
 import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
-from flask import flash, redirect, url_for
+from flask import flash, redirect, render_template, url_for
 from flask_login import current_user
 from flask_mail import Message
 from onetouch.models import School, Student, StudentPayment
 from onetouch import mail, app
 
+#! koristi se u posting_payment ruti
+def provera_validnosti_poziva_na_broj(podaci, all_reference_numbers):
 
+    if len(podaci['PozivNaBrojApp']) == 7:
+        # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+        formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
+        if formated_poziv_odobrenja in all_reference_numbers:
+            podaci['Validnost'] = True
+        else:
+            podaci['Validnost'] = False
+    elif len(podaci['PozivNaBrojApp']) == 8:
+        # proverava da li je forma '0001-001'
+        if podaci['PozivNaBrojApp'] in all_reference_numbers:
+            podaci['Validnost'] = True
+        else:
+            podaci['Validnost'] = False
+    else:
+        # nije dobar poziv na broj
+        podaci['Validnost'] = False
+    return podaci
+
+
+def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
+    if input_string[0].isdigit():
+        pattern = r'\d{4}-\d{3}|\d{7}'
+        brojevi = re.findall(pattern, input_string[:8])
+    elif input_string[0] == '[':
+        # Ako je prvi karakter '[', pronađi poziciju ']' i traži broj u sledećih 8 karaktera
+        end_bracket_pos = input_string.find(']')
+        if end_bracket_pos != -1:
+            brojevi = re.findall(r'\d{4}-\d{3}|\d{7}', input_string[end_bracket_pos+1:end_bracket_pos+9])
+        else:
+            brojevi = []
+    else:
+        brojevi = []
+    return brojevi[0] if brojevi else '-' #! namerno umest None
+
+
+#! koristi se za generisanje i slanje pdf uplatnica
 current_file_path = os.path.abspath(__file__)
 logging.debug(f'{current_file_path=}')
 project_folder = os.path.dirname(os.path.dirname((current_file_path)))
@@ -35,21 +74,9 @@ def send_mail(uplatnica, path, file_name):
     sender_email = 'noreply@uplatnice.online'
     recipient_email = parent_email #!'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
-    body = f'''
-<html>
-<head></head>
-<body>
-<p>Poštovani,<br></p>
-<p>Šaljemo Vam nalog za uplatu koji možete naći u prilogu ovog mejla.<br></p>
-<p>S poštovanjem,<br>
-{school.school_name}<br>
-{school.school_address}</p>
-</body>
-</html>
-'''
         
     message = Message(subject, sender=sender_email, recipients=[recipient_email])
-    message.html = body
+    message.html = render_template('message_html_send_mail.html', school=school, uplatnica=uplatnica)
     
     # Dodajte generirani PDF kao prilog mejlu
     with app.open_resource(path + file_name) as attachment:
