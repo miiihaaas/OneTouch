@@ -8,7 +8,7 @@ from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User
-from onetouch.transactions.functions import uplatnice_gen, export_payment_stats, gen_dept_report
+from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_dept_report
 
 transactions = Blueprint('transactions', __name__)
 
@@ -222,6 +222,7 @@ def submit_records():
     data = request.get_json()
     logging.debug(f'{type(data)=}')
     
+    #! dodavanje novog zaduženja
     if 'service_item' in data: 
         logging.debug('dodavanje novog zaduženja')
         service_item_id = int(data['service_item'])
@@ -244,54 +245,69 @@ def submit_records():
         
         if len(data['records']) == 0:
             return 'Nema zaduženih studenta'
+        
+        #! proverava koliko service_item ima rata
+        service_item = ServiceItem.query.get_or_404(service_item_id)
+        
+        for installment in range(1, service_item.installment_number + 1):
+            installment_attr = f'installment_{installment}'
+            if service_item.installment_number == 1:
+                purpose_of_payment = f'{service_item.service_item_service.service_name} - {service_item.service_item_name}'
+            else:
+                purpose_of_payment = f'{service_item.service_item_service.service_name} - {service_item.service_item_name} / Rata {installment}'
+            installment_value_result = getattr(service_item, installment_attr)
+            logging.debug(f'{installment_attr=}, {installment_value_result=}')
+        
+        
+        
             
         
-        new_debt = StudentDebt(student_debt_date = datetime.now(),
-                                service_item_id = service_item_id,
-                                debt_class = debt_class,
-                                debt_section = debt_section,
-                                installment_number=installment_number,
-                                purpose_of_payment=purpose_of_payment)
-        
-        logging.debug(f'{new_debt=}')
-        db.session.add(new_debt)
-        db.session.commit()
-        
-        logging.debug(f'{new_debt.id=}')
-        
-        
-        
-        student_debt_id = new_debt.id
-        student_payment_id = None
-        for i in range(len(data['records'])):
-            student_id = data['records'][i]['student_id']
-            #! service_item_id = ima već definisano na početku funkcije, ako bude trebalo napiši kod za to
-            student_debt_installment_number = int(data['installment'])
-            logging.debug(f'{student_debt_installment_number=}')
-            student_debt_amount = data['records'][i]['amount']
-            logging.debug(f'prečekiranje pred dodele vrednosti za "studetn_debt_installment_value": {service_item_id=}; {ServiceItem.query.get_or_404(service_item_id)}')
-            studetn_debt_installment_value = getattr(ServiceItem.query.get_or_404(service_item_id), f'installment_{student_debt_installment_number}')
-            logging.debug(f'{studetn_debt_installment_value=}')
-            student_debt_discount = float(data['records'][i]['discount'])
-            logging.debug(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
-            logging.debug(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
-            student_debt_total = student_debt_amount * studetn_debt_installment_value - student_debt_discount
-            logging.debug(f'{student_debt_id=}, {student_payment_id=}, {student_id=}, {service_item_id=}, {student_debt_installment_number=}, {student_debt_amount=}')
-            logging.debug(f'{studetn_debt_installment_value=}, {student_debt_discount=}, {student_debt_total=}')
-            new_record = TransactionRecord(student_debt_id = student_debt_id,
-                                            student_payment_id = student_payment_id,
-                                            student_id = student_id,
-                                            service_item_id = service_item_id,
-                                            student_debt_installment_number = student_debt_installment_number,
-                                            student_debt_amount = student_debt_amount,
-                                            studetn_debt_installment_value = studetn_debt_installment_value,
-                                            student_debt_discount = student_debt_discount,
-                                            student_debt_total = student_debt_total)
-            db.session.add(new_record)
+            new_debt = StudentDebt(student_debt_date = datetime.now(),
+                                    service_item_id = service_item_id,
+                                    debt_class = debt_class,
+                                    debt_section = debt_section,
+                                    installment_number=installment, #! ovo je installment iz for loopa koji je zapravo installment_number iz niza (1, 2, 3 ...)
+                                    purpose_of_payment=purpose_of_payment)
+            
+            logging.debug(f'{new_debt=}')
+            db.session.add(new_debt)
             db.session.commit()
+        
+            logging.debug(f'{new_debt.id=}')
+        
+        
+        
+            student_debt_id = new_debt.id
+            student_payment_id = None
+            for i in range(len(data['records'])):
+                student_id = data['records'][i]['student_id']
+                #! service_item_id = ima već definisano na početku funkcije, ako bude trebalo napiši kod za to
+                student_debt_installment_number = installment #! bia je ova vrednost: int(data['installment']), ali ovo je installment iz for loopa koji je zapravo installment_number iz niza (1, 2, 3 ...)
+                logging.debug(f'{student_debt_installment_number=}')
+                student_debt_amount = data['records'][i]['amount']
+                logging.debug(f'prečekiranje pred dodele vrednosti za "studetn_debt_installment_value": {service_item_id=}; {ServiceItem.query.get_or_404(service_item_id)}')
+                studetn_debt_installment_value = getattr(ServiceItem.query.get_or_404(service_item_id), f'installment_{student_debt_installment_number}')
+                logging.debug(f'{studetn_debt_installment_value=}')
+                student_debt_discount = float(data['records'][i]['discount'])
+                logging.debug(f'{type(student_debt_amount)=}, {type(studetn_debt_installment_value)=}, {type(student_debt_discount)=}')
+                logging.debug(f'{student_debt_amount=}, {studetn_debt_installment_value=}, {student_debt_discount=}')
+                student_debt_total = student_debt_amount * studetn_debt_installment_value - student_debt_discount
+                logging.debug(f'{student_debt_id=}, {student_payment_id=}, {student_id=}, {service_item_id=}, {student_debt_installment_number=}, {student_debt_amount=}')
+                logging.debug(f'{studetn_debt_installment_value=}, {student_debt_discount=}, {student_debt_total=}')
+                new_record = TransactionRecord(student_debt_id = student_debt_id,
+                                                student_payment_id = student_payment_id,
+                                                student_id = student_id,
+                                                service_item_id = service_item_id,
+                                                student_debt_installment_number = student_debt_installment_number,
+                                                student_debt_amount = student_debt_amount,
+                                                studetn_debt_installment_value = studetn_debt_installment_value,
+                                                student_debt_discount = student_debt_discount,
+                                                student_debt_total = student_debt_total)
+                db.session.add(new_record)
+                db.session.commit()
         flash(f'Zaduženje {student_debt_id} je uspešno dodato!', 'success')
         return str(student_debt_id)
-
+    #! izmena postojećeg zaduženja
     elif 'student_debt_id' in data:
         logging.debug('izmena postojećeg zaduženja')
         student_debt_id = int(data['student_debt_id'])
@@ -316,7 +332,7 @@ def submit_records():
             db.session.commit()
         flash(f'Zaduženje {student_debt_id} je uspešno izmenjeno!', 'success')
         return str(student_debt_id)
-    
+    #! izmena postojećeg izvoda
     elif 'student_payment_id' in data: #! izmena pregleda izvoda (payment_archive/<int:>)
         logging.debug('izmena postojećeg izvoda')
         transaction_records = TransactionRecord.query.all()
@@ -643,42 +659,6 @@ def payment_archive(payment_id):
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
 def posting_payment():
     route_name = request.endpoint
-    def provera_validnosti_poziva_na_broj(podaci):
-        if len(podaci['PozivNaBrojApp']) == 7:
-            # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-            formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
-            if formated_poziv_odobrenja in all_reference_numbers:
-                podaci['Validnost'] = True
-            else:
-                podaci['Validnost'] = False
-        elif len(podaci['PozivNaBrojApp']) == 8:
-            # proverava da li je forma '0001-001'
-            if podaci['PozivNaBrojApp'] in all_reference_numbers:
-                podaci['Validnost'] = True
-            else:
-                podaci['Validnost'] = False
-        else:
-            # nije dobar poziv na broj
-            podaci['Validnost'] = False
-        return podaci
-    
-    
-    def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
-        if input_string[0].isdigit():
-            pattern = r'\d{4}-\d{3}|\d{7}'
-            brojevi = re.findall(pattern, input_string[:8])
-        elif input_string[0] == '[':
-            # Ako je prvi karakter '[', pronađi poziciju ']' i traži broj u sledećih 8 karaktera
-            end_bracket_pos = input_string.find(']')
-            if end_bracket_pos != -1:
-                brojevi = re.findall(r'\d{4}-\d{3}|\d{7}', input_string[end_bracket_pos+1:end_bracket_pos+9])
-            else:
-                brojevi = []
-        else:
-            brojevi = []
-        return brojevi[0] if brojevi else '-' #! namerno umest None
-    
-    
     school = School.query.first()
     if request.method == 'POST' and ('submitBtnImportData' in request.form):
         file = request.files['fileInput']
@@ -760,7 +740,7 @@ def posting_payment():
             logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
             #! provera da li je poziv na broj validan
-            provera_validnosti_poziva_na_broj(podaci)
+            provera_validnosti_poziva_na_broj(podaci, all_reference_numbers)
             if podaci['RacunZaduzenja'] in school.school_bank_accounts:
                 logging.info('Ovo je isplata')
                 podaci['Iznos'] = -float(podaci['Iznos'])
