@@ -1,4 +1,4 @@
-body { background: url(img/loginbg.jpg) center center no-repeat; background-size: cover; background-attachment: fixed; font-family: 'Montserrat', sans-serif; padding-left: calc(100vw - 100%); margin-left: -17px; }
+body { background: url(img/loginbg-2.jpg) center center no-repeat; background-size: cover; background-attachment: fixed; font-family: 'Montserrat', sans-serif; padding-left: calc(100vw - 100%); margin-left: -17px; }
 legend { font-size: 1.6rem; color: #999; font-weight: 700; padding: 5px 0 0 0;}
 h1 { font-size: 1.6rem; color: #999; font-weight: 700; padding: 15px 0 0 0; }
 h2 { font-size: 1.4rem; }
@@ -50,7 +50,8 @@ body.softveru a.btn.btn-info { margin-top: 40px !important; }
 header { background-color: #104e97; padding-bottom: 40px; }
 .bg-steel { background-color: #104e97; }
 nav#sidebar { min-width: 300px; }
-main.container:not(.login-screen) { margin:-40px 20px 20px 0; background-color: #fff; box-shadow: 0 0 10px #00000030; border-radius: 5px; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }
+/*main.container:not(.login-screen) { margin:-40px 20px 20px 0; background-color: #fff; box-shadow: 0 0 10px #00000030; border-radius: 5px; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }*/
+main.container:not(.login-screen) { margin: 0 20px 20px 0; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }
 title { display: block; font-size: 24px; font-weight: 700; color: #999; text-shadow: 1px 1px 1px #fff; background-color: #eee; padding: 10px; margin: 0 -20px 20px -20px; }
 .navbar>.container, .navbar>.container-fluid, .navbar>.container-lg, .navbar>.container-md, .navbar>.container-sm, .navbar>.container-xl, .navbar>.container-xxl { justify-content: space-between; }
 .navbar-brand img { max-width: 160px; }
