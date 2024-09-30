@@ -268,8 +268,8 @@ def get_payment():
     return jsonify({'payment_per_unit': service.payment_per_unit})
 
 
-@suppliers.route('/service_profile/<int:service_profile_id>/delete', methods=['POST'])
 @login_required
+@suppliers.route('/service_profile/<int:service_profile_id>/delete', methods=['POST'])
 def delete_service_profile(service_profile_id):
     logging.debug(f'delete profile section: {service_profile_id}')
     service_profile = ServiceItem.query.get_or_404(service_profile_id)
