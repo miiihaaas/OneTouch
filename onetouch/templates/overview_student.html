@@ -25,9 +25,10 @@
 <hr>
 <div class="btn-group" role="group">
     {% if service['service_debt_id'] is not none %}
-        <a class="btn btn-info loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
+        <strong>{{'{:03d}'.format(service['id'])}} - {{ service['service_name'] }}</strong>
+        <!-- <a class="btn btn-info loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{'{:03d}'.format(service['id'])}}</a>
         <a class="btn btn-primary loading" href="{{url_for('transactions.debt_archive', debt_id=service['service_debt_id'])}}">{{ service['service_name'] }}</a>
-        <a href="" class="btn btn-secondary">Generiši uplatnicu na osnovu salda</a>
+        <a href="" class="btn btn-secondary">Generiši uplatnicu na osnovu salda</a> -->
     {% else %}
         <span class="btn btn-info loading disabled">{{'{:03d}'.format(service['id'])}}</span>
         <span class="btn btn-primary loading disabled">{{ service['service_name'] }}</span>
@@ -47,27 +48,34 @@
     </thead>
     <tbody>
         {% for record in data %}
-        {% if record['service_item_id'] == service['id'] %}
-        {% if record['saldo'] < 0 %}
-        <tr class="negativna-vrednost">
-        {% else %}
-        <tr>
-        {% endif %} 
-            <td>{{ record['date'].strftime('%d.%m.%Y.') }}</td>
-            <td>{{ record['description'] }}</td>
-            <td style="text-align: right;">{{ "{:.2f}".format(record['debt_amount']) }}</td>
-            <td style="text-align: right;">{{ "{:.2f}".format(record['payment_amount']) }}</td>
-            <td style="text-align: right;">{{ "{:.2f}".format(record['saldo']) }}</td>
-
-            <td style="text-align: center;">
-                {% if record['debt_amount'] > 0 %} 
-                <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a> 
-                {% else %} 
-                <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn-x btn-primary-x" title="Otvorite izvod"><i class="fa-solid fa-file-lines awesomeedit"></i></a> 
-                {% endif %}
-            </td>
-        </tr>
-        {% endif %}
+            {% if record['service_item_id'] == service['id'] %}
+                {% if record['saldo'] < 0 %}
+                <tr class="negativna-vrednost">
+                {% else %}
+                <tr>
+                {% endif %} 
+                    <td>{{ record['date'].strftime('%d.%m.%Y.') }}</td>
+                    <td>{{ record['description'] }}</td>
+                    <td style="text-align: right;">{{ "{:.2f}".format(record['debt_amount']) }}</td>
+                    <td style="text-align: right;">{{ "{:.2f}".format(record['payment_amount']) }}</td>
+                    <td style="text-align: right;">{{ "{:.2f}".format(record['saldo']) }}</td>
+                    <td style="text-align: center;">
+                        {% if record['debt_amount'] > 0 %} 
+                        <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a> 
+                        {% else %} 
+                        <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn-x btn-primary-x" title="Otvorite izvod"><i class="fa-solid fa-file-lines awesomeedit"></i></a> 
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+            {% if loop.last and record['saldo'] > 0 %}
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <a class="btn btn-primary" href="#">Generiši uplatnicu za vrednost ukupnog dugovanja</a>
+                </td>
+            </tr> -->
+            {% endif %}
         {% endfor %}
     </tbody>
 </table>
