@@ -59,7 +59,7 @@ def reset_request():
         send_reset_email(user)
         flash('Mejl je poslat na Vašu adresu sa instrukcijama za resetovanje lozinke. ', 'info')
         return redirect(url_for('users.login'))
-    return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='Resetovanje lozinke', route_name=route_name)
+    return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='', route_name=route_name)
 
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
