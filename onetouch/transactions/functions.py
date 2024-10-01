@@ -141,7 +141,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
                 'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
                 'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
                 'primalac': school_info,
-                'sifra_placanja': 189,
+                'sifra_placanja': 253, # bilo je ranije: 189,
                 'valuta': 'RSD', #! proveri da li je zbog QR koda potrebno drugačije definisati valutu
                 'iznos': record.student_debt_total,
                 'racun_primaoca': record.transaction_record_service_item.bank_account,
