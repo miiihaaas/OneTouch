@@ -1,29 +1,34 @@
 {% extends "layout.html" %}
 {% block content %}
-    <div class="content-section">
-        <form method="POST" action="">
-            {{ form.hidden_tag() }}
-            <fieldset class="form-group">
-                <p>Uneste mejl na kome ćemo Vam poslati link za resetovanje lozike</p>
+<main role="main" class="container login-screen">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" >
+    <h1>Resetovanje lozinke</h1>
+    <p>Uneste mejl na kome ćemo Vam poslati link za resetovanje lozike</p>
+    <div class="row">
+        <div class="content-section">
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+                <fieldset class="form-group-m0">
+                    <div class="form-group">
+                        <i class="fa-regular fa-envelope"></i> {{ form.email.label(class="form-control-label") }}
+                        {% if form.email.errors %}
+                            {{ form.email(class="form-control form-control-lg is-invalid") }}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.email(class="form-control form-control-lg") }}
+                        {% endif %}
+                    </div>
+                </fieldset>
                 <div class="form-group">
-                    {{ form.email.label(class="form-control-label") }}
-
-                    {% if form.email.errors %}
-                        {{ form.email(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.email.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        {{ form.email(class="form-control form-control-lg") }}
-                    {% endif %}
+                {{ form.submit(class="btn btn-outline-info") }}
                 </div>
-            </fieldset>
-            <div class="form-group">
-              {{ form.submit(class="btn btn-outline-info") }}
-            </div>
-          </form>
+            </form>
         </div>
         <script>document.body.classList.add('reset-request');</script>
+    </div>
+</main>
 {% endblock content%}

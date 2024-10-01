@@ -1,6 +1,6 @@
-body { background: url(img/loginbg.jpg) center center no-repeat; background-size: cover; background-attachment: fixed; font-family: 'Montserrat', sans-serif; padding-left: calc(100vw - 100%); margin-left: -17px; }
-legend { font-size: 1.6rem; color: #999; font-weight: 700; padding: 5px 0 0 0;}
-h1 { font-size: 1.6rem; color: #999; font-weight: 700; padding: 15px 0 0 0; }
+body { background: url(img/loginbg-2.jpg) center center no-repeat; background-size: cover; background-attachment: fixed; font-family: 'Montserrat', sans-serif; padding-left: calc(100vw - 100%); margin-left: -17px; }
+legend { font-size: 2rem; color: #333; font-weight: 500; padding: 5px 0 0 0;}
+h1 { font-size: 2rem; color: #333; font-weight: 500; padding: 15px 0 0 0; }
 h2 { font-size: 1.4rem; }
 h3 { font-size: 1.2rem; }
 body.Dodavanje fieldset.form-group { max-width: 100% !important;}
@@ -22,9 +22,11 @@ body.Dodavanje fieldset.form-group { max-width: 100% !important;}
 .bg-implicit-deepblue { background-color: #104e97; }
 .bg-implicit-skyblue { background-color: #009dde; }
 .bg-implicit-purple { background-color: #940052; }
+.btn-in-center { width: fit-content; margin: auto; }
+
 body.Login title /*body.Login header*/ { display: none; }
 main.login-screen { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; flex-direction: column; /*padding-top: 5%;*/ }
-main.login-screen .row { display: flex; max-width: 700px; width: 700px; background: rgba(255,255,255,0.7); border-radius: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.04); padding: 20px; }
+main.login-screen .row { display: flex; max-width: 700px; width: 700px; /*background: rgba(255,255,255,0.7); border-radius: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.04);*/ padding: 20px; }
 body.Login main:not(.login-screen) { margin-top: 0; background-color: transparent !important; box-shadow: none; }
 body.Login fieldset.form-group { max-width: 100%; }
 body.Login .row form > div.form-group { margin-top: 30px; }
@@ -33,11 +35,20 @@ body.Login .login-screen form > div.form-group { display: flex; justify-content:
 main.login-screen .content-section { background: transparent; padding: 0; border: none; border-radius: unset; margin-bottom: 0; max-width: 650px; margin: auto; }
 main.login-screen .subtitle { text-align: center; }
 main.login-screen i { color: #bbb; }
-.login-screen input.form-control { border: 0; border-bottom: 1px solid #ccc; border-radius: 0; }
-.login-screen input.form-control:focus { box-shadow: none; border-bottom: 3px solid #940052 !important; }
+.login-screen input.form-control { border: 1px solid #eee; /*border-bottom: 1px solid #ccc;*/ border-radius: 6px; }
+.login-screen input.form-control:focus { box-shadow: 0 0 16px #00000010; /*border-bottom: 3px solid #940052 !important;*/ }
 .login-screen input:-internal-autofill-selected { background-color: transparent !important; }
-.login-screen label.form-control-label { color: #bbb; font-style: italic; font-size: 14px; }
+.login-screen label.form-control-label { color: #333; /*font-style: italic;*/ font-size: 14px; }
 #email:before {content: '\f0e0' !important; position: absolute; font-family: "Font Awesome 6 Free"; }
+input:-webkit-autofill, 
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+	box-shadow: 0 0 0 1000px white inset !important;
+	font-size: 20px !important;
+	border-color: #ddd;
+}
 .btn { border: none; background-color: #009dde; background-image: linear-gradient(#009dde, #104e97); border-radius: 5px; color: #fff; text-transform: uppercase; font-weight: 500; font-size: 12px; padding: 10px 20px; }
 .btn:hover, .btn-s:hover { color: #fff; background: #104e97 !important; border-color: transparent; }
 .btn-s { border: none; background-color: #009dde; background-image: linear-gradient(#009dde, #104e97); border-radius: 5px; color: #fff; text-transform: uppercase; font-weight: 500; font-size: 12px;
@@ -47,10 +58,11 @@ body.Početna .two-inputs-in-row { display: flex; justify-content: space-between
 body.Početna .two-inputs-in-row h2 { color: #940052; font-size: 1.2rem; }
 body.softveru a.btn.btn-info { margin-top: 40px !important; }
 
-header { background-color: #104e97; padding-bottom: 40px; }
+header { background-color: #104e97; /*padding-bottom: 40px;*/ }
 .bg-steel { background-color: #104e97; }
 nav#sidebar { min-width: 300px; }
-main.container:not(.login-screen) { margin:-40px 20px 20px 0; background-color: #fff; box-shadow: 0 0 10px #00000030; border-radius: 5px; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }
+/*main.container:not(.login-screen) { margin:-40px 20px 20px 0; background-color: #fff; box-shadow: 0 0 10px #00000030; border-radius: 5px; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }*/
+main.container:not(.login-screen) { margin: 0 20px 20px 0; padding: 0 20px 20px 20px; overflow: hidden; width: -webkit-fill-available; max-width: 100%; }
 title { display: block; font-size: 24px; font-weight: 700; color: #999; text-shadow: 1px 1px 1px #fff; background-color: #eee; padding: 10px; margin: 0 -20px 20px -20px; }
 .navbar>.container, .navbar>.container-fluid, .navbar>.container-lg, .navbar>.container-md, .navbar>.container-sm, .navbar>.container-xl, .navbar>.container-xxl { justify-content: space-between; }
 .navbar-brand img { max-width: 160px; }
@@ -123,8 +135,8 @@ body.Registracija form > div.form-group { text-align: center; }
 footer { display: flex; max-width: 1320px; margin: auto; justify-content: center; font-size: 12px; }
 form > div.form-group { text-align: center; }
 .btn.btn-danger, .btn.btn-secondary { margin-bottom: 10px !important; }
-.btn.btn-secondary { background-image: linear-gradient(#009dde, #0174a5) !important; color:#ffffff !important; }
-.btn.btn-secondary:hover { background-image: linear-gradient(#0174a5, #0174a5) !important; }
+.btn.btn-secondary { background-image: linear-gradient(#b60073, #7c004e) !important; color:#ffffff !important; }
+.btn.btn-secondary:hover { background-image: linear-gradient(#7c004e, #7c004e) !important; }
 .btn.btn-danger { background-image: linear-gradient(#eb0081, #940052) !important; }
 .btn.btn-danger:hover { background-image: linear-gradient(#940052, #940052) !important; }
 .btn.btn-secondary, .btn.btn-danger { margin: 0 0 0 0 !important; }
@@ -195,6 +207,8 @@ span.select2.select2-container.select2-container--classic { width: 100% !importa
 }
 @media (min-width: 768px) {
 	.navbar-expand-md .navbar-collapse { flex-grow: 0; }
+	.navbar { padding: 10px 55px; }
+	.form-switch { padding-left: 55px; }
 }
 @media (max-width: 767px) {
 	main.login-screen .row { width: auto; }

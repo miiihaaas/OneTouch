@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="row">
+<div class="row align-items-end">
     <div class="col">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
@@ -43,11 +43,11 @@
     </div>
     <div class="col">
         <label for="start-date" class="form-label">Početni datum:</label>
-        <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}">
+        <input class="form-control" type="date" id="start-date" name="start-date" value="{{ start_date }}">
     </div>
     <div class="col">
         <label for="end-date" class="form-label">Krajnji datum:</label>
-        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}">
+        <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
     <div class="col">
         <a class="btn btn-danger" href="./debts_archive_list">Reset filtera</a>
