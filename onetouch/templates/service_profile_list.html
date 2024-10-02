@@ -12,10 +12,10 @@
             <th>Naziv dobavljača</th>
             <th>Cena</th>
             <th>Broj rata</th>
-            <th>Razred</th>
+            <th class="sirina-razred">Razred</th>
             <th>Račun</th>
             <th>Poziv na broj</th>
-            <th></th>
+            <th class="sirina-akcije"></th>
         </tr>
     </thead>
     <tbody>
@@ -699,7 +699,7 @@
 
                 // Popuni modal odgovarajućim podacima
                 document.getElementById('service_name').innerText = `"${serviceName}"`;
-                document.getElementById('delete_form').setAttribute('action', `/service_profile/${serviceId}/delete`);
+                document.getElementById('delete_form').setAttribute('action', `/service_profile/${serviceId}/delete`); // ispravi da na serveru ostane /0001/ , /0002/ ... /0010/
 
                 // Prikaži modal
                 $('#DeleteModal').modal('show');

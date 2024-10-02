@@ -69,7 +69,7 @@ def teacher_list():
 def delete_teacher(teacher_id):
     teacher = Teacher.query.get(teacher_id)
     if not current_user.is_authenticated:
-        flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
+        flash('Morate biti ulogovani da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         logging.debug ('nije dobar password')
