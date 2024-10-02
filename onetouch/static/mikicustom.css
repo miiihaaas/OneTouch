@@ -5,15 +5,15 @@ h2 { font-size: 1.4rem; }
 h3 { font-size: 1.2rem; }
 body.Dodavanje fieldset.form-group { max-width: 100% !important;}
 .invalid-input { border-color: red !important; }
-.alert { display: inline-block; padding: 5px 20px 3px 40px !important; }
-.alert-success { color: #009cdb; background-color: transparent;  border: 1px solid #009cdb; font-weight: 700; font-size: 16px; text-align: left; border-radius: 50px;}
-.alert-success:before { position: absolute; content: '\f058'; font-family: "Font Awesome 6 Free"; left: 0; top: -8px; font-size: 32px; }
-.alert-danger { color: #92004f; background-color: transparent; border: 1px solid #92004f; font-weight: 700; font-size: 16px; text-align: left; border-radius: 50px;}
-.alert-danger:before { position: absolute; content: '\f057'; font-family: "Font Awesome 6 Free"; left: 0; top: -8px; font-size: 32px; }
-.alert-message { color: #104e97; background-color: transparent; border: 1px solid #104e97; font-weight: 700; font-size: 16px; text-align: left; border-radius: 50px;}
-.alert-message:before { position: absolute; content: '\f06a'; font-family: "Font Awesome 6 Free"; left: 0; top: -8px; font-size: 32px; }
-.alert-info { color: #104e97; background-color: transparent; border: 1px solid #104e97; font-weight: 700; font-size: 16px; text-align: left; border-radius: 50px; }
-.alert-info:before { position: absolute; content: '\f05a'; font-family: "Font Awesome 6 Free"; left: 0; top: -8px; font-size: 32px; }
+.alert { display: flex; padding: 20px !important; margin: auto; width: fit-content; left: 40px; }
+.alert-success { color: #11a84f; background-color: #fff;  border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020;}
+.alert-success:before { position: absolute; content: '\f058'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
+.alert-danger { color: #eb2127; background-color: #fff; border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020;}
+.alert-danger:before { position: absolute; content: '\f057'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
+.alert-message { color: #f79e1f; background-color: #fff; border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020;}
+.alert-message:before { position: absolute; content: '\f06a'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
+.alert-info { color: #24aae0; background-color: #fff; border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020; }
+.alert-info:before { position: absolute; content: '\f05a'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
 .btn-check:focus+.btn-danger, .btn-danger:focus { box-shadow: none !important; }
 .btn-check:focus+.btn-secondary, .btn-secondary:focus { box-shadow: none !important; }
 .btn-outline-info:not(:disabled):not(.disabled).active:focus, .btn-outline-info:not(:disabled):not(.disabled):active:focus, .show>.btn-outline-info.dropdown-toggle:focus { box-shadow: none !important; }
@@ -43,12 +43,7 @@ main.login-screen i { color: #bbb; }
 input:-webkit-autofill, 
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
-input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 1000px white inset !important;
-	box-shadow: 0 0 0 1000px white inset !important;
-	font-size: 20px !important;
-	border-color: #ddd;
-}
+input:-webkit-autofill:active { -webkit-box-shadow: 0 0 0 1000px white inset !important; box-shadow: 0 0 0 1000px white inset !important; font-size: 20px !important; border-color: #ddd; }
 .btn { border: none; background-color: #009dde; background-image: linear-gradient(#009dde, #104e97); border-radius: 5px; color: #fff; text-transform: uppercase; font-weight: 500; font-size: 12px; padding: 10px 20px; }
 .btn:hover, .btn-s:hover { color: #fff; background: #104e97 !important; border-color: transparent; }
 .btn-s { border: none; background-color: #009dde; background-image: linear-gradient(#009dde, #104e97); border-radius: 5px; color: #fff; text-transform: uppercase; font-weight: 500; font-size: 12px;
@@ -57,6 +52,14 @@ main.login-screen .content-section a { text-decoration: none; color: #104e97; fo
 body.Početna .two-inputs-in-row { display: flex; justify-content: space-between; align-items: baseline; }
 body.Početna .two-inputs-in-row h2 { color: #940052; font-size: 1.2rem; }
 body.softveru a.btn.btn-info { margin-top: 40px !important; }
+body.main\.home .alert-success { margin-bottom: 30px; margin-top: 30px; }
+body.main\.home legend { display: none; }
+.home-icon-row { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+.home-icon-box { display: flex; flex-direction: column; text-align: center; max-width: 150px; }
+.home-icon-box a { overflow: hidden; border-radius: 15px; }
+.home-icon-box a:hover img { transform: scale(1.1); }
+.home-icon-box img { max-width: 150px; transition: transform 0.3s ease; }
+.home-icon-box p { padding-top: 10px; line-height: 18px; font-weight: 500; color: #104e97; }
 
 header { background-color: #104e97; /*padding-bottom: 40px;*/ }
 .bg-steel { background-color: #104e97; }
