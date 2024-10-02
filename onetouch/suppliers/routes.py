@@ -275,7 +275,7 @@ def delete_service_profile(service_profile_id):
     service_profile = ServiceItem.query.get_or_404(service_profile_id)
     transactions = TransactionRecord.query.filter_by(service_item_id=service_profile_id).all()
     if not current_user.is_authenticated:
-        flash('Morate da budete ulogovani da biste pristupili ovoj stranici', 'danger')
+        flash('Morate biti ulogovani da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         logging.debug ('nije dobar password')

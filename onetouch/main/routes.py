@@ -15,7 +15,7 @@ def home():
     if current_user.is_authenticated:
         pass
     else:
-        flash('Morate da budete prijavljeni da biste pristupili ovoj stranici.', 'info')
+        flash('Morate biti prijavljeni da biste pristupili ovoj stranici.', 'info')
         return redirect(url_for('users.login'))
     return render_template('home.html', title="Početna", legend="Početna", route_name=route_name)
 

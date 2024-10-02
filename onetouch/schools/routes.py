@@ -12,7 +12,7 @@ def school_profile():
     route_name = request.endpoint
     school = School.query.first()
     if not current_user.is_authenticated:
-        flash('Morate da budete prijavljeni da biste pristupili ovoj stranici.', 'info')
+        flash('Morate biti prijavljeni da biste pristupili ovoj stranici.', 'info')
         return redirect(url_for('users.login'))
         
     form = EditSchoolForm()

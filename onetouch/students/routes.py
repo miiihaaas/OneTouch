@@ -260,7 +260,7 @@ def class_plus_one():
 def delete_student(student_id):
     student = Student.query.get(student_id)
     if not current_user.is_authenticated:
-        flash('Morate da budete prijavljeni da biste pristupili ovoj stranici', 'danger')
+        flash('Morate biti prijavljeni da biste pristupili ovoj stranici', 'danger')
         return redirect(url_for('users.login'))
     elif not bcrypt.check_password_hash(current_user.user_password, request.form.get("input_password")):
         logging.debug ('nije dobar password')
