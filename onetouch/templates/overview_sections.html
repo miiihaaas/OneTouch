@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="row form-group">
+<div class="row form-group align-flex-end">
     <div class="col-md-3 form-group">
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
@@ -61,19 +61,19 @@
             {% endif %}
         </select>
     </div>
-    <div class="col">
+    <div class="col form-group cstm-1">
         <label for="start-date" class="form-label">Početni datum:</label>
-        <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
+        <input class="form-control" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
     </div>
-    <div class="col">
+    <div class="col form-group cstm-1">
         <label for="end-date" class="form-label">Krajnji datum:</label>
-        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
+        <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
     </div>
-    <div class="col-md-1 mt-1">
+    <div class="col-md-1 form-group cstm-2">
         <a id="resetButton" class="btn btn-danger" href="./overview_sections">Reset filtera</a>
     </div>
-    <div class="col-md-1  mt-1">
-        <a id="resetButton" class="btn btn-promary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank">Štampa pregleda</a>
+    <div class="col-md-1 form-group">
+        <a id="resetButton" class="btn btn-promary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
     </div>
     <hr>
 </div>
@@ -135,7 +135,7 @@
     $(document).ready(function() {
         var table = $('#data').DataTable({
             language: {
-                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                url: "/static/sr-SP.json"
             },
             columnDefs: [
                 { targets: [0, 1], visible: false }, // Sakrivanje prvog i drugog stupa
