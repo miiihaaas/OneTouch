@@ -246,7 +246,7 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <legend class="modal-title" id="DeleteModalLabel">Potvrda brisanja učenika iz baze</legend>
+                <h5 class="modal-title" id="DeleteModalLabel">Potvrda brisanja učenika iz baze</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -258,7 +258,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                <button type="button" class="btn btn-secondary mr-5px" data-dismiss="modal">Otkažite</button>
                 <button class="btn btn-danger" form="deleteForm" type="submit">Obrišite Učenika</button>
             </div>
         </div>
@@ -395,7 +395,7 @@
             ],
             order: [[3, 'asc'], [4, 'asc'], [2, 'asc'],],
             language: {
-                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                url: "/static/sr-SP.json"
             }
         });
         // Dodavanje event listenera za promenu vrednosti u searchRazred
