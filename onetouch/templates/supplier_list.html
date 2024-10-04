@@ -1,9 +1,16 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID dobavljača"; }
+        .mobtable td:nth-of-type(2):before { content: "Naziv dobavljača"; }
+        .mobtable td:nth-of-type(3):before { content: "Akcije"; }
+    }
+</style>
 <div>
     <a href="#" class="btn btn-info mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija novog dobavljača</a>
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID dobavljača</th>

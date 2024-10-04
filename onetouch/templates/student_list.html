@@ -1,5 +1,16 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID učenika"; }
+        .mobtable td:nth-of-type(2):before { content: "Ime"; }
+        .mobtable td:nth-of-type(3):before { content: "Prezime"; }
+        .mobtable td:nth-of-type(4):before { content: "Razred"; }
+        .mobtable td:nth-of-type(5):before { content: "Odeljenje"; }
+        .mobtable td:nth-of-type(6):before { content: "Mejl roditelja"; }
+        .mobtable td:nth-of-type(7):before { content: "Akcije"; }
+    }
+</style>
 <div class="row form-group align-items-end">
     <div class="col form-group">
         <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
@@ -264,7 +275,7 @@
         </div>
     </div>
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID učenika</th>
@@ -356,9 +367,9 @@
                         // Generisanje HTML za novu kolonu
                         if (row.parent_email) {
                             if (row.send_mail) {
-                                return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                                return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> ${row.parent_email}</td>`;
                             } else {
-                                return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                                return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> ${row.parent_email}</td>`;
                             }
                         } else {
                             return '<td></td>';
@@ -395,7 +406,7 @@
             ],
             order: [[3, 'asc'], [4, 'asc'], [2, 'asc'],],
             language: {
-                url: "/static/sr-SP.json"
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             }
         });
         // Dodavanje event listenera za promenu vrednosti u searchRazred

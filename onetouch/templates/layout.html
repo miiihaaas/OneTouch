@@ -22,7 +22,7 @@
     <!-- selet2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='mikicustom.css') }}">
-    <!--
+
     <style>
       #sidebar { transition: margin-left 0.3s; overflow-x: hidden; }
       #sidebar.active { margin-left: -300px; }
@@ -30,7 +30,7 @@
       .navbar-nav .nav-item { opacity: 0; transition: opacity 0.5s ease; }
       .navbar-nav .nav-item.hidden { opacity: 0; pointer-events: none; }
     </style>
-  -->
+
     {% if title %}
       <title>OneTouch - {{ title }}</title>
     {% else %}
@@ -43,13 +43,13 @@
   <body class="{{ route_name }}">
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel">
-        <!--
+
         {% if current_user.is_authenticated %}
         <button type="button" id="sidebarToggle" style="background: transparent; border: none;">
           <i class="fa-solid fa-bars awesomedelete" style="color: white;"></i>
         </button>
         {% endif %}
-        -->
+
         <div class="container">
           {% if current_user.is_authenticated %}
           <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
@@ -103,12 +103,11 @@
     
 
     <div class="wrapper d-flex align-items-stretch">
-      <!--
+      
       {% if current_user.is_authenticated %}
       <nav id="sidebar" class>
         <div class="p-4 pt-5">
-          <a href="{{url_for('main.home')}}"><img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" style="width: 95%;"></a>
-          
+          <!--<a href="{{url_for('main.home')}}"><img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" style="width: 95%;"></a>-->
           <div class="accordion leftcolacc" id="accordionMenu">
             <a href="{{ url_for('main.home') }}" class="homelink">Početna strana</a>
             <div class="accordion-item">
@@ -171,7 +170,7 @@
         </div>
       </nav>
       {% endif %}
-      -->
+
       <main role="main" class="container">
         <div class="row">
           <div class="col-md-12">
@@ -214,7 +213,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     {% block scripts %}{% endblock %}
-    <!--
+
     <script>
       document.addEventListener("DOMContentLoaded", function () {
           // Get the sidebar and button elements
@@ -269,7 +268,7 @@
           toggleSidebar();
       });
     </script>
-    -->
+
     <script>
       // skripta koja porkeće div.loading-overlay kod dugmića koji u class imaju "loading" 
       //a služi za dugmiće koje zahtevaju duži rad u backendu kako bi onemogućili korisniku da klikne  neko dugme dok se ne izvši funkcija u bakendu
@@ -319,5 +318,31 @@
 			}
 		});
 	</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Uzmite trenutni URL
+      var currentPath = window.location.pathname;
+
+      // Uzmite sve podstavke u meniju sa klasom 'dropdown-item'
+      var menuItems = document.querySelectorAll('.dropdown-item');
+
+      // Iterirajte kroz sve podstavke u meniju
+      menuItems.forEach(function (menuItem) {
+          var href = menuItem.getAttribute('href');
+
+          // Proverite da li trenutni URL tačno odgovara href vrednosti
+          if (href && currentPath === href) {
+              // Dodajte klasu 'active' na aktivnu podstavku
+              menuItem.classList.add('active');
+
+              // Dodajte klasu 'active' i na glavnu stavku (roditeljski element <li> ili <a>)
+              var parentDropdown = menuItem.closest('li').querySelector('.nav-link');
+              if (parentDropdown) {
+                  parentDropdown.classList.add('active');
+              }
+          }
+      });
+  });
+</script>
   </body>
 </html>
