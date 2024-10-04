@@ -1,9 +1,20 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID tipa usluge"; }
+        .mobtable td:nth-of-type(2):before { content: "Naziv tipa usluge"; }
+        .mobtable td:nth-of-type(3):before { content: "Naziv dobavljača"; }
+        .mobtable td:nth-of-type(4):before { content: "Tip plaćanja"; }
+        .mobtable td:nth-of-type(5):before { content: "Akcije"; }
+        .mobtable td:nth-of-type(6):before { content: ""; }
+        .mobtable td:nth-of-type(7):before { content: ""; }
+    }
+</style>
 <div>
     <a href="#" class="btn btn-info mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija novog tipa usluge</a>
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID tipa usluge</th>
@@ -192,7 +203,7 @@
                 ],
                 order: [[4, 'asc'], [2, 'asc'], [1, 'asc'],],
                 language: {
-                    url: "/static/sr-SP.json"
+                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
                 }
             });
         });
