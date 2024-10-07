@@ -1,5 +1,6 @@
 body { background: url(img/loginbg-2.jpg) center top no-repeat; background-size: 100%; background-attachment: fixed; font-family: 'Montserrat', sans-serif; /*padding-left: calc(100vw - 100%); margin-left: -17px;*/ }
-legend { font-size: 2rem; color: #333; font-weight: 500; padding: 5px 0 0 0;}
+legend { font-size: 1.3rem; color: #333; font-weight: 500; padding: 5px 0 0 0; background-color: #a1bbd9; text-align: center; padding-bottom: 5px; }
+legend span { font-weight: 700; color: #104e97; }
 h1 { font-size: 2rem; color: #333; font-weight: 500; padding: 15px 0 0 0; }
 h2 { font-size: 1.4rem; }
 h3 { font-size: 1.2rem; }
@@ -112,6 +113,11 @@ title { display: block; font-size: 24px; font-weight: 700; color: #999; text-sha
 .accordion-item input[type=date]{ min-height: 38px; height: 38px }
 .form-control:focus { border-color: #555; box-shadow: none; }
 .accordion-item label.form-control-label { padding-right: 10px; }
+
+.accordion-link { display: flex; background-image: none; background-color: #fff; color: #333 !important; text-transform: uppercase; font-weight: 700; font-size: 12px; padding: 10px 20px; border-radius: 5px !important; margin-bottom: 2px; text-decoration: none; }
+.accordion-link:hover { color: #fff; background: transparent !important; border-color: transparent; text-decoration: none; }
+.accordion-link:focus { border-color: transparent; outline: 0; box-shadow: none; }
+
 .form-select:focus { border-color: #555; box-shadow: none; }
 input[type=search] { min-height: 38px; height: 38px; border-radius: 5px; }
 select.form-select.form-select-sm { min-height: 38px; }
@@ -131,7 +137,7 @@ th.sorting.sorting_desc, th.sorting.sorting_asc { color: #009cdd; }
 .page-link:focus { box-shadow: none; }
 a.page-link:not(.page-item:first-child a.page-link, .page-item:last-child a.page-link, .page-item.disabled a.page-link) { background-image: linear-gradient(#009dde, #104e97); color: #fff; }
 a.page-link:not(.page-item:first-child a.page-link, .page-item:last-child a.page-link):hover { background-image: linear-gradient(#104e97, #009dde); }
-.page-item.active a.page-link:not(.page-item:first-child a.page-link, .page-item:last-child a.page-link) { background-image: linear-gradient(#082950, #082950); }
+.page-item.active a.page-link:not(.page-item:first-child a.page-link, .page-item:last-child a.page-link) { background-image: linear-gradient(#fff, #fff); color: #333; border-color: #ddd; }
 .page-item.active .page-link { border-color: unset; }
 .page-item.disabled a:not(.page-item:first-child a.page-link, .page-item:last-child a.page-link) { border: 0 !important; }
 .page-item:first-child:not(.disabled) .page-link { background-image: linear-gradient(#eee, #ccc); color: #555; }
@@ -185,6 +191,14 @@ input#zaduzi_sve_kolicina { width: 80px !important; margin-right: 4px; }
 .False { border-color: #ffaaaa !important; background-color: #ffeeee !important; }
 .negativna-vrednost { background-color: #dbedd6 !important; }
 .error-result { background-color: #ffeeee !important; border-color: #ffaaaa !important; }
+
+body.main\.instructions .site-header #sidebarToggle, 
+body.main\.instructions .site-header #navbarToggle, 
+body.main\.instructions nav#sidebar { display: none !important; }
+
+#backToTopBtn { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 99; background-color: #104e97; color: white; border: none; padding: 10px 18px;; border-radius: 10px; cursor: pointer; font-size: 18px; }
+#backToTopBtn:hover { background-color: #0c3c72; }
+
 @media (min-width: 992px) {
 	/*body:not(.Korisnici) .btn-info { width: 100%}*/
 	body.Fakture table#data .btn.btn-info { width: 100%; }
@@ -232,6 +246,7 @@ input#zaduzi_sve_kolicina { width: 80px !important; margin-right: 4px; }
 	.navbar-expand-md .navbar-collapse { flex-grow: 0; }
 	.navbar { padding: 10px 55px; }
 	.form-switch { padding-left: 55px; }
+	.minus-50-top { margin-top: -50px; }
 }
 @media (max-width: 767px) {
 	main.login-screen .row { width: auto; }

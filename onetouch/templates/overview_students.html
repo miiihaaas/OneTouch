@@ -133,11 +133,22 @@
     </tbody>
 </table>
 <hr>
-<div>
-    <p>Zaduženje: <span id="zaduzenjeSum"></span></p>
-    <p>Uplate: <span id="uplateSum"></span></p>
-    <p>Saldo: <span id="saldoSum"></span></p>
-</div>
+
+<table id="data" class="table table-striped no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>Zaduženje:</th>
+            <th>Uplate:</th>
+            <th>Saldo:</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span id="zaduzenjeSum"></span></td>
+            <td><span id="uplateSum"></span></td>
+            <td><span id="saldoSum"></span></td>
+        </tr>
+</table>
 {% endblock content%}
 {% block scripts %}
 <script>

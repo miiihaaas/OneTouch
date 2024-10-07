@@ -100,8 +100,7 @@
         </div>
       </nav>
     </header>
-    
-
+    <legend class="">{{ legend | safe }}</legend>
     <div class="wrapper d-flex align-items-stretch">
       
       {% if current_user.is_authenticated %}
@@ -109,7 +108,7 @@
         <div class="p-4 pt-5">
           <!--<a href="{{url_for('main.home')}}"><img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" style="width: 95%;"></a>-->
           <div class="accordion leftcolacc" id="accordionMenu">
-            <a href="{{ url_for('main.home') }}" class="homelink">Početna strana</a>
+            <!--<a href="{{ url_for('main.home') }}" class="homelink">Početna strana</a>-->
             <div class="accordion-item">
               <h2 class="accordion-header" id="headingOne">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
@@ -174,7 +173,7 @@
       <main role="main" class="container">
         <div class="row">
           <div class="col-md-12">
-            <legend class="">{{ legend }}</legend>
+            <!--<legend class="">{{ legend | safe }}</legend>-->
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
@@ -185,6 +184,10 @@
               {% endif %}
             {% endwith %}
             {% block content %}{% endblock %}
+            <div class="loading-overlay">
+              <div class="spinner"></div>
+              <div>   Molim Vas sačekajte...</div>
+            </div>
           </div>
         </div>
       </main>
@@ -282,6 +285,14 @@
         $(window).on("load", function () {
           $(".loading-overlay").removeClass("active");
         });
+    });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelector(".loading-overlay").classList.add("active");
+    });
+    window.addEventListener("load", function() {
+      document.querySelector(".loading-overlay").classList.remove("active");
     });
   </script>
   <script>

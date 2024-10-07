@@ -115,10 +115,6 @@
     <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
     <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a>
 </div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
-</div>
 
 {% endblock content%}
 

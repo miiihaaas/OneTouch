@@ -91,21 +91,42 @@
 </table>
 {% endfor %}
 <hr>
+
 <div class="row">
-    <div class="col">
-        <p>Ukupno zaduženje: <span id="zaduzenjeSum"></span></p>
-        <p>Ukupne uplate: <span id="uplateSum"></span></p>
-        <p>Ukupni saldo: <span id="saldoSum"></span></p>
+    <div class="col-md-6">
+        <table id="data" class="table table-striped no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
+            <tbody>
+                <tr>
+                    <td>Ukupno zaduženje:</td>
+                    <td class="text-right"><span id="zaduzenjeSum"></span></td>
+                </tr>
+                <tr>
+                    <td>Ukupne uplate:</td>
+                    <td class="text-right"><span id="uplateSum"></span></td>
+                </tr>
+                <tr>
+                    <td>Ukupni saldo:</td>
+                    <td class="text-right"><span id="saldoSum"></span></td>
+                </tr>
+        </table>
     </div>
-    <div class="col">
-        <p>Zaduženje za filtrirani period: <span id="zaduzenjeFilterSum"></span></p>
-        <p>Uplate za filtrirani period: <span id="uplateFilterSum"></span></p>
-        <p>Saldo za filtrirani period: <span id="saldoFilterSum"></span></p>
+    <div class="col-md-6">
+        <table id="data" class="table table-striped no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
+            <tbody>
+                <tr>
+                    <td>Zaduženje za filtrirani period:</td>
+                    <td class="text-right"><span id="zaduzenjeFilterSum"></span></td>
+                </tr>
+                <tr>
+                    <td>Uplate za filtrirani period:</td>
+                    <td class="text-right"><span id="uplateFilterSum"></span></td>
+                </tr>
+                <tr>
+                    <td>Saldo za filtrirani period:</td>
+                    <td class="text-right"><span id="saldoFilterSum"></span></td>
+                </tr>
+        </table>
     </div>
-</div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
 </div>
 
 {% endblock content%}
