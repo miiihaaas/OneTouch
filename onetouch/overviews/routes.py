@@ -263,7 +263,7 @@ def overview_student(student_id):
         
     return render_template('overview_student.html', 
                             title=f'Pregled stanja učenika: {student.student_name} {student.student_surname}', 
-                            legend=f"Pregled stanja učenika: {student.student_name} {student.student_surname}", 
+                            legend=f'Pregled stanja učenika: <span>{student.student_name} {student.student_surname}</span>', 
                             student=student,
                             start_date=start_date,
                             end_date=end_date,
