@@ -71,7 +71,8 @@ body.main\.home legend { display: none; }
 .home-icon-box a:hover img { transform: scale(1.1); }
 .home-icon-box img { max-width: 250px; transition: transform 0.3s ease; }
 .home-icon-box p { padding-top: 10px; line-height: 18px; font-weight: 500; color: #fff; margin-top: -40px; z-index: 1; pointer-events: none; margin-bottom: 20px; text-shadow: 0px 1px 1px #000; font-size: 18px; }
-nav#sidebar .nav-link { border-bottom: 1px solid #ffffff; }
+.leftcolacc .accordion-body { padding: 0 10px; }
+nav#sidebar .nav-link:not(:last-child) { border-bottom: 1px solid #ffffff; }
 
 header { background-color: #104e97; /*padding-bottom: 40px;*/ }
 .bg-steel { background-color: #104e97; }
@@ -93,7 +94,8 @@ title { display: block; font-size: 24px; font-weight: 700; color: #999; text-sha
 .leftcolacc .homelink:hover { text-decoration: none; color: #009dde; }
 .leftcolacc h2 { margin-top: 0 }
 .leftcolacc .accordion-button { background-image: none; }
-.leftcolacc .accordion-button:hover { background: transparent !important; }
+.leftcolacc .accordion-button:hover { background-color: #eee !important; }
+.leftcolacc .accordion-button:not(.collapsed) { background-color: #eee !important; }
 .leftcolacc .nav-link { color: #333; }
 .leftcolacc .nav-link:focus, .leftcolacc .nav-link:hover { color: #009dde !important; }
 .leftcolacc .accordion-button:not(.collapsed) { background-color: transparent; box-shadow: none; }
