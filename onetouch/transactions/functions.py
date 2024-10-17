@@ -33,20 +33,37 @@ def provera_validnosti_poziva_na_broj(podaci, all_reference_numbers):
     return podaci
 
 
+# def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
+#     if input_string[0].isdigit():
+#         pattern = r'\d{4}-\d{3}|\d{7}'
+#         brojevi = re.findall(pattern, input_string[:8])
+#     elif input_string[0] == '[':
+#         # Ako je prvi karakter '[', pronađi poziciju ']' i traži broj u sledećih 8 karaktera
+#         end_bracket_pos = input_string.find(']')
+#         if end_bracket_pos != -1:
+#             brojevi = re.findall(r'\d{4}-\d{3}|\d{7}', input_string[end_bracket_pos+1:end_bracket_pos+9])
+#         else:
+#             brojevi = []
+#     else:
+#         brojevi = []
+#     return brojevi[0] if brojevi else '-' #! namerno umest None
+
+
 def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
-    if input_string[0].isdigit():
-        pattern = r'\d{4}-\d{3}|\d{7}'
-        brojevi = re.findall(pattern, input_string[:8])
-    elif input_string[0] == '[':
-        # Ako je prvi karakter '[', pronađi poziciju ']' i traži broj u sledećih 8 karaktera
-        end_bracket_pos = input_string.find(']')
-        if end_bracket_pos != -1:
-            brojevi = re.findall(r'\d{4}-\d{3}|\d{7}', input_string[end_bracket_pos+1:end_bracket_pos+9])
-        else:
-            brojevi = []
+    # Definiše regex pattern koji odgovara generalizovanom formatu
+    pattern = r'(?<!\d)(\d{4}[ -]?\d{3})(?!\d)'
+    
+    # Traži pattern u celom input stringu
+    match = re.search(pattern, input_string)
+    
+    if match:
+        poziv_na_broj = match.group(1)
+        # Ako je pronađen format sa razmakom, zameni ga sa crticom
+        if ' ' in poziv_na_broj:
+            poziv_na_broj = poziv_na_broj.replace(' ', '-')
+        return poziv_na_broj
     else:
-        brojevi = []
-    return brojevi[0] if brojevi else '-' #! namerno umest None
+        return '-'  #! namerno umesto None
 
 
 #! koristi se za generisanje i slanje pdf uplatnica
