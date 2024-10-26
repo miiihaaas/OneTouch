@@ -249,7 +249,7 @@ def submit_records():
         #! proverava koliko service_item ima rata
         service_item = ServiceItem.query.get_or_404(service_item_id)
         
-        # student_debtt_id_first = new_debt.id
+        student_debt_id_first = None
         
         for installment in range(1, service_item.installment_number + 1):
             installment_attr = f'installment_{installment}'
@@ -274,7 +274,7 @@ def submit_records():
             logging.debug(f'{new_debt.id=}')
             
             if installment == 1:
-                student_debtt_id_first = new_debt.id
+                student_debt_id_first = new_debt.id
         
             student_debt_id = new_debt.id
             student_payment_id = None
@@ -305,7 +305,7 @@ def submit_records():
                 db.session.add(new_record)
                 db.session.commit()
         flash(f'Zaduženje {student_debt_id} je uspešno dodato!', 'success')
-        return str(student_debtt_id_first)
+        return str(student_debt_id_first)
         # return str(student_debt_id)
     #! izmena postojećeg zaduženja
     elif 'student_debt_id' in data:

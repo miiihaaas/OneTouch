@@ -730,7 +730,7 @@
                 // Konstruiši URL sa ili bez clientId
                 const clientSegment = getClientSegment();
                 const deleteUrl = isProduction()
-                    ? `/service_profile/${clientSegment}/${serviceId}/delete`
+                    ? `/${clientSegment}/service_profile/${serviceId}/delete`
                     : `/service_profile/${serviceId}/delete`;
                     
                 document.getElementById('delete_form').setAttribute('action', deleteUrl);
