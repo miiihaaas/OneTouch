@@ -249,7 +249,7 @@ def submit_records():
         #! proverava koliko service_item ima rata
         service_item = ServiceItem.query.get_or_404(service_item_id)
         
-        student_debtt_id_first = new_debt.id
+        # student_debtt_id_first = new_debt.id
         
         for installment in range(1, service_item.installment_number + 1):
             installment_attr = f'installment_{installment}'
@@ -259,10 +259,6 @@ def submit_records():
                 purpose_of_payment = f'{service_item.service_item_service.service_name} - {service_item.service_item_name} / Rata {installment}'
             installment_value_result = getattr(service_item, installment_attr)
             logging.debug(f'{installment_attr=}, {installment_value_result=}')
-        
-        
-        
-            
         
             new_debt = StudentDebt(student_debt_date = datetime.now(),
                                     service_item_id = service_item_id,
@@ -276,7 +272,9 @@ def submit_records():
             db.session.commit()
         
             logging.debug(f'{new_debt.id=}')
-        
+            
+            if installment == 1:
+                student_debtt_id_first = new_debt.id
         
             student_debt_id = new_debt.id
             student_payment_id = None

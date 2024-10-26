@@ -703,17 +703,18 @@
     document.addEventListener('DOMContentLoaded', function () {
         const deleteButtons = document.querySelectorAll('.delete-btn');
         
-        // Funkcija koja proverava da li smo na produkcijskom serveru
         function isProduction() {
             return window.location.hostname === 'uplatnice.online';
         }
 
-        // Funkcija koja vraća base URL za akciju
-        function getBaseUrl() {
+        // Funkcija koja vraća URL segment za klijenta
+        function getClientSegment() {
             if (isProduction()) {
                 const currentPath = window.location.pathname;
-                const clientId = currentPath.split('/')[1]; // Uzima '0001' iz URL-a
-                return `/${clientId}`;
+                const pathParts = currentPath.split('/');
+                // Pretpostavljamo da je klijentski ID uvek u formatu '000X'
+                const clientId = pathParts.find(part => /^[0-9]{4}$/.test(part));
+                return clientId || '';
             }
             return ''; // Prazan string za lokalno okruženje
         }
@@ -726,12 +727,13 @@
 
                 document.getElementById('service_name').innerText = `"${serviceName}"`;
                 
-                // Konstruiši URL sa ili bez clientId prefiksa
-                const baseUrl = getBaseUrl();
-                document.getElementById('delete_form').setAttribute(
-                    'action', 
-                    `${baseUrl}/service_profile/${serviceId}/delete`
-                );
+                // Konstruiši URL sa ili bez clientId
+                const clientSegment = getClientSegment();
+                const deleteUrl = isProduction()
+                    ? `/service_profile/${clientSegment}/${serviceId}/delete`
+                    : `/service_profile/${serviceId}/delete`;
+                    
+                document.getElementById('delete_form').setAttribute('action', deleteUrl);
 
                 $('#DeleteModal').modal('show');
                 
