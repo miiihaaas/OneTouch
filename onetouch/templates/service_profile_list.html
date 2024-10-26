@@ -701,28 +701,43 @@
 <script>
     // pokretanje i funkcionisanje delete modala
     document.addEventListener('DOMContentLoaded', function () {
-        // Pronađi sve delete dugmiće
         const deleteButtons = document.querySelectorAll('.delete-btn');
+        
+        // Funkcija koja proverava da li smo na produkcijskom serveru
+        function isProduction() {
+            return window.location.hostname === 'uplatnice.online';
+        }
+
+        // Funkcija koja vraća base URL za akciju
+        function getBaseUrl() {
+            if (isProduction()) {
+                const currentPath = window.location.pathname;
+                const clientId = currentPath.split('/')[1]; // Uzima '0001' iz URL-a
+                return `/${clientId}`;
+            }
+            return ''; // Prazan string za lokalno okruženje
+        }
         
         deleteButtons.forEach(function (button) {
             button.addEventListener('click', function () {
-                // Preuzmi ID i ime usluge iz reda
                 const serviceId = this.getAttribute('data-id');
                 const row = this.closest('tr');
                 const serviceName = row.getAttribute('data-name');
 
-                // Popuni modal odgovarajućim podacima
                 document.getElementById('service_name').innerText = `"${serviceName}"`;
-                document.getElementById('delete_form').setAttribute('action', `/service_profile/${serviceId}/delete`); // ispravi da na serveru ostane /0001/ , /0002/ ... /0010/
+                
+                // Konstruiši URL sa ili bez clientId prefiksa
+                const baseUrl = getBaseUrl();
+                document.getElementById('delete_form').setAttribute(
+                    'action', 
+                    `${baseUrl}/service_profile/${serviceId}/delete`
+                );
 
-                // Prikaži modal
                 $('#DeleteModal').modal('show');
-                // Dodaj event listener za zatvaranje modala
+                
                 const closeModalButtons = document.querySelectorAll('#DeleteModal .close, #DeleteModal .btn-secondary');
-
                 closeModalButtons.forEach(function (button) {
                     button.addEventListener('click', function () {
-                        // Sakrij modal
                         $('#DeleteModal').modal('hide');
                     });
                 });
