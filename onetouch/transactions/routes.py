@@ -304,7 +304,7 @@ def submit_records():
                                                 student_debt_total = student_debt_total)
                 db.session.add(new_record)
                 db.session.commit()
-        flash(f'Zaduženje {student_debt_id} je uspešno dodato!', 'success')
+            flash(f'Zaduženje {student_debt_id} je uspešno dodato!', 'success')
         return str(student_debt_id_first)
         # return str(student_debt_id)
     #! izmena postojećeg zaduženja

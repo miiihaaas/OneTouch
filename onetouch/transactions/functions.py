@@ -294,7 +294,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         # Postavljanje tamno sive boje (RGB: 105, 105, 105)
         pdf.set_text_color(105, 105, 105)
         pdf.set_font('DejaVuSansCondensed', '', 6)
-        pdf.cell(63,3, f"", new_y='NEXT', new_x='LMARGIN', align='L', border=0)
+        # pdf.cell(63,3, f"", new_y='NEXT', new_x='LMARGIN', align='L', border=0)
         pdf.cell(63,3, f"Softver razvio Studio Implicit", new_y='NEXT', new_x='LMARGIN', align='L', border=0)
         pdf.cell(63,3, f"www.implicit.pro", new_y='NEXT', new_x='LMARGIN', align='L', border=0)
         pdf.set_font('DejaVuSansCondensed', '', 10)
