@@ -784,7 +784,7 @@
 
                 // Dohvati tipove usluga za selektovanog dobavljača
                 $.ajax({
-                    url: `/get_services_by_supplier/${serviceSupllierId}`,
+                    url: `./get_services_by_supplier/${serviceSupllierId}`,
                     method: 'GET',
                     success: function(services) {
                         const selectService = document.getElementById('service_id_');
