@@ -6,7 +6,7 @@ from flask import render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Supplier, Service, ServiceItem, User, TransactionRecord, School
-from onetouch.suppliers.forms import RegisterSupplierModalForm, EditSupplierModalForm, EditServiceModalForm, RegisterServiceModalForm, RegisterServiceProfileModalForm, EditServiceProfileModalForm
+from onetouch.suppliers.forms import RegisterSupplierModalForm, EditSupplierModalForm, EditServiceModalForm, RegisterServiceModalForm, RegisterServiceProfileModalForm, EditServiceProfileModalForm, ConfirmServiceModalForm
 from onetouch.suppliers.functions import convert_to_latin
 
 
@@ -61,7 +61,7 @@ def supplier_list():
 
 
     return render_template('supplier_list.html',
-                            tite = 'Dobavljači',
+                            title = 'Dobavljači',
                             legend = 'Dobavljači',
                             suppliers=suppliers,
                             edit_form=edit_form,
@@ -76,12 +76,14 @@ def service_list():
     edit_form = EditServiceModalForm()
     edit_form.reset()
     suppliers_chices_not_archived = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).all()]
-    # suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False).all()]
     suppliers_chices = [(s.id, s.supplier_name) for s in db.session.query(Supplier.id, Supplier.supplier_name).filter(Supplier.archived == False, Supplier.id != 0).all()]
     edit_form.supplier_id.choices = suppliers_chices_not_archived
     register_form = RegisterServiceModalForm()
     register_form.reset()
     register_form.supplier_id.choices = suppliers_chices
+    confirm_form = ConfirmServiceModalForm()
+    confirm_form.reset()
+
     if edit_form.validate_on_submit() and request.form.get('submit_edit'):
         service = Service.query.get(request.form.get('service_id'))
         logging.debug(request.form.get('service_id'))
@@ -98,22 +100,109 @@ def service_list():
     
     if register_form.validate_on_submit() and request.form.get('submit_register'):
         print('register form triggered.')
-        service = Service(service_name=convert_to_latin(register_form.service_name.data), 
-                            payment_per_unit=register_form.payment_per_unit.data,
-                            supplier_id=register_form.supplier_id.data,
-                            archived=False)
+        # Provera da li usluga sa istim parametrima već postoji
+        existing_service = Service.query.filter_by(
+            service_name=convert_to_latin(register_form.service_name.data),
+            supplier_id=register_form.supplier_id.data,
+            payment_per_unit=register_form.payment_per_unit.data
+        ).first()
+        
+        if existing_service:
+            flash(f'Usluga "{register_form.service_name.data}" sa istom cenom po jedinici već postoji za izabranog dobavljača.', 'danger')
+            return redirect(url_for('suppliers.service_list'))
+
+        # Provera sličnih usluga
+        service_name = convert_to_latin(register_form.service_name.data)
+        similar_services = Service.query.filter(
+            Service.supplier_id == register_form.supplier_id.data,
+            Service.payment_per_unit == register_form.payment_per_unit.data
+        ).all()
+
+        if similar_services and not request.form.get('confirm') and not request.form.get('cancel'):
+            # Prikaži slične usluge i traži potvrdu
+            flash('Pronađene su slične usluge. Molimo proverite da li je neka od njih duplikat:', 'warning')
+            return render_template('service_list.html',
+                                title='Tip usluge',
+                                legend='Tip usluge',
+                                suppliers_chices=suppliers_chices,
+                                services=services,
+                                similar_services=similar_services,
+                                edit_form=edit_form,
+                                register_form=register_form,
+                                confirm_form=confirm_form,
+                                show_confirm=True,
+                                route_name=route_name)
+
+    # Obrada potvrde ili otkazivanja
+    if request.form.get('cancel'):
+        flash('Registracija usluge je otkazana.', 'info')
+        return redirect(url_for('suppliers.service_list'))
+    
+    if request.form.get('confirm'):
+        service = Service(
+            service_name=convert_to_latin(request.form.get('service_name')), 
+            payment_per_unit=request.form.get('payment_per_unit'),
+            supplier_id=int(request.form.get('supplier_id')),
+            archived=False
+        )
         db.session.add(service)
         db.session.commit()
         flash(f'Usluga "{service.service_name}" je registrovana.', 'success')
         return redirect(url_for('suppliers.service_list'))
+
+    if register_form.validate_on_submit() and request.form.get('submit_register'):
+        print('register form triggered.')
+        # Provera da li usluga sa istim parametrima već postoji
+        existing_service = Service.query.filter_by(
+            service_name=convert_to_latin(register_form.service_name.data),
+            supplier_id=register_form.supplier_id.data,
+            payment_per_unit=register_form.payment_per_unit.data
+        ).first()
+        
+        if existing_service:
+            flash(f'Usluga "{register_form.service_name.data}" sa istom cenom po jedinici već postoji za izabranog dobavljača.', 'danger')
+            return redirect(url_for('suppliers.service_list'))
+
+        # Provera sličnih usluga
+        service_name = convert_to_latin(register_form.service_name.data)
+        similar_services = Service.query.filter(
+            Service.supplier_id == register_form.supplier_id.data,
+            Service.payment_per_unit == register_form.payment_per_unit.data
+        ).all()
+
+        if similar_services and not request.form.get('confirm') and not request.form.get('cancel'):
+            # Prikaži slične usluge i traži potvrdu
+            flash('Pronađene su slične usluge. Molimo proverite da li je neka od njih duplikat:', 'warning')
+            return render_template('service_list.html',
+                                title='Tip usluge',
+                                legend='Tip usluge',
+                                suppliers_chices=suppliers_chices,
+                                services=services,
+                                similar_services=similar_services,
+                                edit_form=edit_form,
+                                register_form=register_form,
+                                confirm_form=confirm_form,
+                                show_confirm=True,
+                                route_name=route_name)
+
+        service = Service(service_name=convert_to_latin(register_form.service_name.data), 
+                        payment_per_unit=register_form.payment_per_unit.data,
+                        supplier_id=register_form.supplier_id.data,
+                        archived=False)
+        db.session.add(service)
+        db.session.commit()
+        flash(f'Usluga "{service.service_name}" je registrovana.', 'success')
+        return redirect(url_for('suppliers.service_list'))
+
     return render_template('service_list.html',
-                            tite = 'Tip usluge',
-                            legend = 'Tip usluge',
-                            suppliers_chices=suppliers_chices,
-                            services=services,
-                            edit_form=edit_form,
-                            register_form=register_form,
-                            route_name=route_name)
+                        title='Tip usluge',
+                        legend='Tip usluge',
+                        suppliers_chices=suppliers_chices,
+                        services=services,
+                        edit_form=edit_form,
+                        register_form=register_form,
+                        confirm_form=confirm_form,
+                        route_name=route_name)
 
 
 @suppliers.route('/service_profile_list', methods=['POST', 'GET'])
@@ -241,7 +330,7 @@ def service_profile_list():
         
     
     return render_template('service_profile_list.html',
-                            tite = 'Detalji usluge',
+                            title = 'Detalji usluge',
                             legend = 'Detalji usluge',
                             service_profiles= service_profiles,
                             register_form = register_form,
@@ -266,6 +355,15 @@ def get_payment():
     service_id = request.form.get('service_id', type=int)
     service = Service.query.get(service_id)
     return jsonify({'payment_per_unit': service.payment_per_unit})
+
+
+@suppliers.route("/get_services_by_supplier/<int:supplier_id>")
+def get_services_by_supplier(supplier_id):
+    # Dohvati sve servise za datog dobavljača
+    services = Service.query.filter_by(supplier_id=supplier_id, archived=False).filter(Service.id != 0).all()
+    # Konvertuj u JSON format
+    services_list = [{'id': 0, 'name': "Selektujte uslugu"}] + [{'id': service.id, 'name': service.service_name} for service in services]
+    return jsonify(services_list)
 
 
 @login_required

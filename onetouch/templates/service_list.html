@@ -188,6 +188,58 @@
     </div>
 </div>
 
+{% if show_confirm and similar_services %}
+<!-- Modal za potvrdu sličnih usluga -->
+<div class="modal fade show" id="ConfirmModal" tabindex="-1" role="dialog" aria-labelledby="ConfirmModalLabel" style="display: block;" aria-modal="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ConfirmModalLabel">Pronađene slične usluge</h5>
+            </div>
+            <div class="modal-body">
+                <p>Pronađene su slične usluge za istog dobavljača sa istim tipom plaćanja:</p>
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Naziv usluge</th>
+                            <th>Tip plaćanja</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for service in similar_services %}
+                        <tr>
+                            <td>{{ service.service_name }}</td>
+                            <td>
+                                {% if service.payment_per_unit == 'kom' %}
+                                Plaćanje po jedinici
+                                {% elif service.payment_per_unit == 'mes' %}
+                                Mesečno plaćanje
+                                {% elif service.payment_per_unit == 'god' %}
+                                Plaćanje po obračunskom periodu
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p>Da li želite da nastavite sa registracijom?</p>
+                <form method="POST" action="">
+                    {{ confirm_form.hidden_tag() }}
+                    <!-- Sačuvaj originalne podatke iz register forme -->
+                    <input type="hidden" name="service_name" value="{{ register_form.service_name.data }}">
+                    <input type="hidden" name="supplier_id" value="{{ register_form.supplier_id.data }}">
+                    <input type="hidden" name="payment_per_unit" value="{{ register_form.payment_per_unit.data }}">
+                    <div class="form-group text-center mt-4">
+                        <button type="submit" name="confirm" value="1" class="btn btn-primary">Da, nastavi registraciju</button>
+                        <button type="submit" name="cancel" value="1" class="btn btn-secondary">Ne, ovo je duplikat</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% endblock content%}
 
 {% block scripts %}

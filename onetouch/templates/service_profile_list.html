@@ -782,9 +782,31 @@
                 const selectedSupplier = Array.from(selectSupplier.options).find(option => option.value === serviceSupllierId);
                 selectedSupplier.selected = true;
 
-                const selectService = document.getElementById('service_id_');
-                const selectedService = Array.from(selectService.options).find(option => option.value === serviceServiceId); // ovde dodati logiku da filtrira opcije prema selektovanom dobavljaču
-                selectedService.selected = true;
+                // Dohvati tipove usluga za selektovanog dobavljača
+                $.ajax({
+                    url: `/get_services_by_supplier/${serviceSupllierId}`,
+                    method: 'GET',
+                    success: function(services) {
+                        const selectService = document.getElementById('service_id_');
+                        // Očisti postojeće opcije
+                        selectService.innerHTML = '';
+                        
+                        // Dodaj nove opcije
+                        services.forEach(function(service) {
+                            const option = document.createElement('option');
+                            option.value = service.id;
+                            option.textContent = service.name;
+                            // Ako je ovo trenutno selektovani service, označi ga
+                            if(service.id.toString() === serviceServiceId) {
+                                option.selected = true;
+                            }
+                            selectService.appendChild(option);
+                        });
+                    },
+                    error: function(error) {
+                        console.error('Error fetching services:', error);
+                    }
+                });
 
                 const selectBankAccount = document.getElementById('bank_account_');
                 const selectedBankAccount = Array.from(selectBankAccount.options).find(option => option.value === serviceReferenceNumberSpiri);
@@ -1086,6 +1108,7 @@
         })
     });
 </script>
+
 <!--! Register modal -->
 <script>
 
