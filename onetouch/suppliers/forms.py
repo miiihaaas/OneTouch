@@ -7,6 +7,7 @@ from onetouch.models import Supplier, School
 
 school=School.query.first()
 
+
 class RegisterSupplierModalForm(FlaskForm):
     supplier_name = StringField('Naziv dobavljača', validators=[DataRequired()])
     submit_register = SubmitField('Registrujte dobavljača')
@@ -88,3 +89,10 @@ class EditServiceProfileModalForm(FlaskForm):
     installment_12 = DecimalField('Rata 12', validators=[Optional()])
     archived = BooleanField('Usluga arhivirana')
     submit_edit = SubmitField('Sačuvajte')
+
+class ConfirmServiceModalForm(FlaskForm):
+    confirm = SubmitField('Da, nastavi registraciju')
+    cancel = SubmitField('Ne, ovo je duplikat')
+
+    def reset(self):
+        self.__init__()
