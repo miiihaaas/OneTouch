@@ -1142,58 +1142,63 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
 
 
 def gen_dept_report(records):
-    logging.debug(f'records: {records=}')
-    sorted_records = sorted(records, key=lambda x: x.student_debt_amount * x.studetn_debt_installment_value - x.student_debt_discount, reverse=True)
-    logging.debug(f'sorted_records: {sorted_records=}')
-    school = School.query.first()
-    class PDF(FPDF):
-        # def __init__(self, **kwargs):
-        #     super(PDF, self).__init__(**kwargs)
-        #     self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
-        #     self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
-    
-        def header(self):
-            # Postavite font i veličinu teksta za zaglavlje
-            self.set_font('DejaVuSansCondensed', 'B', 10)
-            # Dodajte informacije o školi
-            self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
-            self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
-            self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
-            self.cell(0, 6, f'Datum: {datetime.now().strftime("%d.%m.%Y.")}', 0, 1, 'R')
-            self.set_font('DejaVuSansCondensed', 'B', 18)
-            self.cell(40, 8, '', 0, 1, 'R')
-            self.cell(0, 15, f'Zaduženje', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
-            self.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
-            self.set_font('DejaVuSansCondensed', 'B', 10)
-            self.cell(10, 8, 'R.Br.', 1, 0, 'C', 1)
-            self.cell(40, 8, 'Učenik', 1, 0, 'L', 1)
-            self.cell(22, 8, 'Poziv na br', 1, 0, 'L', 1)
-            self.cell(58, 8, 'Detalji usluge', 1, 0, 'L', 1)
-            self.cell(10, 8, 'Kol', 1, 0, 'C', 1)
-            self.cell(15, 8, 'Iznos', 1, 0, 'C', 1)
-            self.cell(15, 8, 'Olakšica', 1, 0, 'C', 1)
-            self.cell(20, 8, 'Zaduženje', 1, 1, 'C', 1)
-    pdf = PDF()
-    add_fonts(pdf)
-    pdf.add_page()
-    pdf.set_fill_color(255, 255, 255)
-    total = 0
-    red_br = 1
-    for record in sorted_records:
-        pdf.set_font('DejaVuSansCondensed', '', 10)
-        pdf.cell(10, 8, f'{red_br}.', 1, 0, 'C')
-        pdf.cell(40, 8, f"{record.transaction_record_student.student_name} {record.transaction_record_student.student_surname}", 1, 0, 'L')
-        pdf.cell(22, 8, f'{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }', 1, 0, 'C')
-        pdf.cell(58, 8, f'{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name } - { record.transaction_record_student_debt.student_debt_service_item.service_item_name }', 1, 0, 'L')
-        pdf.cell(10, 8, f'{ record.student_debt_amount }', 1, 0, 'C')
-        pdf.cell(15, 8, f'{ "{:.2f}".format(record.studetn_debt_installment_value) }', 1, 0, 'R')
-        pdf.cell(15, 8, f'{ "{:.2f}".format(record.student_debt_discount)}', 1, 0, 'R')
-        pdf.cell(20, 8, f'{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}', 1, 1, 'R')
-        total += record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount
-        red_br += 1
-    pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
-    pdf.cell(0, 8, f'Ukupno: {total:,.2f}', 1, 0, 'R', 1)
-    
-    file_name = 'dept_report.pdf'
-    path = f'{project_folder}/static/reports/'
-    pdf.output(path + file_name)
+    try:
+        logging.debug(f'records: {records=}')
+        sorted_records = sorted(records, key=lambda x: x.student_debt_amount * x.studetn_debt_installment_value - x.student_debt_discount, reverse=True)
+        logging.debug(f'sorted_records: {sorted_records=}')
+        school = School.query.first()
+        class PDF(FPDF):
+            # def __init__(self, **kwargs):
+            #     super(PDF, self).__init__(**kwargs)
+            #     self.add_font('DejaVuSansCondensed', '', font_path, uni=True)
+            #     self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
+        
+            def header(self):
+                # Postavite font i veličinu teksta za zaglavlje
+                self.set_font('DejaVuSansCondensed', 'B', 10)
+                # Dodajte informacije o školi
+                self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
+                self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
+                self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
+                self.cell(0, 6, f'Datum: {datetime.now().strftime("%d.%m.%Y.")}', 0, 1, 'R')
+                self.set_font('DejaVuSansCondensed', 'B', 18)
+                self.cell(40, 8, '', 0, 1, 'R')
+                self.cell(0, 15, f'Zaduženje', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
+                self.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+                self.set_font('DejaVuSansCondensed', 'B', 10)
+                self.cell(10, 8, 'R.Br.', 1, 0, 'C', 1)
+                self.cell(40, 8, 'Učenik', 1, 0, 'L', 1)
+                self.cell(22, 8, 'Poziv na br', 1, 0, 'L', 1)
+                self.cell(58, 8, 'Detalji usluge', 1, 0, 'L', 1)
+                self.cell(10, 8, 'Kol', 1, 0, 'C', 1)
+                self.cell(15, 8, 'Iznos', 1, 0, 'C', 1)
+                self.cell(15, 8, 'Olakšica', 1, 0, 'C', 1)
+                self.cell(20, 8, 'Zaduženje', 1, 1, 'C', 1)
+        pdf = PDF()
+        add_fonts(pdf)
+        pdf.add_page()
+        pdf.set_fill_color(255, 255, 255)
+        total = 0
+        red_br = 1
+        for record in sorted_records:
+            pdf.set_font('DejaVuSansCondensed', '', 10)
+            pdf.cell(10, 8, f'{red_br}.', 1, 0, 'C')
+            pdf.cell(40, 8, f"{record.transaction_record_student.student_name} {record.transaction_record_student.student_surname}", 1, 0, 'L')
+            pdf.cell(22, 8, f'{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }', 1, 0, 'C')
+            pdf.cell(58, 8, f'{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name } - { record.transaction_record_student_debt.student_debt_service_item.service_item_name }', 1, 0, 'L')
+            pdf.cell(10, 8, f'{ record.student_debt_amount }', 1, 0, 'C')
+            pdf.cell(15, 8, f'{ "{:.2f}".format(record.studetn_debt_installment_value) }', 1, 0, 'R')
+            pdf.cell(15, 8, f'{ "{:.2f}".format(record.student_debt_discount)}', 1, 0, 'R')
+            pdf.cell(20, 8, f'{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}', 1, 1, 'R')
+            total += record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount
+            red_br += 1
+        pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
+        pdf.cell(0, 8, f'Ukupno: {total:,.2f}', 1, 0, 'R', 1)
+        
+        file_name = 'dept_report.pdf'
+        path = f'{project_folder}/static/reports/'
+        pdf.output(path + file_name)
+        return True
+    except Exception as e:
+        logging.error(f'Greska u generisanju izveštaja: {e}')
+        return False
