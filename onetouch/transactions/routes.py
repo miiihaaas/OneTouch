@@ -9,15 +9,9 @@ from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User
 from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_dept_report
+from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint('transactions', __name__)
-
-
-# Ova funkcija će proveriti da li je korisnik ulogovan pre nego što pristupi zaštićenoj ruti
-@transactions.before_request
-def require_login():
-    if request.endpoint and not current_user.is_authenticated:
-        return redirect(url_for('users.login'))
 
 
 @transactions.route('/student_debts', methods=['POST', 'GET'])
@@ -38,180 +32,185 @@ def student_debts():
                             route_name=route_name)
 
 
-@transactions.route('/test', methods=['POST', 'GET'])
-def test():
-    students = Student.query.all()
-    return render_template('test.html')
-
-
-@transactions.route('/testing')
-def testing():
-    students_query = Student.query.filter(None)
-    # search filter
-    search = request.args.get('search[value]')
-    student_class = request.args.get('classes')
-    student_section = request.args.get('section')
-    service_item_id = request.args.get('service_item')
-    service_item = ServiceItem.query.get_or_404(service_item_id)
-    installment = request.args.get('installment')
-    installment_value_result = 0
-    if installment in ['', '0']:
-        service_name = '------'
-        installment_attr = f'installment_1'
-    else:
-        installment_attr = f'installment_{installment}'
-        installment_value_result = getattr(ServiceItem.query.filter_by(id=service_item_id).first(), installment_attr)
-        students_query = Student.query.filter(Student.student_class < 9)
-        service_name = f'{service_item.service_item_service.service_name} - {service_item.service_item_name}'
-    
-    logging.debug(f'debug: {search=} {student_class=} {student_section=} {service_item_id=} {installment=} {installment_attr=} {installment_value_result=}')
-    if search:
-        students_query = students_query.filter(db.or_(
-            Student.student_name.like(f'%{search}%'),
-            Student.student_surname.like(f'%{search}%'),
-            Student.id.like(f'%{search}%'))
-        )
-    if student_class:
-        students_query = students_query.filter(Student.student_class == student_class)
-    if student_section:
-        students_query = students_query.filter(Student.student_section == student_section)
-    total_filtered = students_query.count()
-    
-    # sorting
-    order = []
-    i = 0
-    while True:
-        col_index = request.args.get(f'order[{i}][column]')
-        if col_index is None:
-            break
-        if col_index == '0': 
-            col_name = 'student_name'
-        elif col_index == '1':
-            col_name = 'student_surname'
-        descending = request.args.get(f'order[{i}][dir]') == 'desc'
-        col = getattr(Student, col_name)
-        if descending:
-            col = col.desc()
-        order.append(col)
-        i += 1
-    if order:
-        students_query = students_query.order_by(*order)
-    
-    # pagination
-    start = request.args.get('start', type=int)
-    length = request.args.get('length', type=int)
-    students_query = students_query.offset(start).limit(length)
-    
-    students_list = []
-    for student in students_query:
-        new_dict = {
-            'student_id': student.id,
-            'student_name': student.student_name,
-            'student_surname': student.student_surname,
-            'student_class': student.student_class,
-            'student_section': student.student_section,
-            'reference_number': f'{str(student.id).zfill(4)}-{str(service_item_id).zfill(3)}',
-            'service_item_name': service_name,
-            'installment': installment,
-            'installment_value': installment_value_result,
-            
-        }
-        students_list.append(new_dict)
-    return {
-        'data': students_list,
-        'recordsFiltered': total_filtered,
-        'recordsTotal': total_filtered,
-        'draw': request.args.get('draw', type=int),
-    }
-
-
 @transactions.route('/add_new_student', methods=['POST']) #! dodaje novog studenta u postojeće zaduženje (npr došao novi đak tokom školse godine i treba da se zaduži za osiguranje...)
 def add_new_student():
-    student_debt_id = request.form.get('student_debt_id')
-    service_item_id = request.form.get('service_item_id')
-    student_debt_installment_number = request.form.get('student_debt_installment_number')
-    studetn_debt_installment_value = request.form.get('studetn_debt_installment_value')
-    student_id = request.form.get('student_id')
-    logging.debug(f'{student_debt_id=} {service_item_id=} {student_debt_installment_number=} {studetn_debt_installment_value=} {student_id=}')
-    new_student_record = TransactionRecord(student_debt_id=student_debt_id,
-                                            student_id=student_id,
-                                            service_item_id=service_item_id,
-                                            student_debt_installment_number=student_debt_installment_number,
-                                            student_debt_amount=0,
-                                            studetn_debt_installment_value=studetn_debt_installment_value,
-                                            student_debt_discount=0,
-                                            student_debt_total=0)
-    db.session.add(new_student_record)
-    db.session.commit()
-    flash('Učenik je uspešno zadužen!', 'success')
+    try:
+        student_debt_id = request.form.get('student_debt_id')
+        service_item_id = request.form.get('service_item_id')
+        student_debt_installment_number = request.form.get('student_debt_installment_number')
+        studetn_debt_installment_value = request.form.get('studetn_debt_installment_value')
+        student_id = request.form.get('student_id')
+
+        if not all([student_debt_id, service_item_id, student_debt_installment_number, student_id]):
+            raise ValueError("Svi obavezni podaci moraju biti popunjeni")
+
+        logging.debug(f'{student_debt_id=} {service_item_id=} {student_debt_installment_number=} {studetn_debt_installment_value=} {student_id=}')
+        
+        new_student_record = TransactionRecord(
+            student_debt_id=student_debt_id,
+            student_id=student_id,
+            service_item_id=service_item_id,
+            student_debt_installment_number=student_debt_installment_number,
+            student_debt_amount=0,
+            studetn_debt_installment_value=studetn_debt_installment_value,
+            student_debt_discount=0,
+            student_debt_total=0
+        )
+        
+        db.session.add(new_student_record)
+        db.session.commit()
+        flash('Učenik je uspešno zadužen!', 'success')
+        
+    except ValueError as e:
+        db.session.rollback()
+        flash(str(e), 'danger')
+        logging.error(f'Greška pri validaciji podataka: {str(e)}')
+        return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
+        
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash('Došlo je do greške pri čuvanju podataka. Pokušajte ponovo.', 'danger')
+        logging.error(f'SQLAlchemy greška: {str(e)}')
+        return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Došlo je do neočekivane greške. Molimo kontaktirajte administratora.', 'danger')
+        logging.error(f'Neočekivana greška: {str(e)}')
+        return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
+        
     return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
 
 
-#! Ajax
 @transactions.route('/get_service_items', methods=['POST'])
 def get_service_items():
-    service_item_class = request.form.get('classes', 0, type=int)
-    logging.debug(f'from AJAX service items: {service_item_class=}')
-    options = [(0, "Selektujte uslugu")]
-    service_items = ServiceItem.query.filter_by(archived=False).all()
-    service_items = [item for item in service_items if item.id != 0] #! treba da eliminiše uslugu sa id=0 koji se koristi za "grešku"
-    for service_item in service_items:
-        if str(service_item_class) in service_item.service_item_class:
-            options.append((service_item.id, service_item.service_item_service.service_name + " - " + service_item.service_item_name))
-            logging.debug(options)
-    html = ''
-    for option in options:
-        html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
-    return html
+    try:
+        service_item_class = request.form.get('classes', 0, type=int)
+        logging.debug(f'from AJAX service items: {service_item_class=}')
+        
+        options = [(0, "Selektujte uslugu")]
+        
+        service_items = ServiceItem.query.filter_by(archived=False).all()
+        if service_items is None:
+            raise ValueError("Nije moguće učitati listu usluga")
+            
+        service_items = [item for item in service_items if item.id != 0] #! treba da eliminiše uslugu sa id=0 koji se koristi za "grešku"
+        
+        for service_item in service_items:
+            if str(service_item_class) in service_item.service_item_class:
+                options.append((
+                    service_item.id,
+                    service_item.service_item_service.service_name + " - " + service_item.service_item_name
+                ))
+                logging.debug(options)
+        
+        html = ''
+        for option in options:
+            html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
+        
+        return html
+        
+    except SQLAlchemyError as e:
+        logging.error(f'Greška pri učitavanju usluga iz baze: {str(e)}')
+        return '<option value="0">Greška pri učitavanju usluga</option>'
+        
+    except ValueError as e:
+        logging.error(f'Greška pri validaciji podataka: {str(e)}')
+        return '<option value="0">Greška pri validaciji podataka</option>'
+        
+    except Exception as e:
+        logging.error(f'Neočekivana greška u get_service_items: {str(e)}')
+        return '<option value="0">Došlo je do greške pri učitavanju</option>'
 
 
 @transactions.route('/get_installments', methods=['POST'])
 def get_installments():
-    logging.debug(request.form)
-    service_item_id = int(request.form.get('installments'))
-    logging.debug(f'from AJAX installments: {service_item_id=}')
-    options = [(0, "Selektujte ratu")]
-    service_item = ServiceItem.query.get_or_404(service_item_id)
-    if service_item.service_item_service.payment_per_unit == 'kom':
-        komadno = True
-    else:
-        komadno = False
-    
-    logging.debug(f'{komadno=}')
-    
-    if service_item.installment_number == 1:
-        options.append((1, f'Rata 1'))
-        installment_attr = f'price'
-        installment_option = getattr(service_item, installment_attr)
-        logging.debug(f'{installment_option=}')
-    else:
-        for i in range(1, service_item.installment_number + 1):
-            options.append((i, f'Rata {i}'))
-            installment_attr = f'installment_{i}'
+    try:
+        logging.debug(request.form)
+        service_item_id = int(request.form.get('installments'))
+        if not service_item_id:
+            raise ValueError("ID usluge nije prosleđen")
+            
+        logging.debug(f'from AJAX installments: {service_item_id=}')
+        options = [(0, "Selektujte ratu")]
+        
+        service_item = ServiceItem.query.get_or_404(service_item_id)
+        if service_item is None:
+            raise ValueError("Usluga nije pronađena")
+            
+        komadno = service_item.service_item_service.payment_per_unit == 'kom'
+        logging.debug(f'{komadno=}')
+        
+        if service_item.installment_number == 1:
+            options.append((1, f'Rata 1'))
+            installment_attr = f'price'
             installment_option = getattr(service_item, installment_attr)
             logging.debug(f'{installment_option=}')
-    
-    html = ''
-    for option in options:
-        html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
-    return jsonify(html=html, komadno=komadno)
+        else:
+            for i in range(1, service_item.installment_number + 1):
+                options.append((i, f'Rata {i}'))
+                installment_attr = f'installment_{i}'
+                installment_option = getattr(service_item, installment_attr)
+                logging.debug(f'{installment_option=}')
+        
+        html = ''
+        for option in options:
+            html += '<option value="{0}">{1}</option>'.format(option[0], option[1])
+            
+        return jsonify(html=html, komadno=komadno)
+        
+    except ValueError as e:
+        logging.error(f'Greška pri validaciji podataka: {str(e)}')
+        return jsonify(
+            html='<option value="0">Greška pri učitavanju rata</option>',
+            komadno=False
+        )
+        
+    except SQLAlchemyError as e:
+        logging.error(f'Greška pri učitavanju iz baze: {str(e)}')
+        return jsonify(
+            html='<option value="0">Greška pri učitavanju podataka iz baze</option>',
+            komadno=False
+        )
+        
+    except Exception as e:
+        logging.error(f'Neočekivana greška u get_installments: {str(e)}')
+        return jsonify(
+            html='<option value="0">Došlo je do neočekivane greške</option>',
+            komadno=False
+        )
 
 
 @transactions.route('/get_installment_values', methods=['POST'])
 def get_installment_values():
-    logging.debug(request.form)
-    service_item_id = int(request.form.get('installments'))
-    installment_number = int(request.form.get('installment_values'))
-    logging.debug(f'{service_item_id=} {installment_number=}')
-    service_item = ServiceItem.query.get_or_404(service_item_id)
-    logging.debug(service_item)
-    if service_item.installment_number == 1:
-        installment_attr = 'price'
-    else:
-        installment_attr = f'installment_{installment_number}'
-    installment_value_result = {"result" : getattr(service_item,installment_attr)} 
-    logging.debug(f'{installment_value_result=}')
-    return installment_value_result
+    try:
+        logging.debug(request.form)
+        service_item_id = int(request.form.get('installments'))
+        installment_number = int(request.form.get('installment_values'))
+        logging.debug(f'{service_item_id=} {installment_number=}')
+        
+        service_item = ServiceItem.query.get_or_404(service_item_id)
+        logging.debug(service_item)
+        
+        if service_item.installment_number == 1:
+            installment_attr = 'price'
+        else:
+            installment_attr = f'installment_{installment_number}'
+            
+        installment_value = getattr(service_item, installment_attr)
+        installment_value_result = {"result": installment_value}
+        logging.debug(f'{installment_value_result=}')
+        return installment_value_result
+        
+    except ValueError as e:
+        logging.error(f"Greška pri konverziji vrednosti: {str(e)}")
+        return {"error": "Nevažeći format broja"}, 400
+    except AttributeError as e:
+        logging.error(f"Greška pri pristupu atributu: {str(e)}")
+        return {"error": "Nevažeći broj rate"}, 400
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        return {"error": "Došlo je do greške pri obradi zahteva"}, 500
 
 
 @transactions.route('/submit_records', methods=['post'])
@@ -388,197 +387,400 @@ def submit_records():
 
 @transactions.route('/debts_archive_list', methods=['get', 'post'])
 def debts_archive_list():
-    route_name = request.endpoint
-    danas = date.today()
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    if start_date is None or end_date is None:
-        if danas.month < 9:
-            start_date = danas.replace(month=9, day=1, year=danas.year-1)
-            end_date = danas.replace(month=8, day=31)
-        else:
-            start_date = danas.replace(month=9, day=1)
-            end_date = danas.replace(month=8, day=31, year=danas.year+1)
-    logging.debug(f'{start_date=}, {end_date=}')
-    if type(start_date) is str:
-        # Konvertuj start_date i end_date u datetime.date objekte
-        start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-    debts = StudentDebt.query.filter(
-            (StudentDebt.student_debt_date >= start_date) &
-            (StudentDebt.student_debt_date <= (end_date + timedelta(days=1)).isoformat()) #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
-        ).all()
-    logging.debug(f'{debts=}')
-    return render_template('debts_archive_list.html', 
-                            debts=debts,
-                            start_date=start_date,
-                            end_date=end_date,
-                            legend="Arhiva naloga",
-                            route_name=route_name)
+    try:
+        route_name = request.endpoint
+        danas = date.today()
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        if start_date is None or end_date is None:
+            if danas.month < 9:
+                start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                end_date = danas.replace(month=8, day=31)
+            else:
+                start_date = danas.replace(month=9, day=1)
+                end_date = danas.replace(month=8, day=31, year=danas.year+1)
+        
+        logging.debug(f'{start_date=}, {end_date=}')
+        
+        if isinstance(start_date, str):
+            # Konvertuj start_date i end_date u datetime.date objekte
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        
+        debts = StudentDebt.query.filter(
+                (StudentDebt.student_debt_date >= start_date) &
+                (StudentDebt.student_debt_date <= (end_date + timedelta(days=1)).isoformat())
+            ).all()
+            
+        logging.debug(f'{debts=}')
+        
+        return render_template('debts_archive_list.html', 
+                                debts=debts,
+                                start_date=start_date,
+                                end_date=end_date,
+                                legend="Arhiva naloga",
+                                route_name=route_name)
+                                
+    except ValueError as e:
+        logging.error(f"Greška pri konverziji datuma: {str(e)}")
+        flash("Nevažeći format datuma", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+
 
 @transactions.route('/payments_archive_list', methods=['get', 'post'])
 def payments_archive_list():
-    route_name = request.endpoint
-    school = School.query.first()
-    
-    # bank_accounts = [bank_account['bank_account_number'] for bank_account in school.school_bank_accounts['bank_accounts']]
-    bank_accounts = [bank_account['reference_number_spiri'][2:11] for bank_account in school.school_bank_accounts['bank_accounts']]
-    
-    filtered_bank_account_number = request.args.get('bank_account')
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    if start_date is None or end_date is None:
-        if date.today().month < 9:
-            start_date = date.today().replace(day=1, month=9, year=date.today().year-1).isoformat()
-        else:
-            start_date = date.today().replace(day=1, month=9).isoformat()
-        # start_date = date.today().replace(day=1, month=1).isoformat()
-        end_date = date.today().isoformat()
-    payments = StudentPayment.query.filter(
-        StudentPayment.payment_date.between(start_date, (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat())).all() #! prvo se end_date prevede u datum sa satima, pa im se doda jedan dan pa se vrati u string...
-    logging.debug(f'{payments=}')
-    logging.debug(f'{filtered_bank_account_number=}')
-    if filtered_bank_account_number:
-        payments = [payment for payment in payments if payment.bank_account == filtered_bank_account_number]
-    return render_template('payments_archive_list.html', 
-                            bank_accounts=bank_accounts,
-                            payments=payments,
-                            start_date=start_date,
-                            end_date=end_date,
-                            filtered_bank_account_number=filtered_bank_account_number,
-                            legend="Arhiva izvoda",
-                            route_name=route_name)
+    try:
+        route_name = request.endpoint
+        school = School.query.first()
+        
+        if not school:
+            raise ValueError("Škola nije pronađena u bazi podataka")
+        
+        bank_accounts = [bank_account['reference_number_spiri'][2:11] for bank_account in school.school_bank_accounts['bank_accounts']]
+        
+        filtered_bank_account_number = request.args.get('bank_account')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        
+        if start_date is None or end_date is None:
+            if date.today().month < 9:
+                start_date = date.today().replace(day=1, month=9, year=date.today().year-1).isoformat()
+            else:
+                start_date = date.today().replace(day=1, month=9).isoformat()
+            end_date = date.today().isoformat()
+        
+        payments = StudentPayment.query.filter(
+            StudentPayment.payment_date.between(start_date, 
+            (datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)).isoformat())).all()
+            
+        logging.debug(f'{payments=}')
+        logging.debug(f'{filtered_bank_account_number=}')
+        
+        if filtered_bank_account_number:
+            payments = [payment for payment in payments if payment.bank_account == filtered_bank_account_number]
+            
+        return render_template('payments_archive_list.html', 
+                                bank_accounts=bank_accounts,
+                                payments=payments,
+                                start_date=start_date,
+                                end_date=end_date,
+                                filtered_bank_account_number=filtered_bank_account_number,
+                                legend="Arhiva izvoda",
+                                route_name=route_name)
+                                
+    except ValueError as e:
+        logging.error(f"Greška pri konverziji datuma ili podacima škole: {str(e)}")
+        flash("Nevažeći format datuma ili problem sa podacima škole", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
+    except (KeyError, AttributeError) as e:
+        logging.error(f"Greška pri pristupu podacima škole: {str(e)}")
+        flash("Problem pri pristupu podacima o bankovnim računima", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
 
 
 @transactions.route('/single_payment_slip/<int:record_id>', methods=['get', 'post'])
 def single_payment_slip(record_id):
-    records = []
-    record = TransactionRecord.query.get_or_404(record_id)
-    logging.debug(f'{record=}') #! uvek mora da bude samo jedan record
-    debt = StudentDebt.query.get_or_404(record.student_debt_id)
-    purpose_of_payment = debt.purpose_of_payment
-    school = School.query.first()
-    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
-    records.append(record)
-    logging.debug(f'{records=}')
-    #! promenjiva single koja indikuje da se generiše samo jedna uplatnica 'uplatnica.pdf'
-    single = True
-    send = False
-    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    logging.debug(f'{file_name=}')
-    file_path = f'static/payment_slips/{file_name}'
-    logging.debug(f'{file_path=}')
-    return send_file(file_path, as_attachment=False)
+    try:
+        records = []
+        record = TransactionRecord.query.get_or_404(record_id)
+        logging.debug(f'{record=}')
+        
+        if not record:
+            raise ValueError(f"Transakcija sa ID {record_id} nije pronađena")
+            
+        debt = StudentDebt.query.get_or_404(record.student_debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje za transakciju {record_id} nije pronađeno")
+            
+        purpose_of_payment = debt.purpose_of_payment
+        
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        records.append(record)
+        logging.debug(f'{records=}')
+        
+        single = True
+        send = False
+        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+        
+        if not file_name:
+            raise ValueError("Greška pri generisanju uplatnice")
+            
+        logging.debug(f'{file_name=}')
+        file_path = f'static/payment_slips/{file_name}'
+        logging.debug(f'{file_path=}')
+        
+        return send_file(file_path, as_attachment=False)
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Generisana uplatnica nije pronađena", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri generisanju uplatnice", "danger")
+        return redirect(url_for('transactions.payments_archive_list'))
 
 
 @transactions.route('/debt_archive/<int:debt_id>', methods=['GET', 'POST'])
 def debt_archive(debt_id):
-    route_name = request.endpoint
-    debt = StudentDebt.query.get_or_404(debt_id)
-    purpose_of_payment = debt.purpose_of_payment
-    logging.debug(f'{purpose_of_payment=}')
-    school = School.query.first()
-    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
-    teacher = Teacher.query.filter_by(teacher_class=debt.debt_class).filter_by(teacher_section=debt.debt_section).first()
-    
-    records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-    logging.debug(f'provera broja đaka: {records=}, {len(records)=}')
-    
-    students = Student.query.filter_by(student_class=debt.debt_class).filter_by(student_section=debt.debt_section).all()
-    logging.debug(f'provera broja đaka: {students=}, {len(students)=}')
-    
-    new_students = []
-    if len(students) > len(records):
-        record_ids = set([record.transaction_record_student.id for record in records])
-        new_students = [student for student in students if student.id not in record_ids]
-        logging.debug(f'{record_ids=}; {new_students=}')
-    
-    single = False
-    send = False
-    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    # if not file_name:
-    #     flash('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
-    #     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-    
-    gen_dept_report(records)
+    try:
+        route_name = request.endpoint
+        
+        # Provera zaduženja
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+            
+        purpose_of_payment = debt.purpose_of_payment
+        logging.debug(f'{purpose_of_payment=}')
+        
+        # Provera škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
+        # Pronalaženje razrednog starešine
+        teacher = Teacher.query.filter_by(teacher_class=debt.debt_class).filter_by(teacher_section=debt.debt_section).first()
+        if not teacher:
+            logging.warning(f"Nije pronađen razredni starešina za odeljenje {debt.debt_class}-{debt.debt_section}")
+        
+        # Pronalaženje transakcija
+        records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
+        logging.debug(f'provera broja đaka: {records=}, {len(records)=}')
+        
+        # Pronalaženje učenika
+        students = Student.query.filter_by(student_class=debt.debt_class).filter_by(student_section=debt.debt_section).all()
+        logging.debug(f'provera broja đaka: {students=}, {len(students)=}')
+        
+        # Provera novih učenika
+        new_students = []
+        if len(students) > len(records):
+            record_ids = set([record.transaction_record_student.id for record in records])
+            new_students = [student for student in students if student.id not in record_ids]
+            logging.debug(f'{record_ids=}; {new_students=}')
+        
+        # Generisanje uplatnice
+        single = False
+        send = False
+        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+        if not file_name:
+            raise ValueError("Greška pri generisanju uplatnice")
+        
+        # Generisanje izveštaja
+        if not gen_dept_report(records):
+            raise ValueError("Greška pri generisanju izveštaja")
 
-    return render_template('debt_archive.html', 
-                            records=records, 
-                            debt=debt, 
-                            teacher=teacher,
-                            new_students=new_students,
-                            purpose_of_payment=purpose_of_payment,
-                            legend=f"Pregled zaduženja: {debt.id}",
-                            title="Pregled zaduženja",
-                            route_name=route_name)
+        return render_template('debt_archive.html', 
+                                records=records, 
+                                debt=debt, 
+                                teacher=teacher,
+                                new_students=new_students,
+                                purpose_of_payment=purpose_of_payment,
+                                legend=f"Pregled zaduženja: {debt.id}",
+                                title="Pregled zaduženja",
+                                route_name=route_name)
+                                
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Greška pri generisanju dokumenta", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
 
 
 @transactions.route('/send_payment_slips/<int:debt_id>', methods=['get', 'post'])
 def send_payment_slips(debt_id):
-    debt = StudentDebt.query.get_or_404(debt_id)
-    purpose_of_payment = debt.purpose_of_payment
-    school = School.query.first()
-    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+    try:
+        # Provera zaduženja
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+            
+        purpose_of_payment = debt.purpose_of_payment
+        
+        # Provera škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
 
-    records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-    single = True
-    send = True
-    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    # if not file_name:
-    #     flash('Doslo je do greške prilikom generisanja uplatnica. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.', 'danger')
-    #     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-    flash('Uspešno ste poslali mejlove roditeljima.', 'success')
-    return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+        # Pronalaženje transakcija
+        records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
+        if not records:
+            raise ValueError("Nema pronađenih transakcija za ovo zaduženje")
+            
+        # Generisanje i slanje uplatnica
+        single = True
+        send = True
+        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+        if not file_name:
+            raise ValueError("Greška pri generisanju i slanju uplatnica")
+            
+        flash('Uspešno ste poslali mejlove roditeljima.', 'success')
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Greška pri generisanju uplatnica", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except smtplib.SMTPException as e:
+        logging.error(f"Greška pri slanju mejla: {str(e)}")
+        flash("Greška pri slanju mejlova roditeljima", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 
 @transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
 def send_single_payment_slip(record_id):
-    debt_id = TransactionRecord.query.get_or_404(record_id).student_debt_id
-    debt = StudentDebt.query.get_or_404(debt_id)
-    purpose_of_payment = debt.purpose_of_payment
-    school = School.query.first()
-    school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
-    records =[]
-    record = TransactionRecord.query.get_or_404(record_id)
-    records.append(record)
-    single = True
-    send = True
-    file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-    # if not file_name:
-    #     print('Doslo je do greške prilikom generisanja uplatnice. Proverite da li su svi podaci na uplatnici ispravno popunjeni ili kontaktirajte našu podršku.')
-    #     return redirect(url_for('transactions.send_single_payment_slip', record_id=record_id))
-    flash('Uspešno ste poslali mejl roditelju.', 'success')
-    return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-
-
-# @transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
-# def send_single_payment_slip(record_id):
-#     debt_id = TransactionRecord.query.get_or_404(record_id).student_debt_id
-#     debt = StudentDebt.query.get_or_404(debt_id)
-#     purpose_of_payment = debt.purpose_of_payment
-#     school = School.query.first()
-#     school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
-#     records =[]
-#     record = TransactionRecord.query.get_or_404(record_id)
-#     records.append(record)
-#     send = True
-#     single=True
-#     file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-#     flash('Uspešno ste poslali mejl roditelju.', 'success')
-#     return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    try:
+        # Pronalaženje transakcije i zaduženja
+        record = TransactionRecord.query.get_or_404(record_id)
+        if not record:
+            raise ValueError(f"Transakcija sa ID {record_id} nije pronađena")
+            
+        debt_id = record.student_debt_id
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+            
+        purpose_of_payment = debt.purpose_of_payment
+        
+        # Provera škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
+        # Priprema liste sa jednom transakcijom
+        records = [record]
+        
+        # Generisanje i slanje uplatnice
+        single = True
+        send = True
+        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+        if not file_name:
+            raise ValueError("Greška pri generisanju i slanju uplatnice")
+            
+        flash('Uspešno ste poslali mejl roditelju.', 'success')
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id if 'debt_id' in locals() else None))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id if 'debt_id' in locals() else None))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Greška pri generisanju uplatnice", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id if 'debt_id' in locals() else None))
+    except smtplib.SMTPException as e:
+        logging.error(f"Greška pri slanju mejla: {str(e)}")
+        flash("Greška pri slanju mejla roditelju", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id if 'debt_id' in locals() else None))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id if 'debt_id' in locals() else None))
 
 
 @transactions.route('/debt_archive_delete/<int:debt_id>', methods=['get', 'post'])
 def debt_archive_delete(debt_id):
-    records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-    for record in records:
-        db.session.delete(record)
-        db.session.commit()
-    debt = StudentDebt.query.get_or_404(debt_id)
-    db.session.delete(debt)
-    db.session.commit()
-    flash(f'Nalog {debt_id} je uspešno obrisan, kao i sva zaduženja učenika iz tog naloga.', 'success')
-    return redirect(url_for('transactions.debts_archive_list'))
+    try:
+        # Provera da li zaduženje postoji
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+            
+        # Pronalaženje i brisanje povezanih transakcija
+        records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
+        for record in records:
+            try:
+                db.session.delete(record)
+                db.session.commit()
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                raise SQLAlchemyError(f"Greška pri brisanju transakcije {record.id}: {str(e)}")
+                
+        # Brisanje zaduženja
+        try:
+            db.session.delete(debt)
+            db.session.commit()
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            raise SQLAlchemyError(f"Greška pri brisanju zaduženja {debt_id}: {str(e)}")
+            
+        flash(f'Nalog {debt_id} je uspešno obrisan, kao i sva zaduženja učenika iz tog naloga.', 'success')
+        return redirect(url_for('transactions.debts_archive_list'))
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri brisanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri brisanju naloga", "danger")
+        return redirect(url_for('transactions.debts_archive_list'))
 
 
 @transactions.route('/payment_archive/<int:payment_id>', methods=['get', 'post'])
@@ -649,7 +851,7 @@ def payment_archive(payment_id):
                             services=json.dumps(services_data),
                             export_data = export_data, #! ovo je za treću tabelu
                             legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})",
-                            route_name=route_name,)
+                            route_name=route_name)
 
 
 

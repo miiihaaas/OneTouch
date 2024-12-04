@@ -454,18 +454,3 @@ def overview_sections():
                             odeljenje=odeljenje,
                             route_name=route_name,)
 
-@overviews.route("/overview_services", methods=['GET', 'POST'])
-def overview_services():
-    route_name = request.endpoint
-    danas = datetime.now()
-    active_date_start = danas.replace(month=4, day=15)
-    active_date_end = danas.replace(month=9, day=15)
-    services = ServiceItem.query.all()
-    return render_template('overview_services.html', #! napraviti html fajl, revidirati funkciju
-                            title='Pregled po usluzi', 
-                            legend="Pregled po usluzi", 
-                            services=services,
-                            active_date_start=active_date_start,
-                            active_date_end=active_date_end,
-                            danas=danas,
-                            route_name=route_name,)
