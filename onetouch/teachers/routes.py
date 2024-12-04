@@ -10,10 +10,6 @@ from flask_login import login_required, current_user
 
 teachers = Blueprint('teachers', __name__)
 
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
 # Ova funkcija će proveriti da li je korisnik ulogovan pre nego što pristupi zaštićenoj ruti
 @teachers.before_request
 def require_login():
@@ -30,8 +26,8 @@ def teacher_list():
     edit_form = EditTeacherModalForm()
     register_form = RegisterTeacherModalForm() 
     if register_form.validate_on_submit() and request.form.get('submit_register'):
-        teacher=Teacher(teacher_name=register_form.teacher_name.data.capitalize(),
-                        teacher_surname=register_form.teacher_surname.data.capitalize(),
+        teacher=Teacher(teacher_name=register_form.teacher_name.data.titel(),
+                        teacher_surname=register_form.teacher_surname.data.titel(),
                         teacher_class=register_form.teacher_class.data,
                         teacher_section=register_form.teacher_section.data)
         db.session.add(teacher)
@@ -42,8 +38,8 @@ def teacher_list():
         logging.debug(f'edit form validation: {request.form.get("teacher_id")=}')
         teacher = Teacher.query.get(request.form.get('teacher_id'))
         
-        teacher.teacher_name = edit_form.teacher_name.data.capitalize()
-        teacher.teacher_surname = edit_form.teacher_surname.data.capitalize()
+        teacher.teacher_name = edit_form.teacher_name.data.titel()
+        teacher.teacher_surname = edit_form.teacher_surname.data.titel()
         teacher.teacher_class = edit_form.teacher_class.data
         teacher.teacher_section = edit_form.teacher_section.data
         db.session.commit()

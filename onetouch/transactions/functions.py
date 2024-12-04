@@ -1,8 +1,10 @@
+import dns.resolver
+import smtplib
 import re
 import requests, os, io, time, logging
 from datetime import datetime
+from email.utils import parseaddr
 from flask_login import current_user
-import requests, os, io, time
 from PIL import Image
 from fpdf import FPDF
 from flask import flash, redirect, render_template, url_for
@@ -81,9 +83,9 @@ def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrh
 
 #! koristi se za generisanje i slanje pdf uplatnica
 current_file_path = os.path.abspath(__file__)
-logging.debug(f'{current_file_path=}')
+# logging.debug(f'{current_file_path=}')
 project_folder = os.path.dirname(os.path.dirname((current_file_path)))
-logging.debug(f'{project_folder=}')
+# logging.debug(f'{project_folder=}')
 
 font_path = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed.ttf')
 font_path_B = os.path.join(project_folder, 'static', 'fonts', 'DejaVuSansCondensed-Bold.ttf')
@@ -94,29 +96,125 @@ def add_fonts(pdf):
     pdf.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
 
 
+# def send_mail(uplatnica, path, file_name):
+#     school = School.query.first()
+#     student = Student.query.get_or_404(uplatnica['student_id'])
+#     if student.parent_email == None or student.send_mail == False:
+#         return
+#     parent_email = student.parent_email
+#     logging.debug(f'Poslao bi mejl roditelju na: {parent_email}')
+#     sender_email = 'noreply@uplatnice.online'
+#     recipient_email = parent_email #!'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
+#     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
+        
+#     message = Message(subject, sender=sender_email, recipients=[recipient_email])
+#     message.html = render_template('message_html_send_mail.html', school=school, uplatnica=uplatnica)    
+#     # Dodajte generirani PDF kao prilog mejlu
+#     with app.open_resource(path + file_name) as attachment:
+#         message.attach(file_name, 'application/pdf', attachment.read())
+    
+#     try:
+#         mail.send(message)
+#         # return redirect(url_for('main.home'))
+#     except Exception as e:
+#         flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
+#         # return redirect(url_for('main.home'))
+
+def verify_email(email):
+    """Verify if email address is valid and reachable."""
+    try:
+        # Check email format
+        _, domain = parseaddr(email)[1].split('@')
+        
+        # Get MX records
+        mx_records = dns.resolver.resolve(domain, 'MX')
+        if not mx_records:
+            return False, "No MX records found for domain"
+        
+        # Try connecting to mail server
+        mx_record = str(mx_records[0].exchange)
+        with smtplib.SMTP(timeout=10) as server:
+            server.connect(mx_record)
+            server.helo()
+            return True, None
+            
+    except Exception as e:
+        return False, str(e)
+
+def send_error_notification(school, student, parent_email, error_message):
+    """Send notification about email delivery failure."""
+    try:
+        sender_email = 'noreply@uplatnice.online'
+        admin_email = current_user.user_mail
+        student_name = f'{student.student_name} {student.student_surname}'
+        subject = f"Neuspešno slanje uplatnice - {student_name}"
+        
+        message = Message(subject, 
+                            sender=sender_email,
+                            recipients=[admin_email])
+        
+        message.html = render_template(
+            'message_html_admin_email_notification.html',
+            student_name=student_name,
+            parent_email=parent_email,
+            error_message=error_message
+        )
+        
+        mail.send(message)
+        logging.info(f'Sent error notification for student {student.student_name}')
+        
+    except Exception as e:
+        logging.error(f'Failed to send error notification: {str(e)}')
+
 def send_mail(uplatnica, path, file_name):
+    """Send email with payment slip and verify delivery."""
     school = School.query.first()
     student = Student.query.get_or_404(uplatnica['student_id'])
-    if student.parent_email == None or student.send_mail == False:
-        return
-    parent_email = student.parent_email
-    logging.debug(f'Poslao bi mejl roditelju na: {parent_email}')
-    sender_email = 'noreply@uplatnice.online'
-    recipient_email = parent_email #!'miiihaaas@gmail.com' #! ispraviti kod da prima mejl roditelj
-    subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
-        
-    message = Message(subject, sender=sender_email, recipients=[recipient_email])
-    message.html = render_template('message_html_send_mail.html', school=school, uplatnica=uplatnica)    
-    # Dodajte generirani PDF kao prilog mejlu
-    with app.open_resource(path + file_name) as attachment:
-        message.attach(file_name, 'application/pdf', attachment.read())
     
+    # Early return if email sending is disabled or no email
+    if student.parent_email is None or student.send_mail is False:
+        return
+    
+    parent_email = student.parent_email
+    logging.debug(f'Attempting to send email to: {parent_email}')
+    
+    # Verify email before sending
+    is_valid, error = verify_email(parent_email)
+    if not is_valid:
+        logging.error(f'Invalid email address for student {student.student_name}: {error}')
+        send_error_notification(school, student, parent_email, error)
+        return
+    
+    # Prepare email
+    sender_email = 'noreply@uplatnice.online'
+    subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
+    
+    message = Message(subject, 
+                        sender=sender_email,
+                        recipients=[parent_email])
+    
+    message.html = render_template('message_html_send_mail.html',
+                                    school=school,
+                                    uplatnica=uplatnica)
+    
+    # Attach PDF
+    try:
+        with app.open_resource(path + file_name) as attachment:
+            message.attach(file_name, 'application/pdf', attachment.read())
+    except Exception as e:
+        error_msg = f'Error attaching PDF: {str(e)}'
+        logging.error(error_msg)
+        send_error_notification(school, student, parent_email, error_msg)
+        return
+    
+    # Send email
     try:
         mail.send(message)
-        # return redirect(url_for('main.home'))
+        logging.info(f'Successfully sent email to {parent_email}')
     except Exception as e:
-        flash('Greska prilikom slanja mejla: ' + str(e), 'danger')
-        # return redirect(url_for('main.home'))
+        error_msg = f'Error sending email: {str(e)}'
+        logging.error(error_msg)
+        send_error_notification(school, student, parent_email, error_msg)
 
 
 def export_payment_stats(data):

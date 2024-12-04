@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obaveštenje o nevažećoj email adresi</title>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #104e97;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .details-box {
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        .footer {
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h1>Obaveštenje o nevažećoj email adresi</h1>
+        
+        <p>Poštovani,</p>
+        
+        <p>Sistem nije uspeo da pošalje uplatnicu na email adresu roditelja.</p>
+        
+        <div class="details-box">
+            <p><strong>Detalji:</strong></p>
+            <ul>
+                <li><strong>Učenik:</strong> {{ student_name }}</li>
+                <li><strong>Email adresa roditelja:</strong> {{ parent_email }}</li>
+                <li><strong>Greška:</strong> {{ error_message }}</li>
+            </ul>
+        </div>
+        
+        <p>Molimo vas da proverite i ažurirate email adresu roditelja u sistemu.</p>
+        
+        <div class="footer">
+            <p>Srdačan pozdrav,<br>OneTouch Sistem</p>
+        </div>
+        <div class="copyright">
+            <p>Softver izradio <a href="https://implicit.pro/" target="_blank">Studio Implicit</a> © 2024</p>
+        </div>
+    </div>
+</body>
+</html>
