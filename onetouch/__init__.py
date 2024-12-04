@@ -25,7 +25,8 @@ db = SQLAlchemy(app)
 # migrate = Migrate(app, db, compare_type=True, render_as_batch=True) #da primeti izmene npr u dužini stringova
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'users.login'
+login_manager.login_message = 'Morate biti prijavljeni da biste pristupili ovoj stranici.'
 login_manager.login_message_category = 'info'
 app.config['JSON_AS_ASCII'] = False #! da ne bude ascii već utf8
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER') # dodati u .env: 'mail.uplatnice.online'
@@ -55,6 +56,7 @@ from onetouch.teachers.routes import teachers
 from onetouch.transactions.routes import transactions
 from onetouch.overviews.routes import overviews
 from onetouch.users.routes import users
+from onetouch.errors.routes import errors
 
 
 app.register_blueprint(main)
@@ -65,7 +67,4 @@ app.register_blueprint(teachers)
 app.register_blueprint(transactions)
 app.register_blueprint(overviews)
 app.register_blueprint(users)
-
-
-
-
+app.register_blueprint(errors)

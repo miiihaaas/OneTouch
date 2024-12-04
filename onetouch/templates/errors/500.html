@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <h1>Greška na serveru (500)</h1>
+        <p>Došlo je do neočekivane greške. Naši administratori su obavešteni o problemu.</p>
+        <p>Molimo pokušajte ponovo kasnije ili kontaktirajte podršku ako se problem nastavi.</p>
+        <div class="border-top pt-3">
+            <a class="btn btn-outline-info" href="{{ url_for('main.home') }}">Nazad na početnu</a>
+        </div>
+    </div>
+{% endblock content %}

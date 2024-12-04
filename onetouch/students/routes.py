@@ -16,10 +16,6 @@ from onetouch.suppliers.functions import convert_to_latin
 students = Blueprint('students', __name__)
 
 
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
-
 # Ova funkcija će proveriti da li je korisnik ulogovan pre nego što pristupi zaštićenoj ruti
 @students.before_request
 def require_login():
@@ -43,8 +39,8 @@ def student_list():
         logging.debug(f'debug- edit mode: {student.student_name=} {student.student_surname=}')
         logging.debug(f'{edit_form.student_name.data=} {edit_form.student_surname.data=} {edit_form.send_mail.data=}')
         logging.debug(f'{request.form.get("send_mail")=}')
-        student.student_name = convert_to_latin(edit_form.student_name.data.strip().capitalize())
-        student.student_surname = convert_to_latin(" ".join(word.capitalize() for word in edit_form.student_surname.data.strip().split()))
+        student.student_name = convert_to_latin(edit_form.student_name.data.strip().title())
+        student.student_surname = convert_to_latin(" ".join(word.title() for word in edit_form.student_surname.data.strip().split()))
         student.student_class = edit_form.student_class.data
         student.student_section = edit_form.student_section.data
         student.parent_email = edit_form.parent_email.data
@@ -55,8 +51,8 @@ def student_list():
         return redirect(url_for('students.student_list'))
     if register_form.validate_on_submit() and request.form.get('submit_register'):
         student = Student(
-                            student_name=convert_to_latin(register_form.student_name.data.strip().capitalize()),
-                            student_surname=convert_to_latin(" ".join(word.capitalize() for word in register_form.student_surname.data.strip().split())),
+                            student_name=convert_to_latin(register_form.student_name.data.strip().title()),
+                            student_surname=convert_to_latin(" ".join(word.title() for word in register_form.student_surname.data.strip().split())),
                             student_class=str(register_form.student_class.data),
                             student_section=register_form.student_section.data,
                             parent_email=register_form.parent_email.data,
@@ -147,7 +143,6 @@ def api_students_list():
         'recordsTotal': total_filtered,
         'draw': request.args.get('draw', type=int),
         }
-
 
 
 @students.route('/testingg')
@@ -279,8 +274,4 @@ def delete_student(student_id):
         db.session.commit()
         flash(f'Profil učenika "{student.student_name} {student.student_surname}" je obrisan.', 'success')
         return redirect(url_for("students.student_list"))
-
-
-
-
 

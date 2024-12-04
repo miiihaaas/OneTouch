@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+        <h1>Stranica nije pronađena (404)</h1>
+        <p>Stranica koju tražite ne postoji. Molimo proverite URL adresu i pokušajte ponovo.</p>
+        <div class="border-top pt-3">
+            <a class="btn btn-outline-info" href="{{ url_for('main.home') }}">Nazad na početnu</a>
+        </div>
+    </div>
+{% endblock content %}

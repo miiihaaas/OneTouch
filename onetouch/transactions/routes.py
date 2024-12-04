@@ -12,9 +12,6 @@ from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate
 
 transactions = Blueprint('transactions', __name__)
 
-def load_user(user_id):
-    return User.query.get(int(user_id))
-
 
 # Ova funkcija će proveriti da li je korisnik ulogovan pre nego što pristupi zaštićenoj ruti
 @transactions.before_request
