@@ -286,7 +286,7 @@ def overview_student(student_id):
             data.sort(key=lambda x: (x['service_item_id'], x['date']))
             unique_services_list.sort(key=lambda x: x['service_item_date'])
             
-            report_student = gen_report_student(student, data, start_date, end_date)
+            report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
             
             return render_template('overview_student.html',
                                title='Pregled učenika',
@@ -305,10 +305,10 @@ def overview_student(student_id):
     except Exception as e:
         logging.error(f'Neočekivana greška u overview_student: {str(e)}')
         flash('Došlo je do neočekivane greške.', 'danger')
-        return redirect(url_for('main.home'))
+        return redirect(url_for('overviews.overview_students'))
 
 
-@overviews.route("/overview_sections", methods=['GET', 'POST']) # odeljenja
+@overviews.route("/overview_sections", methods=['GET', 'POST']) # odeljenja #! dodati try-except blok za ovu rutu
 def overview_sections():
     route_name = request.endpoint
     danas = date.today()

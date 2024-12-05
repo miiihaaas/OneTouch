@@ -159,11 +159,13 @@ body.Registracija form > div.form-group { text-align: center; }
 footer { display: flex; max-width: 1320px; margin: auto; justify-content: center; font-size: 12px; }
 form > div.form-group { text-align: center; }
 .btn.btn-danger, .btn.btn-secondary { margin-bottom: 10px !important; }
-.btn.btn-secondary { background-image: linear-gradient(#39ddd5, #238d88) !important; color:#ffffff !important; }
-.btn.btn-secondary:hover { background-image: linear-gradient(#238d88, #238d88) !important; }
-.btn.btn-danger { background-image: linear-gradient(#eb0081, #940052) !important; }
-.btn.btn-danger:hover { background-image: linear-gradient(#940052, #940052) !important; }
+.btn.btn-secondary { background-image: none !important; background-color: #009cdd !important; color: #ffffff !important; }
+.btn.btn-secondary:hover { background-color: #016d9b !important; }
+.btn.btn-danger { background-image: none !important; background-color: #b40164 !important; }
+.btn.btn-danger:hover { background-color: #940052 !important; }
 .btn.btn-secondary, .btn.btn-danger { margin: 0 0 0 0 !important; }
+.btn.btn-primary { background-color: #104e97 !important; background-image: none !important; }
+.btn.btn-primary:hover { background-color: #0c3a70 !important; }
 .form-check-input:checked { background-color: #009cdd; border-color: #009cdd; }
 .select2-container { background-color: #fff; }
 .select2-container--open { z-index: 1111; }
@@ -290,3 +292,45 @@ body.main\.instructions nav#sidebar { display: none !important; }
 	height: auto !important; overflow: hidden !important; padding: 6px !important; position: relative !important; width: auto !important; white-space: nowrap !important; }
 .spornispan .select2.select2-container { display: none; }
 /* kraj ubistva */
+
+/* dodao Mihas */
+.error-page {
+	min-height: 70vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.error-container {
+	max-width: 600px;
+	margin: 0 auto;
+	padding: 2rem;
+}
+
+.error-title {
+	font-size: 6rem;
+	font-weight: 700;
+	color: #104e97;
+	margin-bottom: 1rem;
+}
+
+.error-subtitle {
+	font-size: 2rem;
+	font-weight: 500;
+	color: #333;
+}
+
+.error-message {
+	font-size: 1.1rem;
+	color: #666;
+	line-height: 1.6;
+}
+
+.error-action {
+	margin-top: 2rem;
+}
+
+.btn-lg {
+	padding: 0.75rem 2rem;
+	font-size: 1.1rem;
+}

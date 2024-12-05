@@ -15,7 +15,7 @@
     }
 </style>
 <div class="mb-3">
-    <a class="btn btn-info" data-toggle="modal" data-target="#RegisterModal">Registracija novog detalja usluge</a>
+    <a class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog detalja usluge</a>
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
@@ -381,7 +381,7 @@
                         <input class="form-control w-100" type="text" id="result-input" readonly value="" hidden>
                     </div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ edit_form.submit_edit(class="btn btn-outline-info") }}
+                    {{ edit_form.submit_edit(class="btn btn-primary") }}
                 </div>
             </form>
         </div>
@@ -660,7 +660,7 @@
                         <input class="form-control w-100" type="text" id="result-input-register" readonly value="" hidden>
                     </div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ register_form.submit_register(class="btn btn-outline-info", disabled="disabled") }}
+                    {{ register_form.submit_register(class="btn btn-primary", disabled="disabled") }}
                 </div>
             </div>
         </form>
