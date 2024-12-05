@@ -213,7 +213,7 @@ def get_installment_values():
         return {"error": "Došlo je do greške pri obradi zahteva"}, 500
 
 
-@transactions.route('/submit_records', methods=['post'])
+@transactions.route('/submit_records', methods=['post']) #! dodati try-except blok za ovu rutu
 def submit_records():
     data = request.get_json()
     logging.debug(f'{type(data)=}')
@@ -785,66 +785,67 @@ def debt_archive_delete(debt_id):
 
 @transactions.route('/payment_archive/<int:payment_id>', methods=['get', 'post'])
 def payment_archive(payment_id):
-    route_name = request.endpoint
-    payment = StudentPayment.query.get_or_404(payment_id)
-    records = TransactionRecord.query.filter_by(student_payment_id=payment_id).all()
-    students = Student.query.all()
-    students_data = [
-            {
-                'student_id': 0,
-                'student_name': "ignorisana",
-                'student_surname': "uplata",
+    try:
+        route_name = request.endpoint
+        payment = StudentPayment.query.get_or_404(payment_id)
+        records = TransactionRecord.query.filter_by(student_payment_id=payment_id).all()
+        students = Student.query.all()
+        students_data = [
+                {
+                    'student_id': 0,
+                    'student_name': "ignorisana",
+                    'student_surname': "uplata",
+                    
+                }
+            ]
+        for student in students:
+            student_data = {
+                'student_id': student.id,
+                'student_name': student.student_name,
+                'student_surname': student.student_surname,
                 
             }
-        ]
-    for student in students:
-        student_data = {
-            'student_id': student.id,
-            'student_name': student.student_name,
-            'student_surname': student.student_surname,
-            
-        }
-        students_data.append(student_data)
-    services = ServiceItem.query.all()
-    services_data = [{
-            'service_id': 0,
-            'service_item_name': "",
-            'service_debt': "",
-        }]
-    for service in services:
-        service_data = {
-            'service_id': service.id,
-            'service_item_name': service.service_item_name,
-            'service_debt': service.service_item_service.service_name,
-        }
-        services_data.append(service_data)
+            students_data.append(student_data)
+        services = ServiceItem.query.all()
+        services_data = [{
+                'service_id': 0,
+                'service_item_name': "",
+                'service_debt': "",
+            }]
+        for service in services:
+            service_data = {
+                'service_id': service.id,
+                'service_item_name': service.service_item_name,
+                'service_debt': service.service_item_service.service_name,
+            }
+            services_data.append(service_data)
 
-    unique_service_item_ids = []
-    for record in records:
-        if record.service_item_id not in unique_service_item_ids:
-            unique_service_item_ids.append(record.service_item_id)
-    export_data = []
-    record_data = {}
-    for unique_service_item_id in unique_service_item_ids:
-        # Filtrirajte zapise samo za trenutni unique_service_item_id
-        filtered_records = [record for record in records if record.service_item_id == unique_service_item_id]
-        # Sabiranje svih vrednosti student_debt_total za trenutni unique_service_item_id
-        sum_amount = sum(record.student_debt_total for record in filtered_records)
-        
-        # Kreiranje record_data za trenutni unique_service_item_id
-        record_data = {
-            'payment_id': payment.id,
-            'service_item_id': unique_service_item_id,
-            'sum_amount': sum_amount,
-        }
-        if filtered_records[0].transaction_record_service_item is not None:
-            record_data['name'] = filtered_records[0].transaction_record_service_item.service_item_service.service_name + ' - ' + filtered_records[0].transaction_record_service_item.service_item_name
-        else:
-            record_data['name'] = 'Greška'
-        export_data.append(record_data)
-        
-        gen_file = export_payment_stats(export_data)
-    return render_template('payment_archive.html', 
+        unique_service_item_ids = []
+        for record in records:
+            if record.service_item_id not in unique_service_item_ids:
+                unique_service_item_ids.append(record.service_item_id)
+        export_data = []
+        record_data = {}
+        for unique_service_item_id in unique_service_item_ids:
+            # Filtrirajte zapise samo za trenutni unique_service_item_id
+            filtered_records = [record for record in records if record.service_item_id == unique_service_item_id]
+            # Sabiranje svih vrednosti student_debt_total za trenutni unique_service_item_id
+            sum_amount = sum(record.student_debt_total for record in filtered_records)
+            
+            # Kreiranje record_data za trenutni unique_service_item_id
+            record_data = {
+                'payment_id': payment.id,
+                'service_item_id': unique_service_item_id,
+                'sum_amount': sum_amount,
+            }
+            if filtered_records[0].transaction_record_service_item is not None:
+                record_data['name'] = filtered_records[0].transaction_record_service_item.service_item_service.service_name + ' - ' + filtered_records[0].transaction_record_service_item.service_item_name
+            else:
+                record_data['name'] = 'Greška'
+            export_data.append(record_data)
+            
+            gen_file = export_payment_stats(export_data)
+        return render_template('payment_archive.html', 
                             records=records, #! ovo je za prvu tabelu
                             payment=payment,
                             students=json.dumps(students_data),
@@ -852,221 +853,249 @@ def payment_archive(payment_id):
                             export_data = export_data, #! ovo je za treću tabelu
                             legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})",
                             route_name=route_name)
-
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Došlo je do greške prilikom učitavanja arhive plaćanja: {str(e)}', 'danger')
+        return redirect(url_for('transactions.payments'))
 
 
 @transactions.route('/posting_payment', methods=['POST', 'GET'])
 def posting_payment():
-    route_name = request.endpoint
-    school = School.query.first()
-    if request.method == 'POST' and ('submitBtnImportData' in request.form):
-        file = request.files['fileInput']
-        if file.filename == '':
-            error_mesage = 'Niste izabrali XML fajl'
-            flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', error_mesage=error_mesage)
-        tree = ET.parse(file)
-        root = tree.getroot()
+    try:
+        route_name = request.endpoint
+        school = School.query.first()
+        if request.method == 'POST' and ('submitBtnImportData' in request.form):
+            try:
+                file = request.files['fileInput']
+                if file.filename == '':
+                    error_mesage = 'Niste izabrali XML fajl'
+                    flash(error_mesage, 'danger')
+                    return render_template('posting_payment.html', error_mesage=error_mesage)
+                tree = ET.parse(file)
+                root = tree.getroot()
 
-        #! nova logika za SPIRI .xml fajl
-        pozivi_na_broj = [bank_account['reference_number_spiri'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
-        print(f'{pozivi_na_broj=}')
-        pozivi_na_broj = [broj[2:11] for broj in pozivi_na_broj]
-        print(f'{pozivi_na_broj=}')
-        
+                #! nova logika za SPIRI .xml fajl
+                pozivi_na_broj = [bank_account['reference_number_spiri'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
+                print(f'{pozivi_na_broj=}')
+                pozivi_na_broj = [broj[2:11] for broj in pozivi_na_broj]
+                print(f'{pozivi_na_broj=}')
+                
 
 
-        # racun_skole = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
-        datum_izvoda_element = root.find('.//DatumIzvoda').text
-        racun_izvoda_element = root.find('.//RacunIzvoda').text
-        broj_izvoda_element = root.find('.//BrojIzvoda').text
-        iznos_potrazuje_element = root.find('.//IznosPotrazuje').text
-        logging.debug(f'{racun_izvoda_element=}')
-        # Pronalaženje broja pojavljivanja elementa <Stavka>
-        broj_pojavljivanja = len(root.findall('.//Stavka'))
-        
-        existing_payments = StudentPayment.query.filter_by(
-                                                payment_date=datetime.strptime(datum_izvoda_element, '%d.%m.%Y'), #todo: podesiti filtere datetime.strptime(datum_izvoda_element, '%d.%m.%Y')
-                                                statment_nubmer=int(broj_izvoda_element)).first() #todo: podesiti filtere
-        # spisak svih izvoda koji postoje u data bazi
-        transaction_records = TransactionRecord.query.all()
-        all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records  if record.student_debt_id is not None]
-        logging.debug(f'{all_reference_numbers=}')
-        
-        logging.debug(f'{existing_payments=}')
-        if existing_payments:
-            error_mesage = f'Izabrani izvod ({broj_izvoda_element}) već postoji u bazi.'
-            flash(error_mesage, 'danger')
-            # return render_template('posting_payment.html', error_mesage=error_mesage) #todo izmeniti atribute u render_template tako da se učitaju stavke i error mesage
+                # racun_skole = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
+                datum_izvoda_element = root.find('.//DatumIzvoda').text
+                racun_izvoda_element = root.find('.//RacunIzvoda').text
+                broj_izvoda_element = root.find('.//BrojIzvoda').text
+                iznos_potrazuje_element = root.find('.//IznosPotrazuje').text
+                logging.debug(f'{racun_izvoda_element=}')
+                # Pronalaženje broja pojavljivanja elementa <Stavka>
+                broj_pojavljivanja = len(root.findall('.//Stavka'))
+                
+                existing_payments = StudentPayment.query.filter_by(
+                                                        payment_date=datetime.strptime(datum_izvoda_element, '%d.%m.%Y'), #todo: podesiti filtere datetime.strptime(datum_izvoda_element, '%d.%m.%Y')
+                                                        statment_nubmer=int(broj_izvoda_element)).first() #todo: podesiti filtere
+                # spisak svih izvoda koji postoje u data bazi
+                transaction_records = TransactionRecord.query.all()
+                all_reference_numbers = [f'{record.student_id:04d}-{record.service_item_id:03d}' for record in transaction_records  if record.student_debt_id is not None]
+                logging.debug(f'{all_reference_numbers=}')
+                
+                logging.debug(f'{existing_payments=}')
+                if existing_payments:
+                    error_mesage = f'Izabrani izvod ({broj_izvoda_element}) već postoji u bazi.'
+                    flash(error_mesage, 'danger')
+                    # return render_template('posting_payment.html', error_mesage=error_mesage) #todo izmeniti atribute u render_template tako da se učitaju stavke i error mesage
 
-        # Ispis rezultata
-        logging.debug("Broj pojavljivanja elementa <Stavka>: ", broj_pojavljivanja)
-        logging.debug(f'{datum_izvoda_element=}')
-        logging.debug(f'{broj_izvoda_element=}')
-        logging.debug(f'{iznos_potrazuje_element=}')
-        logging.debug(f'{pozivi_na_broj=}, {racun_izvoda_element=}')
-        # if racun_izvoda_element not in racun_skole:
-        if racun_izvoda_element not in pozivi_na_broj:
-            error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {pozivi_na_broj}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
-            flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+                # Ispis rezultata
+                logging.debug("Broj pojavljivanja elementa <Stavka>: ", broj_pojavljivanja)
+                logging.debug(f'{datum_izvoda_element=}')
+                logging.debug(f'{broj_izvoda_element=}')
+                logging.debug(f'{iznos_potrazuje_element=}')
+                logging.debug(f'{pozivi_na_broj=}, {racun_izvoda_element=}')
+                # if racun_izvoda_element not in racun_skole:
+                if racun_izvoda_element not in pozivi_na_broj:
+                    error_mesage = f'Računi nisu isti. Račun izvoda: {racun_izvoda_element}, račun škole: {pozivi_na_broj}. Izaberite odgovarajući XML fajl i pokušajte ponovo.'
+                    flash(error_mesage, 'danger')
+                    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
 
-        stavke = []
-        for stavka in root.findall('Stavka'):
-            podaci = {}
-            podaci['RacunZaduzenja'] = stavka.find('RacunZaduzenja').text #! onaj ko plaća
-            podaci['NazivZaduzenja'] = stavka.find('NazivZaduzenja').text
-            podaci['MestoZaduzenja'] = stavka.find('MestoZaduzenja').text
-            podaci['IzvorInformacije'] = stavka.find('IzvorInformacije').text
-            podaci['ModelPozivaZaduzenja'] = stavka.find('ModelPozivaZaduzenja').text
-            podaci['PozivZaduzenja'] = stavka.find('PozivZaduzenja').text
-            podaci['SifraPlacanja'] = stavka.find('SifraPlacanja').text
-            podaci['Iznos'] = stavka.find('Iznos').text
-            podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! onom kome se plaća
-            podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
-            podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
-            podaci['ModelPozivaOdobrenja'] = stavka.find('ModelPozivaOdobrenja').text
-            podaci['PozivOdobrenja'] = stavka.find('PozivOdobrenja').text if stavka.find('PozivOdobrenja').text else "-" #! ako nije None onda preuzmi vrednost iz xml, akoj je None onda mu dodeli "-"
-            podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text if stavka.find('SvrhaDoznake').text else "-" #! isti princip kao gornji red 
-            podaci['PozivNaBrojApp'] = izvuci_poziv_na_broj_iz_svrhe_uplate(podaci['SvrhaDoznake']) #! ovde dodati kod koji će da iz SVRHE UPLATE povlači POZIV NA BROJ za APP
-            # podaci['DatumValute'] = stavka.find('DatumValute').text
-            podaci['PodatakZaReklamaciju'] = stavka.find('PodatakZaReklamaciju').text
-            # podaci['VremeUnosa'] = stavka.find('VremeUnosa').text
-            # podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
-            podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
-            # podaci['TipSloga'] = stavka.find('TipSloga').text
-            
-            logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
+                stavke = []
+                for stavka in root.findall('Stavka'):
+                    podaci = {}
+                    podaci['RacunZaduzenja'] = stavka.find('RacunZaduzenja').text #! onaj ko plaća
+                    podaci['NazivZaduzenja'] = stavka.find('NazivZaduzenja').text
+                    podaci['MestoZaduzenja'] = stavka.find('MestoZaduzenja').text
+                    podaci['IzvorInformacije'] = stavka.find('IzvorInformacije').text
+                    podaci['ModelPozivaZaduzenja'] = stavka.find('ModelPozivaZaduzenja').text
+                    podaci['PozivZaduzenja'] = stavka.find('PozivZaduzenja').text
+                    podaci['SifraPlacanja'] = stavka.find('SifraPlacanja').text
+                    podaci['Iznos'] = stavka.find('Iznos').text
+                    podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! onom kome se plaća
+                    podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
+                    podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
+                    podaci['ModelPozivaOdobrenja'] = stavka.find('ModelPozivaOdobrenja').text
+                    podaci['PozivOdobrenja'] = stavka.find('PozivOdobrenja').text if stavka.find('PozivOdobrenja').text else "-" #! ako nije None onda preuzmi vrednost iz xml, akoj je None onda mu dodeli "-"
+                    podaci['SvrhaDoznake'] = stavka.find('SvrhaDoznake').text if stavka.find('SvrhaDoznake').text else "-" #! isti princip kao gornji red 
+                    podaci['PozivNaBrojApp'] = izvuci_poziv_na_broj_iz_svrhe_uplate(podaci['SvrhaDoznake']) #! ovde dodati kod koji će da iz SVRHE UPLATE povlači POZIV NA BROJ za APP
+                    # podaci['DatumValute'] = stavka.find('DatumValute').text
+                    podaci['PodatakZaReklamaciju'] = stavka.find('PodatakZaReklamaciju').text
+                    # podaci['VremeUnosa'] = stavka.find('VremeUnosa').text
+                    # podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
+                    podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
+                    # podaci['TipSloga'] = stavka.find('TipSloga').text
+                    
+                    logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
-            #! provera da li je poziv na broj validan
-            provera_validnosti_poziva_na_broj(podaci, all_reference_numbers)
-            if podaci['RacunZaduzenja'] in school.school_bank_accounts:
-                logging.info('Ovo je isplata')
-                podaci['Iznos'] = -float(podaci['Iznos'])
-                # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
-                # if len(podaci['PozivOdobrenja']) == 7:
-                #     # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-                #     formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
-                #     if formated_poziv_odobrenja in all_reference_numbers:
-                #         podaci['Validnost'] = True
-                # elif len(podaci['PozivOdobrenja']) == 8:
-                #     # proverava da li je forma '0001-001'
-                #     if podaci['PozivOdobrenja'] in all_reference_numbers:
-                #         podaci['Validnost'] = True
-                # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
-                # else:
-                #     continue
-            logging.debug(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
+                    #! provera da li je poziv na broj validan
+                    provera_validnosti_poziva_na_broj(podaci, all_reference_numbers)
+                    if podaci['RacunZaduzenja'] in school.school_bank_accounts:
+                        logging.info('Ovo je isplata')
+                        podaci['Iznos'] = -float(podaci['Iznos'])
+                        # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
+                        # if len(podaci['PozivOdobrenja']) == 7:
+                        #     # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+                        #     formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
+                        #     if formated_poziv_odobrenja in all_reference_numbers:
+                        #         podaci['Validnost'] = True
+                        # elif len(podaci['PozivOdobrenja']) == 8:
+                        #     # proverava da li je forma '0001-001'
+                        #     if podaci['PozivOdobrenja'] in all_reference_numbers:
+                        #         podaci['Validnost'] = True
+                        # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
+                        # else:
+                        #     continue
+                    logging.debug(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
 
-            logging.debug(f'pre appenda: {podaci=}')
-            stavke.append(podaci)
-        logging.debug(f'{stavke=}')
-        
-        
-        
-        flash('Uspešno je učitan XML fajl.', 'success')
-        return render_template('posting_payment.html',
-                                title="Knjiženje uplata",
-                                legend="Knjiženje uplata",
-                                stavke=stavke,
-                                datum_izvoda_element=datum_izvoda_element,
-                                broj_izvoda_element=broj_izvoda_element,
-                                iznos_potrazuje_element=iznos_potrazuje_element,
-                                racun_izvoda_element=racun_izvoda_element,
-                                broj_pojavljivanja=broj_pojavljivanja,
-                                route_name=route_name)
-    if request.method == 'POST' and ('submitBtnSaveData' in request.form):
-        logging.debug(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
-        # Dohvaćanje vrijednosti iz obrasca
-        payment_date = datetime.strptime(request.form['payment_date'], '%d.%m.%Y')
-        statment_nubmer = int(request.form['statment_nubmer'])
-        total_payment_amount = float(request.form['total_payment_amount'].replace(',', '.'))
-        number_of_items = int(request.form['number_of_items'])
-        bank_account = request.form['bank_account'] #! obezbedi da bude string a ne int, mora i u db da se ispravi
-        logging.debug(f'{payment_date=}')
-        logging.debug(f'{statment_nubmer=}')
-        logging.debug(f'{total_payment_amount=}')
-        logging.debug(f'{number_of_items=}')
-        existing_payments = StudentPayment.query.filter_by(
-                                                payment_date=payment_date,
-                                                statment_nubmer=statment_nubmer,
-                                                bank_account=bank_account).first()
-        logging.debug(f'{existing_payments=}')
-        if existing_payments:
-            error_mesage = f'Uplata za dati datum ({payment_date}) i broj računa ({statment_nubmer}) već postoji u bazi. Izaberite novi XML fajl i pokušajte ponovo.'
-            flash(error_mesage, 'danger')
-            return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
-        else:
-            # čuvanje podataka u bazu
-            new_payment = StudentPayment(payment_date=payment_date,
-                                            bank_account=bank_account,
-                                            statment_nubmer=statment_nubmer,
-                                            total_payment_amount=total_payment_amount,
-                                            number_of_items=number_of_items,
-                                            number_of_errors=0
-                                        )
-            db.session.add(new_payment)
-            db.session.commit()
-            
-            uplatioci = request.form.getlist('uplatilac')
-            iznosi = request.form.getlist('iznos')
-            pozivi_na_broj = request.form.getlist('poziv_na_broj')
-            svrha_uplate = request.form.getlist('svrha_uplate')
-            logging.debug(f'{iznosi=}')
-            logging.debug(f'{pozivi_na_broj=}')
-            logging.debug(f'{svrha_uplate=}')
-            records = []
-            for i in range(len(iznosi)):
-                records.append({
-                        'uplatilac': uplatioci[i],
-                        'iznos': iznosi[i],
-                        'poziv_na_broj': pozivi_na_broj[i],
-                        'svrha_uplate': svrha_uplate[i]
-                    })
-            logging.debug(f'{records=}')
-            number_of_errors = 0
-            student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
-            service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
-            for record in records:
-                payer = record['uplatilac']
-                purpose_of_payment = record['svrha_uplate']
-                reference_number = record['poziv_na_broj']
-                student_id = record['poziv_na_broj'][:4]
-                service_item_id = record['poziv_na_broj'][-3:]
-                student_debt_total = float(record['iznos'].replace(',', '.'))
-                payment_error = False
-                logging.debug(f'{student_ids=}')
-                logging.debug(f'{service_item_ids=}')
-                logging.debug(f'{student_id=}')
-                logging.debug(f'{service_item_id=}')
-                if (student_id not in student_ids) or (service_item_id not in service_item_ids):
-                    logging.debug(f'nije u listi student_ids: {student_id=}')
-                    student_id = 1
-                    service_item_id = 0
-                    payment_error = True
-                    number_of_errors += 1
-                new_record = TransactionRecord(student_debt_id = None,
-                                                student_payment_id = new_payment.id,
-                                                student_id = student_id,
-                                                service_item_id = service_item_id,
-                                                student_debt_installment_number = None,
-                                                student_debt_amount = None,
-                                                studetn_debt_installment_value = None,
-                                                student_debt_discount = None,
-                                                student_debt_total = student_debt_total,
-                                                purpose_of_payment=purpose_of_payment,
-                                                payer=payer,
-                                                reference_number=reference_number,
-                                                payment_error=payment_error)
-                logging.debug(f'{new_record.student_id=}')
-                logging.debug(f'{new_record.service_item_id=}')
-                logging.debug(f'{new_record.student_debt_total=}')
-                logging.debug(f'{new_record.purpose_of_payment=}')
-                logging.debug(f'{new_record.reference_number=}')
-                db.session.add(new_record)
-                db.session.commit()
-            new_payment.number_of_errors = number_of_errors
-            db.session.commit()
-            flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer} na podračunu {new_payment.bank_account}, od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
-            return redirect(url_for('transactions.payments_archive_list'))
-    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+                    logging.debug(f'pre appenda: {podaci=}')
+                    stavke.append(podaci)
+                logging.debug(f'{stavke=}')
+                
+                
+                
+                flash('Uspešno je učitan XML fajl.', 'success')
+                return render_template('posting_payment.html',
+                                        title="Knjiženje uplata",
+                                        legend="Knjiženje uplata",
+                                        stavke=stavke,
+                                        datum_izvoda_element=datum_izvoda_element,
+                                        broj_izvoda_element=broj_izvoda_element,
+                                        iznos_potrazuje_element=iznos_potrazuje_element,
+                                        racun_izvoda_element=racun_izvoda_element,
+                                        broj_pojavljivanja=broj_pojavljivanja,
+                                        route_name=route_name)
+            except ET.ParseError as e:
+                logging.error(f'Greška pri parsiranju XML fajla: {str(e)}')
+                db.session.rollback()
+                flash(f'Greška pri parsiranju XML fajla: {str(e)}', 'danger')
+                return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+            except Exception as e:
+                logging.error(f'Došlo je do greške prilikom učitavanja XML fajla: {str(e)}')
+                db.session.rollback()
+                flash(f'Došlo je do greške prilikom učitavanja XML fajla: {str(e)}', 'danger')
+                return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+        if request.method == 'POST' and ('submitBtnSaveData' in request.form):
+            try:
+                logging.debug(f'pritisnuto je dugme sačuvajte i rasknjićite uplate')
+                # Dohvaćanje vrijednosti iz obrasca
+                payment_date = datetime.strptime(request.form['payment_date'], '%d.%m.%Y')
+                statment_nubmer = int(request.form['statment_nubmer'])
+                total_payment_amount = float(request.form['total_payment_amount'].replace(',', '.'))
+                number_of_items = int(request.form['number_of_items'])
+                bank_account = request.form['bank_account'] #! obezbedi da bude string a ne int, mora i u db da se ispravi
+                logging.debug(f'{payment_date=}')
+                logging.debug(f'{statment_nubmer=}')
+                logging.debug(f'{total_payment_amount=}')
+                logging.debug(f'{number_of_items=}')
+                existing_payments = StudentPayment.query.filter_by(
+                                                        payment_date=payment_date,
+                                                        statment_nubmer=statment_nubmer,
+                                                        bank_account=bank_account).first()
+                logging.debug(f'{existing_payments=}')
+                if existing_payments:
+                    error_mesage = f'Uplata za dati datum ({payment_date}) i broj računa ({statment_nubmer}) već postoji u bazi. Izaberite novi XML fajl i pokušajte ponovo.'
+                    flash(error_mesage, 'danger')
+                    return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata")
+                else:
+                    # čuvanje podataka u bazu
+                    new_payment = StudentPayment(payment_date=payment_date,
+                                                    bank_account=bank_account,
+                                                    statment_nubmer=statment_nubmer,
+                                                    total_payment_amount=total_payment_amount,
+                                                    number_of_items=number_of_items,
+                                                    number_of_errors=0
+                                                )
+                    db.session.add(new_payment)
+                    db.session.commit()
+                    
+                    uplatioci = request.form.getlist('uplatilac')
+                    iznosi = request.form.getlist('iznos')
+                    pozivi_na_broj = request.form.getlist('poziv_na_broj')
+                    svrha_uplate = request.form.getlist('svrha_uplate')
+                    logging.debug(f'{iznosi=}')
+                    logging.debug(f'{pozivi_na_broj=}')
+                    logging.debug(f'{svrha_uplate=}')
+                    records = []
+                    for i in range(len(iznosi)):
+                        records.append({
+                                'uplatilac': uplatioci[i],
+                                'iznos': iznosi[i],
+                                'poziv_na_broj': pozivi_na_broj[i],
+                                'svrha_uplate': svrha_uplate[i]
+                            })
+                    logging.debug(f'{records=}')
+                    number_of_errors = 0
+                    student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
+                    service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
+                    for record in records:
+                        payer = record['uplatilac']
+                        purpose_of_payment = record['svrha_uplate']
+                        reference_number = record['poziv_na_broj']
+                        student_id = record['poziv_na_broj'][:4]
+                        service_item_id = record['poziv_na_broj'][-3:]
+                        student_debt_total = float(record['iznos'].replace(',', '.'))
+                        payment_error = False
+                        logging.debug(f'{student_ids=}')
+                        logging.debug(f'{service_item_ids=}')
+                        logging.debug(f'{student_id=}')
+                        logging.debug(f'{service_item_id=}')
+                        if (student_id not in student_ids) or (service_item_id not in service_item_ids):
+                            logging.debug(f'nije u listi student_ids: {student_id=}')
+                            student_id = 1
+                            service_item_id = 0
+                            payment_error = True
+                            number_of_errors += 1
+                        new_record = TransactionRecord(student_debt_id = None,
+                                                        student_payment_id = new_payment.id,
+                                                        student_id = student_id,
+                                                        service_item_id = service_item_id,
+                                                        student_debt_installment_number = None,
+                                                        student_debt_amount = None,
+                                                        studetn_debt_installment_value = None,
+                                                        student_debt_discount = None,
+                                                        student_debt_total = student_debt_total,
+                                                        purpose_of_payment=purpose_of_payment,
+                                                        payer=payer,
+                                                        reference_number=reference_number,
+                                                        payment_error=payment_error)
+                        logging.debug(f'{new_record.student_id=}')
+                        logging.debug(f'{new_record.service_item_id=}')
+                        logging.debug(f'{new_record.student_debt_total=}')
+                        logging.debug(f'{new_record.purpose_of_payment=}')
+                        logging.debug(f'{new_record.reference_number=}')
+                        db.session.add(new_record)
+                        db.session.commit()
+                    new_payment.number_of_errors = number_of_errors
+                    db.session.commit()
+                    flash(f'Uspešno ste uvezli izvod broj: {new_payment.statment_nubmer} na podračunu {new_payment.bank_account}, od datuma {new_payment.payment_date.strftime("%d.%m.%Y.")}', 'success')
+                    return redirect(url_for('transactions.payments_archive_list'))
+            except ValueError as e:
+                db.session.rollback()
+                flash(f'Greška pri konverziji podataka: {str(e)}', 'danger')
+                return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Došlo je do greške prilikom čuvanja podataka: {str(e)}', 'danger')
+                return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+        return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Došlo je do neočekivane greške: {str(e)}', 'danger')
+        return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
