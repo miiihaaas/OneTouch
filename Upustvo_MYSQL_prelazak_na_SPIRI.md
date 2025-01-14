@@ -37,7 +37,17 @@ SQL naredba za ovu izmenu:
 ALTER TABLE `student_payment`
 ADD COLUMN `bank_account` VARCHAR(255);
 ```
-
+Ukupni SQL kod za sve tri stavke:
+```sql
+ALTER TABLE `school`
+ADD COLUMN `school_bank_accounts` JSON,
+ADD COLUMN `class_plus_one` DATE;
+ALTER TABLE `service_item`
+ADD COLUMN `bank_account` VARCHAR(255),
+ADD COLUMN `reference_number_spiri` VARCHAR(255);
+ALTER TABLE `student_payment`
+ADD COLUMN `bank_account` VARCHAR(255);
+```
 #
 
 ### Nakon primene ovih izmena, baza će biti spremna za nadogradnju aplikacije na SPIRI verziju.
@@ -58,7 +68,7 @@ Nakon prilagođavanja strukture baze podataka potrebno je izmeniti sledeće poda
 
 U koloni `school_bank_accounts` treba da se nalazi JSON podatak u formatu:
 ```json
-{"bank_accounts": [{"bank_account_number": "840-0000031568845-28", "reference_number_spiri": "1401696160174237800"}]}
+{"bank_accounts": [{"bank_account_number": "840-0000000000000-33", "reference_number_spiri": "0000000000000000000"}]}
 ```
 * prilagoditi podatke školi.
 * preko aplikacije dodati ostale bankovne račune. Link prilagoditi tako da se umesto xxxx u URL-u nalazi ID škole.
