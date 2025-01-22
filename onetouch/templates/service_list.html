@@ -8,11 +8,15 @@
         .mobtable td:nth-of-type(4):before { content: "Tip plaćanja"; }
         .mobtable td:nth-of-type(5):before { content: "Akcije"; }
         .mobtable td:nth-of-type(6):before { content: ""; }
+        {% if not license_expired %}
         .mobtable td:nth-of-type(7):before { content: ""; }
+        {% endif %}
     }
 </style>
 <div>
+    {% if not license_expired %}
     <a href="#" class="btn btn-primary mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija novog tipa usluge</a>
+    {% endif %}
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
@@ -21,7 +25,9 @@
             <th>Naziv tipa usluge</th>
             <th>Naziv dobavljača</th>
             <th>Tip plaćanja</th>
+            {% if not license_expired %}
             <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -43,8 +49,13 @@
                 Plaćanje po obračunskom periodu
                 {% endif %}
             </td>
-            <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{service.id}}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if service.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}</td>
+            {% if not license_expired %}
+            <td>
+                <a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{service.id}}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if service.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}
+            </td>
+            {% endif %}
         </tr>
+        {% if not license_expired %}
         <!-- Modal Edit -->
         <div class="modal fade" id="EditModal{{service.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -119,10 +130,12 @@
                 </form>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>
 
+{% if not license_expired %}
 <!-- Modal Register -->
 <div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -238,6 +251,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endif %}
 
 {% endblock content%}

@@ -4,18 +4,24 @@
     @media (max-width: 991px)  {
         .mobtable td:nth-of-type(1):before { content: "ID dobavljača"; }
         .mobtable td:nth-of-type(2):before { content: "Naziv dobavljača"; }
+        {% if not license_expired %}
         .mobtable td:nth-of-type(3):before { content: "Akcije"; }
+        {% endif %}
     }
 </style>
 <div>
+    {% if not license_expired %}
     <a href="#" class="btn btn-primary mb-3" data-toggle="modal" data-target="#RegisterModal">Registracija novog dobavljača</a>
+    {% endif %}
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID dobavljača</th>
             <th>Naziv dobavljača</th>
+            {% if not license_expired %}
             <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -23,8 +29,11 @@
         <tr class="odd">
             <td>{{ supplier.id }}</td>
             <td>{{ supplier.supplier_name }}</td>
+            {% if not license_expired %}
             <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{supplier.id}}" title="Izmenite dobavljača"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a> {% if supplier.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Dobavljač arhiviran"></i> {% endif %}</td>
+            {% endif %}
         </tr>
+        {% if not license_expired %}
         <!-- Modal Edit -->
         <div class="modal fade" id="EditModal{{supplier.id}}" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -71,10 +80,12 @@
                 </form>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>
 
+{% if not license_expired %}
 <!-- Modal Register -->
 <div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -113,7 +124,7 @@
         </form>
     </div>
 </div>
-
+{% endif %}
 {% endblock content%}
 
 {% block scripts %}

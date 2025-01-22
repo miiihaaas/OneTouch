@@ -7,12 +7,16 @@
         .mobtable td:nth-of-type(3):before { content: "Prezime"; }
         .mobtable td:nth-of-type(4):before { content: "Razred"; }
         .mobtable td:nth-of-type(5):before { content: "Odeljenje"; }
+        {% if not license_expired %}
         .mobtable td:nth-of-type(6):before { content: "Akcije"; }
+        {% endif %}
     }
 </style>
 <div class="row form-group align-items-end">
     <div class="col form-group">
+        {% if not license_expired %}
         <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog odeljenskog starešine</a>
+        {% endif %}
     </div>
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
@@ -43,7 +47,9 @@
             <th>Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
+            {% if not license_expired %}
             <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -54,6 +60,7 @@
             <td>{{ teacher.teacher_surname }}</td>
             <td>{{ teacher.teacher_class }}</td>
             <td>{{ teacher.teacher_section }}</td>
+            {% if not license_expired %}
             <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{teacher.id}}" title="Izmenite profil starešine"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
                 <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{teacher.id}}" title="Obrišite profil starešine"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
         </tr>
@@ -177,6 +184,7 @@
                 </form>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>
@@ -289,4 +297,4 @@
         });
     </script>
 
-{% endblock %}
+{% endblock scripts%}

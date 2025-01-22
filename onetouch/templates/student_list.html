@@ -8,12 +8,16 @@
         .mobtable td:nth-of-type(4):before { content: "Razred"; }
         .mobtable td:nth-of-type(5):before { content: "Odeljenje"; }
         .mobtable td:nth-of-type(6):before { content: "Mejl roditelja"; }
+        {% if not license_expired %}
         .mobtable td:nth-of-type(7):before { content: "Akcije"; }
+        {% endif %}
     }
 </style>
 <div class="row form-group align-items-end">
     <div class="col form-group">
+        {% if not license_expired %}
         <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+        {% endif %}
     </div>
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
@@ -34,15 +38,19 @@
         </select>
     </div>
     <div class="col form-group">
-        {% if plus_one_button %}
-            {% if danas >= active_date_start and danas <= active_date_end %}
-                <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
-                <a href="{{ url_for('main.instructions', _anchor='plus_one')}}" target="_blank">Upustvo</a>
+        {% if not license_expired %}
+            {% if plus_one_button %}
+                {% if danas >= active_date_start and danas <= active_date_end %}
+                    <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
+                    <a href="{{ url_for('main.instructions', _anchor='plus_one')}}" target="_blank">Upustvo</a>
+                {% endif %}
             {% endif %}
         {% endif %}
     </div>
 </div>
 <hr>
+
+{% if not license_expired %}
 <!-- Modal Edit -->
 <div class="modal fade" id="EditModal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -275,6 +283,7 @@
         </div>
     </div>
 </div>
+{% endif %}
 <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
@@ -284,7 +293,9 @@
             <th>Razred</th>
             <th>Odeljenje</th>
             <th>Mejl roditelja</th>
+            {% if not license_expired %}
             <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -375,7 +386,7 @@
                             return '<td></td>';
                         }
                     },
-                },
+                }{% if not license_expired %},
                 {
                     data: null,
                     render: function (data, type, row) {
@@ -402,7 +413,7 @@
                             </a>
                         </td>`;
                     },
-                }
+                }{% endif %}
             ],
             order: [[3, 'asc'], [4, 'asc'], [2, 'asc'],],
             language: {

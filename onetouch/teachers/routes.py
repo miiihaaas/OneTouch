@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
-from onetouch.models import Teacher, User
+from onetouch.models import Teacher, School
 from onetouch.teachers.forms import RegisterTeacherModalForm, EditTeacherModalForm
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -20,6 +20,13 @@ def teacher_list():
             danas = datetime.now()
             active_date_start = danas.replace(month=4, day=15)
             active_date_end = danas.replace(month=9, day=15)
+            school = School.query.first()
+            license_expired = False
+            if school and school.license_expiry_date:
+                days_left = school.days_until_license_expiry()
+                if days_left is not None and days_left <= 0:
+                    license_expired = True
+            
             edit_form = EditTeacherModalForm()
             register_form = RegisterTeacherModalForm()
         except SQLAlchemyError as e:
@@ -88,7 +95,8 @@ def teacher_list():
                             register_form=register_form,
                             active_date_start=active_date_start,
                             active_date_end=active_date_end,
-                            danas=danas)
+                            danas=danas,
+                            license_expired=license_expired)
                             
     except Exception as e:
         logging.error(f"Neočekivana greška u teacher_list: {str(e)}")

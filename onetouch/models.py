@@ -41,7 +41,16 @@ class School(db.Model):
     school_municipality = db.Column(db.String(255), nullable=False)
     school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
     class_plus_one = db.Column(db.Date, nullable=False)
+    license_expiry_date = db.Column(db.Date, nullable=True)
     users = db.relationship('User', backref='user_school', lazy=True)
+    
+    def days_until_license_expiry(self):
+        if not self.license_expiry_date:
+            return None
+        from datetime import datetime
+        today = datetime.now().date()
+        delta = self.license_expiry_date - today
+        return delta.days
 
 
 class Supplier(db.Model):
