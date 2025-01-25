@@ -32,11 +32,18 @@ def school_profile():
                     account_number = bank_account_form.bank_account_number.data.strip()
                     reference_number = bank_account_form.reference_number_spiri.data.strip()
                     
-                    if account_number and reference_number:
-                        school.school_bank_accounts["bank_accounts"].append({
-                            "bank_account_number": account_number,
-                            "reference_number_spiri": reference_number
-                        })
+                    # if account_number and reference_number:
+                    if account_number:
+                        try:
+                            school.school_bank_accounts["bank_accounts"].append({
+                                "bank_account_number": account_number,
+                                "reference_number_spiri": reference_number
+                            })
+                        except SQLAlchemyError as e:
+                            db.session.rollback()
+                            logger.error(f"Database error while adding bank account: {str(e)}")
+                            flash('Došlo je do greške pri čuvanju podataka. Pokušajte ponovo.', 'danger')
+                            return redirect(url_for('schools.school_profile'))
 
                 # Update school details
                 school.school_name = form.school_name.data.strip()
