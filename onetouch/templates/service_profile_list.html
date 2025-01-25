@@ -11,11 +11,15 @@
         .mobtable td:nth-of-type(7):before { content: "Razred"; }
         .mobtable td:nth-of-type(8):before { content: "Račun"; }
         .mobtable td:nth-of-type(9):before { content: "Poziv na broj"; }
+        {% if not license_expired %}
         .mobtable td:nth-of-type(10):before { content: "Akcije"; }
+        {% endif %}
     }
 </style>
 <div class="mb-3">
+    {% if not license_expired %}
     <a class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog detalja usluge</a>
+    {% endif %}
 </div>
 <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
@@ -29,7 +33,9 @@
             <th class="sirina-razred">Razred</th>
             <th>Račun</th>
             <th>Poziv na broj</th>
+            {% if not license_expired %}
             <th class="sirina-akcije"></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -70,10 +76,13 @@
             <td>{{ service_profile.service_item_class }}</td>
             <td>{{ service_profile.bank_account }}</td>
             <td>{{ service_profile.reference_number_spiri }}</td>
-            <td><a class="edit-btn" data-id="{{ service_profile.id }}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
+            {% if not license_expired %}
+            <td>
+                <a class="edit-btn" data-id="{{ service_profile.id }}" title="Izmenite uslugu"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
                 <a class="delete-btn" data-id="{{ service_profile.id }}" title="Obrišite uslugu"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a>
                 {% if service_profile.archived %} <i class="fa-regular fa-file-zipper awesomearchive" title="Usluga arhivirana"></i> {% endif %}
             </td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>

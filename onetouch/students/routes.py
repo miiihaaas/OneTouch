@@ -35,6 +35,13 @@ def student_list():
         active_date_start = danas.replace(month=8, day=15)
         active_date_end = danas.replace(month=9, day=30)
         
+        # Provera isteka licence
+        license_expired = False
+        if school and school.license_expiry_date:
+            days_left = school.days_until_license_expiry()
+            if days_left is not None and days_left <= 0:
+                license_expired = True
+        
         register_form = RegisterStudentModalForm()
         edit_form = EditStudentModalForm()
         
@@ -93,7 +100,8 @@ def student_list():
                                 active_date_start=active_date_start,
                                 active_date_end=active_date_end,
                                 danas=danas,
-                                route_name=route_name)
+                                route_name=route_name,
+                                license_expired=license_expired)
     except Exception as e:
         logger.error(f"Neočekivana greška u student_list: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')

@@ -26,6 +26,12 @@ def supplier_list():
     try:
         route_name = request.endpoint
         suppliers = Supplier.query.filter(Supplier.id != 0).all()
+        school = School.query.first()
+        license_expired = False
+        if school and school.license_expiry_date:
+            days_left = school.days_until_license_expiry()
+            if days_left is not None and days_left <= 0:
+                license_expired = True
         edit_form = EditSupplierModalForm()
         register_form = RegisterSupplierModalForm()
         if request.form.get('submit_edit'):
@@ -76,7 +82,8 @@ def supplier_list():
                                 suppliers=suppliers,
                                 edit_form=edit_form,
                                 register_form=register_form,
-                                route_name=route_name)
+                                route_name=route_name,
+                                license_expired=license_expired)
     except Exception as e:
         logger.error(f"Neočekivana greška u supplier_list: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')
@@ -87,6 +94,12 @@ def supplier_list():
 def service_list():
     try:
         route_name = request.endpoint
+        school = School.query.first()
+        license_expired = False
+        if school and school.license_expiry_date:
+            days_left = school.days_until_license_expiry()
+            if days_left is not None and days_left <= 0:
+                license_expired = True
         services=Service.query.filter(Service.id != 0).all()
         edit_form = EditServiceModalForm()
         edit_form.reset()
@@ -152,7 +165,8 @@ def service_list():
                                         register_form=register_form,
                                         confirm_form=confirm_form,
                                         show_confirm=True,
-                                        route_name=route_name)
+                                        route_name=route_name,
+                                        license_expired=license_expired)
 
             except SQLAlchemyError as e:
                 db.session.rollback()
@@ -216,7 +230,8 @@ def service_list():
                                         register_form=register_form,
                                         confirm_form=confirm_form,
                                         show_confirm=True,
-                                        route_name=route_name)
+                                        route_name=route_name,
+                                        license_expired=license_expired)
 
                 service = Service(service_name=convert_to_latin(register_form.service_name.data), 
                                 payment_per_unit=register_form.payment_per_unit.data,
@@ -240,7 +255,8 @@ def service_list():
                             edit_form=edit_form,
                             register_form=register_form,
                             confirm_form=confirm_form,
-                            route_name=route_name)
+                            route_name=route_name,
+                            license_expired=license_expired)
     except Exception as e:
         logger.error(f"Neočekivana greška u service_list: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')
@@ -253,6 +269,11 @@ def service_profile_list():
     try:
         route_name = request.endpoint
         school = School.query.first()
+        license_expired = False
+        if school and school.license_expiry_date:
+            days_left = school.days_until_license_expiry()
+            if days_left is not None and days_left <= 0:
+                license_expired = True
         school_bank_accounts = school.school_bank_accounts.get('bank_accounts', [])
         school_reference_numbers_spiri = [bank_account['reference_number_spiri'][2:11] for bank_account in school_bank_accounts]
         logging.debug(f'{school_bank_accounts=}')
@@ -385,7 +406,8 @@ def service_profile_list():
                                 service_profiles= service_profiles,
                                 register_form = register_form,
                                 edit_form = edit_form, getattr=builtins.getattr,
-                                route_name = route_name)
+                                route_name = route_name,
+                                license_expired = license_expired)
     except Exception as e:
         logger.error(f"Neočekivana greška u service_profile_list: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')

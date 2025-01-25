@@ -17,6 +17,17 @@ transactions = Blueprint('transactions', __name__)
 @transactions.route('/student_debts', methods=['POST', 'GET'])
 @login_required
 def student_debts():
+    school = School.query.first()
+    license_expired = False
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            license_expired = True
+            
+    if license_expired:
+        flash('Vaša licenca je istekla, ne možete vršiti zaduživanje učenika.', 'danger')
+        return redirect(url_for('main.home'))
+    
     route_name = request.endpoint
     teachers = Teacher.query.all()
     students = Student.query.all()
@@ -387,6 +398,9 @@ def submit_records():
 
 @transactions.route('/debts_archive_list', methods=['get', 'post'])
 def debts_archive_list():
+    if not current_user.is_authenticated:
+        flash('Morate biti ulogovani da biste pristupili ovoj stranici.', 'danger')
+        return redirect(url_for('users.login'))
     try:
         route_name = request.endpoint
         danas = date.today()
@@ -552,6 +566,9 @@ def single_payment_slip(record_id):
 
 @transactions.route('/debt_archive/<int:debt_id>', methods=['GET', 'POST'])
 def debt_archive(debt_id):
+    if not current_user.is_authenticated:
+        flash('Morate biti ulogovani da biste pristupili ovoj stranici.', 'danger')
+        return redirect(url_for('users.login'))
     try:
         route_name = request.endpoint
         
@@ -742,6 +759,9 @@ def send_single_payment_slip(record_id):
 
 @transactions.route('/debt_archive_delete/<int:debt_id>', methods=['get', 'post'])
 def debt_archive_delete(debt_id):
+    if not current_user.is_authenticated:
+        flash('Morate biti ulogovani da biste pristupili ovoj stranici.', 'danger')
+        return redirect(url_for('users.login'))
     try:
         # Provera da li zaduženje postoji
         debt = StudentDebt.query.get_or_404(debt_id)
@@ -864,6 +884,15 @@ def posting_payment():
     try:
         route_name = request.endpoint
         school = School.query.first()
+        license_expired = False
+        if school and school.license_expiry_date:
+            days_left = school.days_until_license_expiry()
+            if days_left is not None and days_left <= 0:
+                license_expired = True
+        if license_expired:
+            flash('Vaša licenca je istekla, ne možete vršiti knjiženje učlata.', 'danger')
+            return redirect(url_for('main.home'))
+        error_mesage = None
         if request.method == 'POST' and ('submitBtnImportData' in request.form):
             try:
                 file = request.files['fileInput']
