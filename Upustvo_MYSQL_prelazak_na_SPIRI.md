@@ -4,14 +4,20 @@ Ovo uputstvo daje instrukcije koje promene treba uraditi u MySQL bazi na serveru
 
 ## 1. Izmene u `school` tabeli
 
-Potrebno je dodati novu kolonu `school_bank_accounts` koja će čuvati informacije u JSON formatu  i `class_plus_one` koji će da čuva datum kada su svi učenici prebačeni u sledeći razred. 
+Potrebno je dodati nove kolone:
+* `school_bank_accounts` koja čuva informacije u JSON formatu
+* `class_plus_one` koja čuva datum kada su svi učenici prebačeni u sledeći razred
+* `license_expiry_date` koja čuva datum isteka licence za školu
+* `last_license_email_date` koja čuva datum slanja mejla o isteku licence
 
 SQL naredba za ovu izmenu:
 
 ```sql
 ALTER TABLE `school`
-ADD COLUMN `school_bank_accounts` JSON,
-ADD COLUMN `class_plus_one` DATE;
+ADD COLUMN IF NOT EXISTS `school_bank_accounts` JSON,
+ADD COLUMN IF NOT EXISTS `class_plus_one` DATE,
+ADD COLUMN IF NOT EXISTS `license_expiry_date` DATE,
+ADD COLUMN IF NOT EXISTS `last_license_email_date` DATE;
 ```
 
 ## 2. Izmene u `service_item` tabeli
@@ -23,8 +29,8 @@ U tabeli `service_item` potrebno je dodati sledeće dve nove kolone:
 SQL naredba za ovu izmenu:
 ```sql
 ALTER TABLE `service_item`
-ADD COLUMN `bank_account` VARCHAR(255),
-ADD COLUMN `reference_number_spiri` VARCHAR(255);
+ADD COLUMN IF NOT EXISTS `bank_account` VARCHAR(255),
+ADD COLUMN IF NOT EXISTS `reference_number_spiri` VARCHAR(255);
 ```
 
 ## 3. Izmene u `student_payment` tabeli
@@ -35,22 +41,24 @@ U tabeli `student_payment` potrebno je dodati novu kolonu `bank_account` sa tipo
 SQL naredba za ovu izmenu:
 ```sql
 ALTER TABLE `student_payment`
-ADD COLUMN `bank_account` VARCHAR(255);
+ADD COLUMN IF NOT EXISTS `bank_account` VARCHAR(255);
 ```
 Ukupni SQL kod za sve tri stavke:
 ```sql
 ALTER TABLE `school`
-ADD COLUMN `school_bank_accounts` JSON,
-ADD COLUMN `class_plus_one` DATE;
+ADD COLUMN IF NOT EXISTS `school_bank_accounts` JSON,
+ADD COLUMN IF NOT EXISTS `class_plus_one` DATE,
+ADD COLUMN IF NOT EXISTS `license_expiry_date` DATE,
+ADD COLUMN IF NOT EXISTS `last_license_email_date` DATE;
 ALTER TABLE `service_item`
-ADD COLUMN `bank_account` VARCHAR(255),
-ADD COLUMN `reference_number_spiri` VARCHAR(255);
+ADD COLUMN IF NOT EXISTS `bank_account` VARCHAR(255),
+ADD COLUMN IF NOT EXISTS `reference_number_spiri` VARCHAR(255);
 ALTER TABLE `student_payment`
-ADD COLUMN `bank_account` VARCHAR(255);
+ADD COLUMN IF NOT EXISTS `bank_account` VARCHAR(255);
 ```
 #
 
-### Nakon primene ovih izmena, baza će biti spremna za nadogradnju aplikacije na SPIRI verziju.
+### Nakon primene ovih izmena, bazaće biti spremna za nadogradnju aplikacije na SPIRI verziju.
 # Pelazak na SPIRI
 U terminalu na serveru imamo sledeće komande:
 ## 1. Git pull

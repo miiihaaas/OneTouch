@@ -1,6 +1,6 @@
 from onetouch import app, db, login_manager
 from flask_login import UserMixin
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import URLSafeTimedSerializer as Serializer
 
 
 @login_manager.user_loader
@@ -16,14 +16,26 @@ class User(db.Model, UserMixin): #! ovo je samo administrator škole
     user_password = db.Column(db.String(255), nullable=False)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     
+    # def get_reset_token(self, expires_sec=1800):
+    #     s = Serializer(app.config['SECRET_KEY'], expires_sec)
+    #     return s.dumps({'user_id': self.id}).decode('utf-8')
     def get_reset_token(self, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
+        s = Serializer(app.config['SECRET_KEY'], salt='reset-key')
         return s.dumps({'user_id': self.id}).decode('utf-8')
+    # @staticmethod
+    # def verify_reset_token(token):
+    #     s = Serializer(app.config['SECRET_KEY'], salt='reset-key')
+    #     try:
+    #         user_id = s.loads(token)['user_id']
+    #     except:
+    #         return None
+    #     return User.query.get(user_id)
+
     @staticmethod
     def verify_reset_token(token):
         s = Serializer(app.config['SECRET_KEY'])
         try:
-            user_id = s.loads(token)['user_id']
+            user_id = s.loads(token, salt='reset-key', max_age=1800)['user_id']
         except:
             return None
         return User.query.get(user_id)
@@ -42,6 +54,7 @@ class School(db.Model):
     school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
     class_plus_one = db.Column(db.Date, nullable=False)
     license_expiry_date = db.Column(db.Date, nullable=True)
+    last_license_email_date = db.Column(db.Date, nullable=True)
     users = db.relationship('User', backref='user_school', lazy=True)
     
     def days_until_license_expiry(self):
