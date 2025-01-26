@@ -7,6 +7,28 @@ from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from flask_apscheduler import APScheduler
+
+# Podešavanje logovanja
+log_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
+if not os.path.exists(log_folder):
+    os.makedirs(log_folder)
+
+log_file = os.path.join(log_folder, 'onetouch.log')
+handler = RotatingFileHandler(
+    filename=log_file,
+    maxBytes=5*1024*1024,  # 5MB po fajlu
+    backupCount=10,        # čuva poslednjih 10 fajlova
+    encoding='utf-8'
+)
+handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(name)s - %(threadName)s : %(message)s',
+    datefmt='%d/%m/%Y %H:%M:%S'
+))
+
+logger = logging.getLogger('onetouch')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(handler)
 
 load_dotenv()
 
@@ -34,9 +56,64 @@ app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER') # dodati u .env: 'mail.upla
 app.config['MAIL_PORT'] = os.getenv('MAIL_PORT') # dodati u .env: 465
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = os.getenv('EMAIL_USER') 
-app.config['MAIL_PASSWORD'] = os.getenv('EMAIL_PASS') 
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME') 
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD') 
+app.config['LICENSE_NOTIFICATION_DAYS'] = [int(x) for x in os.getenv('LICENSE_NOTIFICATION_DAYS').split(',')]
+app.config['LICENSE_NOTIFICATION_EMAILS'] = os.getenv('LICENSE_NOTIFICATION_EMAILS').split(',')
 mail = Mail(app)
+
+
+
+logger.info('Aplikacija je pokrenuta')
+
+# Pre inicijalizacije scheduler-a
+if not app.config.get('SCHEDULER_STARTED', False):
+    # Scheduler za proveru isteka licence
+    scheduler = APScheduler()
+    scheduler.init_app(app)
+    scheduler.start()
+    app.config['SCHEDULER_STARTED'] = True
+    logger.info('Startovan scheduler za proveru isteka licence.')
+
+def check_license_job():
+    try:
+        with app.app_context():
+            logger.info('Započinjem proveru isteka licence')
+            from onetouch.models import School
+            from onetouch.main.functions import send_license_expiry_notification
+
+            school = School.query.first()
+            if not school:
+                logger.warning('Nijedna škola nije pronađena u bazi')
+                return
+
+            if not school.license_expiry_date:
+                logger.warning(f'Škola {school.school_name} nema definisan datum isteka licence')
+                return
+
+            days_left = school.days_until_license_expiry()
+            if days_left is None:
+                logger.error(f'Greška pri računanju preostalog vremena licence za školu {school.school_name}')
+                return
+
+            logger.info(f'Škola: {school.school_name}, preostalo dana: {days_left}')
+            
+            try:
+                notification_sent = send_license_expiry_notification(school)
+                if notification_sent:
+                    logger.info(f'Uspešno poslato obaveštenje za školu {school.school_name}')
+                else:
+                    logger.info(f'Nije potrebno slati obaveštenje za školu {school.school_name} u ovom trenutku')
+            except Exception as e:
+                logger.error(f'Greška pri slanju email obaveštenja: {str(e)}')
+                
+    except Exception as e:
+        logger.error(f'Neočekivana greška u check_license_job: {str(e)}')
+
+
+# Pokreće se svaki dan u 9:00
+scheduler.add_job(id='check_license', func=check_license_job, 
+                    trigger='cron', hour=9, minute=0)
 
 @app.context_processor
 def check_license_expiry():
@@ -47,36 +124,14 @@ def check_license_expiry():
             days_left = school.days_until_license_expiry()
             if days_left is not None:
                 if 2 <= days_left <= 30:
-                    flash(f'Upozorenje: Preostalo je još {days_left} dana do isteka licence. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi njenog produženja.', 'warning')
+                    flash(f'Upozorenje: Preostalo je još {days_left} dana do isteka licence za korišćenje softvera. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi produženja licence.', 'warning')
                 elif days_left == 1:
-                    flash(f'Upozorenje: Preostalo je još 1 dan do isteka licence. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi njenog produženja.', 'danger')
+                    flash(f'Upozorenje: Preostalo je još 1 dan do isteka licence za korišćenje softvera. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi produženja licence.', 'danger')
                 elif days_left <= 0:
-                    flash(f'Upozorenje: Vreme licence je isteklo. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi njenog produženja. Do tad ćete moći samo da koristite funkcionalnosti vezane za preglede.', 'danger')
+                    flash(f'Upozorenje: Licenca za korišćenje softvera je istekla. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi produženja licence. Do tada ćete moći da koristite funkcionalnosti vezane za preglede.', 'danger')
                 warning_shown['shown'] = True
     return warning_shown
 
-# Podešavanje logovanja
-log_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
-if not os.path.exists(log_folder):
-    os.makedirs(log_folder)
-
-log_file = os.path.join(log_folder, 'onetouch.log')
-handler = RotatingFileHandler(
-    filename=log_file,
-    maxBytes=5*1024*1024,  # 5MB po fajlu
-    backupCount=10,        # čuva poslednjih 10 fajlova
-    encoding='utf-8'
-)
-handler.setFormatter(logging.Formatter(
-    '%(asctime)s - %(levelname)s - %(name)s - %(threadName)s : %(message)s',
-    datefmt='%d/%m/%Y %H:%M:%S'
-))
-
-logger = logging.getLogger('onetouch')
-logger.setLevel(logging.DEBUG)
-logger.addHandler(handler)
-
-logger.info('Aplikacija je pokrenuta')
 
 from onetouch.main.routes import main
 from onetouch.schools.routes import schools

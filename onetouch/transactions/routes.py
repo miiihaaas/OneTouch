@@ -890,7 +890,7 @@ def posting_payment():
             if days_left is not None and days_left <= 0:
                 license_expired = True
         if license_expired:
-            flash('Vaša licenca je istekla, ne možete vršiti knjiženje učlata.', 'danger')
+            flash('Vaša licenca je istekla, ne možete vršiti knjiženje uplata.', 'danger')
             return redirect(url_for('main.home'))
         error_mesage = None
         if request.method == 'POST' and ('submitBtnImportData' in request.form):
