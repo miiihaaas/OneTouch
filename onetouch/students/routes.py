@@ -174,7 +174,7 @@ def api_students_list():
                     'student_surname': student.student_surname,
                     'student_class': student.student_class,
                     'student_section': student.student_section,
-                    'parent_email': student.parent_email,
+                    'parent_email': student.parent_email if student.parent_email else "",
                     'send_mail': student.send_mail,
                     'print_payment': student.print_payment
                 }

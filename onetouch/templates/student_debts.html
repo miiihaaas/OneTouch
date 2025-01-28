@@ -115,11 +115,17 @@
     // Funkcija za izračunavanje iznosa zaduženja
     function dataChanged(studentId) {
         // Dohvati vrednosti iz input polja 'Količina' i 'Olakšica' za određenog studenta
-        var kolicina = parseFloat(document.getElementById("kolicina_" + studentId).value);
-        var olaksice = parseFloat(document.getElementById("olaksice_" + studentId).value);
+        var kolicinaValue = document.getElementById("kolicina_" + studentId).value;
+        var olaksiceValue = document.getElementById("olaksice_" + studentId).value;
+        var iznosValue = document.getElementById("iznos-" + studentId).value;
 
-        // Dohvati vrednost iznosa iz odgovarajućeg input polja za taj student
-        var iznos = parseFloat(document.getElementById("iznos-" + studentId).value);
+        // Konvertuj prazne stringove u "0" pre parseFloat
+        kolicinaValue = kolicinaValue === "" ? "0" : kolicinaValue;
+        olaksiceValue = olaksiceValue === "" ? "0" : olaksiceValue;
+        
+        var kolicina = parseFloat(kolicinaValue);
+        var olaksice = parseFloat(olaksiceValue);
+        var iznos = parseFloat(iznosValue);
 
         // Izračunaj iznos zaduženja
         var iznosZaduzenja = (kolicina * iznos) - olaksice;
