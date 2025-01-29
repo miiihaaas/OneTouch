@@ -66,14 +66,7 @@ mail = Mail(app)
 
 logger.info('Aplikacija je pokrenuta')
 
-# Pre inicijalizacije scheduler-a
-if not app.config.get('SCHEDULER_STARTED', False):
-    # Scheduler za proveru isteka licence
-    scheduler = APScheduler()
-    scheduler.init_app(app)
-    scheduler.start()
-    app.config['SCHEDULER_STARTED'] = True
-    logger.info('Startovan scheduler za proveru isteka licence.')
+
 
 def check_license_job():
     try:
@@ -111,9 +104,20 @@ def check_license_job():
         logger.error(f'Neočekivana greška u check_license_job: {str(e)}')
 
 
-# Pokreće se svaki dan u 9:00
-scheduler.add_job(id='check_license', func=check_license_job, 
-                    trigger='cron', hour=9, minute=0)
+# Inicijalizacija scheduler-a samo u glavnom procesu
+scheduler = None
+if (os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug) and not app.config.get('SCHEDULER_STARTED', False):
+    try:
+        scheduler = APScheduler()
+        scheduler.init_app(app)
+        scheduler.start()
+        scheduler.add_job(id='check_license', func=check_license_job, 
+                        trigger='cron', hour=9, minute=0)
+        app.config['SCHEDULER_STARTED'] = True
+        logger.info('Startovan scheduler za proveru isteka licence.')
+    except Exception as e:
+        logger.error(f'Greška pri inicijalizaciji scheduler-a: {str(e)}')
+
 
 @app.context_processor
 def check_license_expiry():
