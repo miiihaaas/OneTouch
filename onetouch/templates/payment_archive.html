@@ -100,7 +100,7 @@
     function get_student_name(studentId) {
         console.log(students);
         var students = {{ students|safe }};
-        // var students = JSON.parse('{{ students|safe }}');
+        // var students = JSON.parse('{{ students|safe }}'); // ovo je radilo u lokalu ali na serveru ne
         var student = students.find(function (s) {
             console.log('iz funkcije - s: ', s)
             return s.student_id === parseInt(studentId);
@@ -112,7 +112,8 @@
     }
     // Dodajte funkciju za dobijanje naziva usluge na osnovu ID-a
     function get_service_name(serviceId) {
-        var services = JSON.parse('{{ services|safe }}');
+        var services = {{ services|safe }};
+        // var services = JSON.parse('{{ services|safe }}'); // ovo je radilo u lokalu ali na serveru ne
         var service = services.find(function (s) {
             console.log('iz funkcije - s: ', s)
             return s.service_id === parseInt(serviceId);
