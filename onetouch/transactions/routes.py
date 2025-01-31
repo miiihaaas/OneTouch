@@ -868,8 +868,10 @@ def payment_archive(payment_id):
         return render_template('payment_archive.html', 
                             records=records, #! ovo je za prvu tabelu
                             payment=payment,
-                            students=json.dumps(students_data, ensure_ascii=False),
-                            services=json.dumps(services_data, ensure_ascii=False),
+                            # students=students_data,
+                            # services=services_data,
+                            students=json.dumps(students_data),
+                            services=json.dumps(services_data),
                             export_data = export_data, #! ovo je za treću tabelu
                             legend=f"Pregled izvoda: {payment.statment_nubmer} ({payment.payment_date.strftime('%d.%m.%Y.')})",
                             route_name=route_name)
