@@ -99,8 +99,8 @@
     // Dodajte funkciju za dobijanje imena i prezimena studenta na osnovu ID-a
     function get_student_name(studentId) {
         console.log(students);
-        // var students = '{{ students|tojson|safe }}';
-        var students = JSON.parse('{{ students|safe }}');
+        var students = {{ students|safe }};
+        // var students = JSON.parse('{{ students|safe }}');
         var student = students.find(function (s) {
             console.log('iz funkcije - s: ', s)
             return s.student_id === parseInt(studentId);
