@@ -7,7 +7,7 @@ from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from dotenv import load_dotenv
 from flask_migrate import Migrate
-from flask_apscheduler import APScheduler
+# from flask_apscheduler import APScheduler
 
 # Podešavanje logovanja
 log_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
@@ -68,55 +68,55 @@ logger.info('Aplikacija je pokrenuta')
 
 
 
-def check_license_job():
-    try:
-        with app.app_context():
-            logger.info('Započinjem proveru isteka licence')
-            from onetouch.models import School
-            from onetouch.main.functions import send_license_expiry_notification
+# def check_license_job():
+#     try:
+#         with app.app_context():
+#             logger.info('Započinjem proveru isteka licence')
+#             from onetouch.models import School
+#             from onetouch.main.functions import send_license_expiry_notification
 
-            school = School.query.first()
-            if not school:
-                logger.warning('Nijedna škola nije pronađena u bazi')
-                return
+#             school = School.query.first()
+#             if not school:
+#                 logger.warning('Nijedna škola nije pronađena u bazi')
+#                 return
 
-            if not school.license_expiry_date:
-                logger.warning(f'Škola {school.school_name} nema definisan datum isteka licence')
-                return
+#             if not school.license_expiry_date:
+#                 logger.warning(f'Škola {school.school_name} nema definisan datum isteka licence')
+#                 return
 
-            days_left = school.days_until_license_expiry()
-            if days_left is None:
-                logger.error(f'Greška pri računanju preostalog vremena licence za školu {school.school_name}')
-                return
+#             days_left = school.days_until_license_expiry()
+#             if days_left is None:
+#                 logger.error(f'Greška pri računanju preostalog vremena licence za školu {school.school_name}')
+#                 return
 
-            logger.info(f'Škola: {school.school_name}, preostalo dana: {days_left}')
+#             logger.info(f'Škola: {school.school_name}, preostalo dana: {days_left}')
             
-            try:
-                notification_sent = send_license_expiry_notification(school)
-                if notification_sent:
-                    logger.info(f'Uspešno poslato obaveštenje za školu {school.school_name}')
-                else:
-                    logger.info(f'Nije potrebno slati obaveštenje za školu {school.school_name} u ovom trenutku')
-            except Exception as e:
-                logger.error(f'Greška pri slanju email obaveštenja: {str(e)}')
+#             try:
+#                 notification_sent = send_license_expiry_notification(school)
+#                 if notification_sent:
+#                     logger.info(f'Uspešno poslato obaveštenje za školu {school.school_name}')
+#                 else:
+#                     logger.info(f'Nije potrebno slati obaveštenje za školu {school.school_name} u ovom trenutku')
+#             except Exception as e:
+#                 logger.error(f'Greška pri slanju email obaveštenja: {str(e)}')
                 
-    except Exception as e:
-        logger.error(f'Neočekivana greška u check_license_job: {str(e)}')
+#     except Exception as e:
+#         logger.error(f'Neočekivana greška u check_license_job: {str(e)}')
 
 
 # Inicijalizacija scheduler-a samo u glavnom procesu
 scheduler = None
-if (os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug) and not app.config.get('SCHEDULER_STARTED', False):
-    try:
-        scheduler = APScheduler()
-        scheduler.init_app(app)
-        scheduler.start()
-        scheduler.add_job(id='check_license', func=check_license_job, 
-                        trigger='cron', hour=9, minute=0)
-        app.config['SCHEDULER_STARTED'] = True
-        logger.info('Startovan scheduler za proveru isteka licence.')
-    except Exception as e:
-        logger.error(f'Greška pri inicijalizaciji scheduler-a: {str(e)}')
+# if (os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug) and not app.config.get('SCHEDULER_STARTED', False):
+#     try:
+#         scheduler = APScheduler()
+#         scheduler.init_app(app)
+#         scheduler.start()
+#         scheduler.add_job(id='check_license', func=check_license_job, 
+#                         trigger='cron', hour=9, minute=0)
+#         app.config['SCHEDULER_STARTED'] = True
+#         logger.info('Startovan scheduler za proveru isteka licence.')
+#     except Exception as e:
+#         logger.error(f'Greška pri inicijalizaciji scheduler-a: {str(e)}')
 
 
 @app.context_processor
