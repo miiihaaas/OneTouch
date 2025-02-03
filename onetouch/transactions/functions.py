@@ -206,9 +206,15 @@ def export_payment_stats(data):
             pdf.cell(120, 7, f'{record["name"]}', new_y='LAST', align='L', border=1)
             pdf.cell(40, 7, f'{record["sum_amount"]:.2f}', new_y='NEXT', new_x='LMARGIN', align='R', border=1)
 
+    
+    
     path = f"{project_folder}/static/payment_slips/"
+    user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    
     file_name = f'export.pdf'
-    pdf.output(path + file_name)
+    pdf.output(user_folder + '/' + file_name)
     return file_name
 
 
@@ -474,6 +480,11 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     qr_code_images = []
     path = f'{project_folder}/static/payment_slips/'
     
+    # Kreiranje user-specifičnog foldera za PDF
+    user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    
     # Priprema podataka i generisanje QR kodova
     for record in records:
         if record.student_debt_total > 0:
@@ -507,7 +518,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         
         if single:
             file_name = 'uplatnica.pdf'
-            pdf.output(path + file_name)
+            # pdf.output(path + file_name)
+            pdf.output(f'{user_folder}/{file_name}')
             if uplatnica['slanje_mejla_roditelju'] and send:
                 send_mail(uplatnica, path, file_name)
                 pdf = PDF()
@@ -531,9 +543,10 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             pdf.add_page()
             pdf.set_font('DejaVuSansCondensed', 'B', 16)
             pdf.multi_cell(0, 20, 'Nema zaduženih učenika ili je svim zaduženim učenicima aktivirana opcija slanja generisanih uplatnica putem e-maila...', align='C')
-        pdf.output(path + file_name)
-    else:
-        file_name = 'uplatnica.pdf'
+        # pdf.output(path + file_name)
+        pdf.output(f'{user_folder}/{file_name}')
+    # else:
+    #     file_name = 'uplatnica.pdf'
     
     cleanup_qr_codes(project_folder, current_user)
     return file_name
@@ -621,7 +634,10 @@ def gen_report_student_list(export_data, start_date, end_date, filtered_records,
     
     file_name = 'report_student_list.pdf'
     path = f'{project_folder}/static/reports/'
-    pdf.output(path + file_name)
+    user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    pdf.output(f'{user_folder}/{file_name}')
 
 
 def gen_report_student(data, unique_services_list, student, start_date, end_date):
@@ -687,7 +703,10 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
     logger.debug(f'{zaduzenje=} {uplate=} {saldo=}')
     file_name = 'report_student.pdf'
     path = f'{project_folder}/static/reports/'
-    pdf.output(path + file_name)
+    user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    pdf.output(f'{user_folder}/{file_name}')
 
 
 def gen_report_school(data, start_date, end_date, filtered_records, service_id, razred, odeljenje):
@@ -766,10 +785,13 @@ def gen_report_school(data, start_date, end_date, filtered_records, service_id, 
     
     file_name = 'report_school.pdf'
     path = f'{project_folder}/static/reports/'
-    pdf.output(path + file_name)
+    user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    pdf.output(f'{user_folder}/{file_name}')
 
 
-def gen_dept_report(records):
+def gen_debt_report(records):
     try:
         logger.debug(f'records: {records=}')
         sorted_records = sorted(records, key=lambda x: x.student_debt_amount * x.studetn_debt_installment_value - x.student_debt_discount, reverse=True)
@@ -823,9 +845,12 @@ def gen_dept_report(records):
         pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
         pdf.cell(0, 8, f'Ukupno: {total:,.2f}', 1, 0, 'R', 1)
         
-        file_name = 'dept_report.pdf'
-        path = f'{project_folder}/static/reports/'
-        pdf.output(path + file_name)
+        file_name = 'debt_report.pdf'
+        # path = f'{project_folder}/static/reports/'
+        user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        pdf.output(f'{user_folder}/{file_name}')
         return True
     except Exception as e:
         logger.error(f'Greska u generisanju izveštaja: {e}')

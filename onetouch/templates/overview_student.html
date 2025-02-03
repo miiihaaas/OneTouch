@@ -28,7 +28,8 @@
         <input class="form-control mb-2" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
     <div class="col mtb-8px cstm-3">
-        <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('static', filename='reports/report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
+        <!-- <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('static', filename='reports/report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
+        <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('transactions.get_report', filename='report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
     </div>
 </div>
 {% for service in unique_services_list %}

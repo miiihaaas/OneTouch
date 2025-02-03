@@ -3,12 +3,12 @@ import requests, os, io, re
 import xml.etree.ElementTree as ET
 from PIL import Image
 from datetime import datetime, date, timedelta
-from flask import  render_template, url_for, flash, redirect, request, send_file, jsonify
+from flask import  render_template, url_for, flash, redirect, request, send_file, jsonify, send_from_directory
 from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User
-from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_dept_report
+from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report
 from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint('transactions', __name__)
@@ -91,6 +91,22 @@ def add_new_student():
         return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
         
     return redirect(url_for('transactions.debt_archive', debt_id=student_debt_id))
+
+
+@transactions.route('/get_payment_slip/<string:filename>')
+@login_required
+def get_payment_slip(filename):
+    """Preuzimanje PDF fajla iz user-specifičnog foldera."""
+    user_folder = f'static/payment_slips/user_{current_user.id}'
+    return send_from_directory(user_folder, filename)
+
+
+@transactions.route('/get_report/<string:filename>')
+@login_required
+def get_report(filename):
+    """Preuzimanje PDF fajla iz user-specifičnog foldera."""
+    user_folder = f'static/reports/user_{current_user.id}'
+    return send_from_directory(user_folder, filename)
 
 
 @transactions.route('/get_service_items', methods=['POST'])
@@ -615,7 +631,7 @@ def debt_archive(debt_id):
             raise ValueError("Greška pri generisanju uplatnice")
         
         # Generisanje izveštaja
-        if not gen_dept_report(records):
+        if not gen_debt_report(records):
             raise ValueError("Greška pri generisanju izveštaja")
 
         return render_template('debt_archive.html', 
