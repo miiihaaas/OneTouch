@@ -265,7 +265,7 @@ def prepare_qr_data(payment_data, school_info):
         "I": dug,
         "P": payment_data['uplatilac'],
         "SF": payment_data['sifra_placanja'],
-        "S": payment_data['svrha_uplate'] if len(payment_data['svrha_uplate']) < 36 else payment_data['svrha_uplate'][:35]
+        "S": payment_data['svrha_uplate'].strip() if len(payment_data['svrha_uplate'].strip()) < 36 else payment_data['svrha_uplate'][:35].strip()
     }
     
     # Dodaj RO polje samo ako postoje i model i poziv na broj
