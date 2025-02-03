@@ -84,7 +84,8 @@
         <a id="resetButton" class="btn btn-danger" href="./overview_sections">Reset filtera</a>
     </div>
     <div class="col-md-1 form-group">
-        <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
+        <!-- <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
+        <a id="resetButton" class="btn btn-primary" href="{{ url_for('transactions.get_report', filename='report_school.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
     </div>
     <hr>
 </div>
