@@ -63,13 +63,25 @@ def logout():
 
 def send_reset_email(user):
     token = user.get_reset_token()
-    msg = Message('Zahtev za resetovanje lozinke', sender='noreply@uplatnice.online', recipients=[user.user_mail])
+    msg = Message('Zahtev za resetovanje lozinke',
+                    sender='noreply@uplatnice.online',
+                    recipients=[user.user_mail])
+    reset_url = url_for('users.reset_token', token=token, _external=True)
     msg.body = f'''Da biste resetovali lozinku, kliknite na sledeći link:
-{url_for('users.reset_token', token=token, _external=True)}
+{reset_url}
 
 Ako Vi niste napavili ovaj zahtev, molim Vas ignorišite ovaj mejl i neće biti napravljene nikakve izmene na Vašem nalogu.
+'''
+    msg.html = f'''
+    <p>Da biste resetovali lozinku, kliknite na sledeći link:</p>
+    <p><a href="{reset_url}">Resetuj lozinku</a></p>
+    <p>Ako Vi niste napavili ovaj zahtev, molim Vas ignorišite ovaj mejl i neće biti napravljene nikakve izmene na Vašem nalogu.</p>
     '''
-    mail.send(msg)
+    try:
+        mail.send(msg)
+    except Exception as e:
+        logging.error(f'Greška pri slanju mejla: {str(e)}')
+        raise
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
