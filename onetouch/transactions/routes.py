@@ -555,9 +555,17 @@ def single_payment_slip(record_id):
         
         if not file_name:
             raise ValueError("Greška pri generisanju uplatnice")
-            
-        logging.debug(f'{file_name=}')
-        file_path = f'static/payment_slips/{file_name}'
+        
+        
+        #! koristi se za generisanje i slanje pdf uplatnica
+        current_file_path = os.path.abspath(__file__)
+        # logger.debug(f'{current_file_path=}')
+        project_folder = os.path.dirname(os.path.dirname((current_file_path)))
+        
+        user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        file_path = f'{user_folder}/{file_name}'
         logging.debug(f'{file_path=}')
         
         return send_file(file_path, as_attachment=False)
