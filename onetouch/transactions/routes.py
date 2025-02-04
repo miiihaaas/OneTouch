@@ -922,12 +922,15 @@ def posting_payment():
                 root = tree.getroot()
 
                 #! nova logika za SPIRI .xml fajl
-                pozivi_na_broj = [bank_account['reference_number_spiri'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
+                pozivi_na_broj = [bank_account['reference_number_spiri'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts'] if bank_account['reference_number_spiri'] != '']
                 print(f'{pozivi_na_broj=}')
                 pozivi_na_broj = [broj[2:11] for broj in pozivi_na_broj]
                 print(f'{pozivi_na_broj=}')
                 
+                broj_racuna_bez_poziva = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts'] if bank_account['reference_number_spiri'] == '']
+                print(f'{broj_racuna_bez_poziva=}')
 
+                pozivi_na_broj = pozivi_na_broj + broj_racuna_bez_poziva
 
                 # racun_skole = [bank_account['bank_account_number'] for bank_account in School.query.get(1).school_bank_accounts['bank_accounts']]
                 datum_izvoda_element = root.find('.//DatumIzvoda').text
