@@ -126,7 +126,7 @@ def send_error_notification(school, student, parent_email, error_message):
     except Exception as e:
         logger.error(f'Failed to send error notification: {str(e)}')
 
-def send_mail(uplatnica, path, file_name):
+def send_mail(uplatnica, user_folder, file_name):
     """Send email with payment slip and verify delivery."""
     school = School.query.first()
     student = Student.query.get_or_404(uplatnica['student_id'])
@@ -159,7 +159,8 @@ def send_mail(uplatnica, path, file_name):
     
     # Attach PDF
     try:
-        with app.open_resource(path + file_name) as attachment:
+        full_path = f'{user_folder}/{file_name}'
+        with app.open_resource(full_path) as attachment:
             message.attach(file_name, 'application/pdf', attachment.read())
     except Exception as e:
         error_msg = f'Error attaching PDF: {str(e)}'
@@ -478,7 +479,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     """Glavna funkcija za generisanje uplatnica."""
     data_list = []
     qr_code_images = []
-    path = f'{project_folder}/static/payment_slips/'
+    # path = f'{project_folder}/static/payment_slips/user_{current_user.id}'
     
     # Kreiranje user-specifičnog foldera za PDF
     user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
@@ -521,7 +522,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             # pdf.output(path + file_name)
             pdf.output(f'{user_folder}/{file_name}')
             if uplatnica['slanje_mejla_roditelju'] and send:
-                send_mail(uplatnica, path, file_name)
+                send_mail(uplatnica, user_folder, file_name)
                 pdf = PDF()
                 add_fonts(pdf)
                 if counter % 3 != 1:
