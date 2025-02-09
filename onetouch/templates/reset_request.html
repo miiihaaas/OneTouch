@@ -1,9 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
 <main role="main" class="container login-screen">
-    <img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" >
-    <h1>Resetovanje lozinke</h1>
-    <p>Uneste mejl na kome ćemo Vam poslati link za resetovanje lozike</p>
+    <img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo">
+    {% if is_create %}
+        <h1>Kreiranje lozinke</h1>
+        <p>Uneste mejl na kome ćemo Vam poslati link za kreiranje lozike</p>
+    {% else %}
+        <h1>Resetovanje lozinke</h1>
+        <p>Uneste mejl na kome ćemo Vam poslati link za resetovanje lozike</p>
+    {% endif %}
     <div class="row">
         <div class="content-section">
             <form method="POST" action="">
@@ -24,7 +29,11 @@
                     </div>
                 </fieldset>
                 <div class="form-group">
-                {{ form.submit(class="btn btn-outline-info") }}
+                    {% if is_create %}
+                        <button type="submit" class="btn btn-primary">Zatražite kreiranje lozinke</button>
+                    {% else %}
+                        {{ form.submit(class="btn btn-primary") }}
+                    {% endif %}
                 </div>
             </form>
         </div>

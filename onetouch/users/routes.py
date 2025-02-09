@@ -83,10 +83,13 @@ Ako Vi niste napavili ovaj zahtev, molim Vas ignorišite ovaj mejl i neće biti 
         logging.error(f'Greška pri slanju mejla: {str(e)}')
         raise
 
+@users.route("/create_password", methods=['GET', 'POST'])
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
     try:
         route_name = request.endpoint
+        is_create = 'create' in request.path
+
         if current_user.is_authenticated:
             return redirect(url_for('main.home'))
             
@@ -97,24 +100,32 @@ def reset_request():
                 if user:
                     try:
                         send_reset_email(user)
-                        logging.info(f'Zahtev za resetovanje lozinke poslat za korisnika: {user.user_mail}')
-                        flash('Mejl je poslat na Vašu adresu sa instrukcijama za resetovanje lozinke.', 'info')
+                        action_type = "kreiranje" if is_create else "resetovanje"
+                        logging.info(f'Zahtev za {action_type} lozinke poslat za korisnika: {user.user_mail}')
+                        flash(f'Mejl je poslat na Vašu adresu sa instrukcijama za {action_type} lozinke.', 'info')
                         return redirect(url_for('users.login'))
                     except Exception as e:
-                        logging.error(f'Greška pri slanju mejla za resetovanje lozinke: {str(e)}')
+                        logging.error(f'Greška pri slanju mejla za {"kreiranje" if is_create else "resetovanje"} lozinke: {str(e)}')
                         flash('Došlo je do greške pri slanju mejla. Pokušajte ponovo kasnije.', 'danger')
                 else:
-                    logging.warning(f'Pokušaj resetovanja lozinke za nepostojeći email: {form.email.data}')
+                    logging.warning(f'Pokušaj {"kreiranja" if is_create else "resetovanja"} lozinke za nepostojeći email: {form.email.data}')
                     flash('Ne postoji nalog sa ovom email adresom.', 'warning')
                     
             except SQLAlchemyError as e:
                 logging.error(f'Greška pri pristupu bazi podataka: {str(e)}')
                 flash('Trenutno nije moguće pristupiti sistemu. Pokušajte kasnije.', 'danger')
-                
-        return render_template('reset_request.html', title='Resetovanje lozinke', form=form, legend='', route_name=route_name)
+        
+        title = 'Kreiranje lozinke' if is_create else 'Resetovanje lozinke'
+        return render_template('reset_request.html', 
+                                title=title, 
+                                form=form, 
+                                legend='', 
+                                route_name=route_name, 
+                                is_create=is_create)
         
     except Exception as e:
-        logging.error(f'Neočekivana greška u reset_request ruti: {str(e)}')
+        action_type = "kreiranje" if is_create else "resetovanje"
+        logging.error(f'Neočekivana greška u {action_type} lozinke: {str(e)}')
         flash('Došlo je do greške. Pokušajte ponovo.', 'danger')
         return redirect(url_for('main.home'))
 
