@@ -32,6 +32,7 @@
                     {% if is_create %}
                         <button type="submit" class="btn btn-primary">Zatražite kreiranje lozinke</button>
                     {% else %}
+                        <a href="{{ url_for('users.login')}}" class="btn btn-secondary">Nazad na prijavu</a>
                         {{ form.submit(class="btn btn-primary") }}
                     {% endif %}
                 </div>
