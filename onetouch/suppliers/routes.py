@@ -271,6 +271,9 @@ def service_profile_list():
         school = School.query.first()
         license_expired = False
         if school and school.license_expiry_date:
+            print(f"license_expiry_date type: {type(school.license_expiry_date)}")
+            print(f"license_expiry_date value: {school.license_expiry_date}")
+        if school and school.license_expiry_date:
             days_left = school.days_until_license_expiry()
             if days_left is not None and days_left <= 0:
                 license_expired = True

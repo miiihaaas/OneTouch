@@ -51,6 +51,7 @@ def school_profile():
                 school.school_zip_code = form.school_zip_code.data.strip()
                 school.school_city = form.school_city.data.strip()
                 school.school_municipality = form.school_municipality.data.strip()
+                school.school_phone_number = form.school_phone_number.data.strip()
                 
                 db.session.commit()
                 logger.info(f"School profile updated successfully by user {current_user.id}")
@@ -70,6 +71,7 @@ def school_profile():
                 form.school_zip_code.data = school.school_zip_code
                 form.school_city.data = school.school_city
                 form.school_municipality.data = school.school_municipality
+                form.school_phone_number.data = school.school_phone_number
                 
                 # Populate bank accounts
                 bank_accounts_json = school.school_bank_accounts.get('bank_accounts', [])
