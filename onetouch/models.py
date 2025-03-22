@@ -52,6 +52,8 @@ class School(db.Model):
     school_city = db.Column(db.String(255), nullable=False)
     school_municipality = db.Column(db.String(255), nullable=False)
     school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
+    school_phone_number = db.Column(db.String(255), nullable=False, default=None) #! kontakt telefon škole koji se stavlja u mejl koji se šalje roditeljima za uplatnicu
+    # school_max_number_of_class = db.Column(db.Integer, nullable=False) #! maximalan broj razreda: osnovna 8, srednja 4, muzička 6
     class_plus_one = db.Column(db.Date, nullable=False)
     license_expiry_date = db.Column(db.Date, nullable=True)
     last_license_email_date = db.Column(db.Date, nullable=True)
@@ -60,10 +62,15 @@ class School(db.Model):
     def days_until_license_expiry(self):
         if not self.license_expiry_date:
             return None
-        from datetime import datetime
-        today = datetime.now().date()
-        delta = self.license_expiry_date - today
-        return delta.days
+        try:
+            from datetime import date
+            today = date.today()
+            delta = self.license_expiry_date - today
+            return delta.days
+        except Exception as e:
+            import logging
+            logging.error(f"Greška pri izračunavanju dana do isteka licence: {str(e)}")
+            return None
 
 
 class Supplier(db.Model):

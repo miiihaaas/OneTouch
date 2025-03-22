@@ -73,7 +73,11 @@
         <p>Poštovani,</p>
         <p>Šaljemo Vam nalog za uplatu koji možete naći u prilogu ovog mejla.</p>
         <p>Molimo Vas da uplatu izvršite u skladu sa uplatnicom iz prologa.</p>
-        <p>Ako imate bilo kakvih pitanja, slobodno nas kontaktirajte.</p>
+        {% if school.school_phone_number %}
+        <p>Ako imate bilo kakvih pitanja, slobodno nas kontaktirajte na telefon: {{ school.school_phone_number }} ili na mejl: {{ school.school_email }}.</p>
+        {% else %}
+        <p>Ako imate bilo kakvih pitanja, slobodno nas kontaktirajte na mejl: {{ school.school_email }}.</p>
+        {% endif %}
         
         <div class="footer">
             <p>S poštovanjem,</p>

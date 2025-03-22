@@ -22,10 +22,14 @@ def teacher_list():
             active_date_end = danas.replace(month=9, day=15)
             school = School.query.first()
             license_expired = False
-            if school and school.license_expiry_date:
-                days_left = school.days_until_license_expiry()
-                if days_left is not None and days_left <= 0:
-                    license_expired = True
+            try:
+                if school and school.license_expiry_date:
+                    days_left = school.days_until_license_expiry()
+                    if days_left is not None and days_left <= 0:
+                        license_expired = True
+            except Exception as e:
+                logging.error(f"Greška pri izračunavanju dana do isteka licence: {str(e)}")
+                license_expired = False
             
             edit_form = EditTeacherModalForm()
             register_form = RegisterTeacherModalForm()

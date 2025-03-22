@@ -9,6 +9,7 @@ Potrebno je dodati nove kolone:
 * `class_plus_one` koja čuva datum kada su svi učenici prebačeni u sledeći razred
 * `license_expiry_date` koja čuva datum isteka licence za školu
 * `last_license_email_date` koja čuva datum slanja mejla o isteku licence
+* `school_phone_number` koja čuva kontakt telefon škole
 
 SQL naredba za ovu izmenu:
 
@@ -17,7 +18,8 @@ ALTER TABLE `school`
 ADD COLUMN IF NOT EXISTS `school_bank_accounts` JSON,
 ADD COLUMN IF NOT EXISTS `class_plus_one` DATE,
 ADD COLUMN IF NOT EXISTS `license_expiry_date` DATE,
-ADD COLUMN IF NOT EXISTS `last_license_email_date` DATE;
+ADD COLUMN IF NOT EXISTS `last_license_email_date` DATE,
+ADD COLUMN IF NOT EXISTS `school_phone_number` VARCHAR(255);
 ```
 
 ## 2. Izmene u `service_item` tabeli
@@ -67,7 +69,11 @@ BEGIN
    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'school' AND COLUMN_NAME = 'last_license_email_date') THEN
        ALTER TABLE `school` ADD COLUMN `last_license_email_date` DATE;
    END IF;
-
+   
+   IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'school' AND COLUMN_NAME = 'school_phone_number') THEN
+       ALTER TABLE `school` ADD COLUMN `school_phone_number` VARCHAR(255);
+   END IF;
+   
    -- service_item table
    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'service_item' AND COLUMN_NAME = 'bank_account') THEN
        ALTER TABLE `service_item` ADD COLUMN `bank_account` VARCHAR(255);
@@ -114,7 +120,11 @@ BEGIN
    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'school' AND COLUMN_NAME = 'last_license_email_date') THEN
        ALTER TABLE `school` ADD COLUMN `last_license_email_date` DATE;
    END IF;
-
+   
+   IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'school' AND COLUMN_NAME = 'school_phone_number') THEN
+       ALTER TABLE `school` ADD COLUMN `school_phone_number` VARCHAR(255);
+   END IF;
+   
    -- service_item table
    IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = @dbname AND TABLE_NAME = 'service_item' AND COLUMN_NAME = 'bank_account') THEN
        ALTER TABLE `service_item` ADD COLUMN `bank_account` VARCHAR(255);
