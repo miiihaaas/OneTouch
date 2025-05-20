@@ -18,6 +18,7 @@ class EditSchoolForm(FlaskForm):
     # school_bank_account = StringField('Broj bankovnog računa', validators = [DataRequired()])
     # school_bank_accounts = FieldList(StringField('Broj bankovnog računa'), min_entries=1)
     school_phone_number = StringField('Kontakt telefon', validators = [Optional()]) #!
+    school_email = StringField('Kontakt mejl', validators = [Optional()]) #!
     # school_max_number_of_class = StringField('Maksimalan broj razreda', validators = [DataRequired()]) #!
     school_bank_accounts = FieldList(FormField(BankAccountForm), min_entries=1)
 
