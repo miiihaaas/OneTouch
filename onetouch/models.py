@@ -53,6 +53,7 @@ class School(db.Model):
     school_municipality = db.Column(db.String(255), nullable=False)
     school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
     school_phone_number = db.Column(db.String(255), nullable=False, default=None) #! kontakt telefon škole koji se stavlja u mejl koji se šalje roditeljima za uplatnicu
+    school_email = db.Column(db.String(255), nullable=False, default=None) #! kontakt mejl škole koji se stavlja u mejl koji se šalje roditeljima za uplatnicu
     # school_max_number_of_class = db.Column(db.Integer, nullable=False) #! maximalan broj razreda: osnovna 8, srednja 4, muzička 6
     class_plus_one = db.Column(db.Date, nullable=False)
     license_expiry_date = db.Column(db.Date, nullable=True)

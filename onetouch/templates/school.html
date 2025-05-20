@@ -93,6 +93,19 @@
                     {{ form.school_phone_number(class="form-control form-control-lg") }} 
                 {% endif %}
             </div>
+            <div class="form-group">
+                {{ form.school_email.label(class="form-control-label") }} 
+                {% if form.school_email.errors %} 
+                    {{ form.school_email(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.school_email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %} 
+                    {{ form.school_email(class="form-control form-control-lg") }} 
+                {% endif %}
+            </div>
             
             <!-- Finansijske informacije -->
             <h4 class="mb-3 mt-4">Finansijske informacije</h4>
