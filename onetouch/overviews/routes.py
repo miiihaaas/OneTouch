@@ -289,14 +289,15 @@ def overview_student(student_id):
             report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
             
             return render_template('overview_student.html',
-                               title='Pregled učenika',
-                               student=student,
-                               data=data,
-                               unique_services_list=unique_services_list,
-                               start_date=start_date,
-                               end_date=end_date,
-                               route_name=route_name)
-                               
+                                title='Pregled učenika',
+                                legend=f'Pregled učenika: {student.student_name} {student.student_surname} ({student.student_class}/{student.student_section})',
+                                student=student,
+                                data=data,
+                                unique_services_list=unique_services_list,
+                                start_date=start_date,
+                                end_date=end_date,
+                                route_name=route_name)
+                                
         except SQLAlchemyError as e:
             logging.error(f'Greška pri pristupu bazi podataka: {str(e)}')
             flash('Došlo je do greške pri učitavanju podataka.', 'danger')
