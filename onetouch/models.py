@@ -167,8 +167,8 @@ class StudentPayment(db.Model):
 
 class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata po detetu 
     id = db.Column(db.Integer, primary_key=True)
-    student_debt_id = db.Column(db.Integer, db.ForeignKey('student_debt.id'), nullable=False)
-    student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=False)
+    student_debt_id = db.Column(db.Integer, db.ForeignKey('student_debt.id'), nullable=True)
+    student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=True)
     service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=True)
     student_debt_installment_number = db.Column(db.Integer, nullable=True)
