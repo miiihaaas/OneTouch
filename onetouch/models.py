@@ -100,7 +100,7 @@ class ServiceItem(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
     bank_account = db.Column(db.String(255), nullable=False) #todo doraj u SPIRI MYSQL tabele na serveru
     reference_number_spiri = db.Column(db.String(255), nullable=False) #todo doraj u SPIRI MYSQL tabele na serveru
-    service_item_class = db.Column(db.Integer, nullable=True) #! ovo treba da je dropdown meni sa cekbox itemima koji kada se čekiraju imaju listu kao input
+    service_item_class = db.Column(db.String(255), nullable=True) #! ovo treba da je dropdown meni sa cekbox itemima koji kada se čekiraju imaju listu kao input
     price = db.Column(db.Float, nullable=False)
     # discount = db.Column(db.Float, nullable=False)
     installment_number = db.Column(db.Integer)
