@@ -23,6 +23,7 @@ venv/
 venvOneTouch/
 onetouch/static/pdf_forms/*.*
 .vscode/
+konekcija_sa_serverom.md
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
