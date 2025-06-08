@@ -985,7 +985,7 @@ def posting_payment():
                     podaci['ModelPozivaZaduzenja'] = stavka.find('ModelPozivaZaduzenja').text
                     podaci['PozivZaduzenja'] = stavka.find('PozivZaduzenja').text
                     podaci['SifraPlacanja'] = stavka.find('SifraPlacanja').text
-                    podaci['Iznos'] = stavka.find('Iznos').text
+                    podaci['Iznos'] = stavka.find('Iznos').text if stavka.find('TipPlacanja').text != '13' else "-" + stavka.find('Iznos').text #! ako je tip placanja 13 onda je iznos negativan
                     podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! onom kome se plaća
                     podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
                     podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
@@ -999,6 +999,7 @@ def posting_payment():
                     # podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
                     podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
                     # podaci['TipSloga'] = stavka.find('TipSloga').text
+                    podaci['TipPlacanja'] = stavka.find('TipPlacanja').text
                     
                     logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
