@@ -999,7 +999,8 @@ def posting_payment():
                     # podaci['VremeIzvrsenja'] = stavka.find('VremeIzvrsenja').text
                     podaci['StatusNaloga'] = stavka.find('StatusNaloga').text
                     # podaci['TipSloga'] = stavka.find('TipSloga').text
-                    podaci['TipPlacanja'] = stavka.find('TipPlacanja').text
+                    if stavka.find('TipPlacanja').text:
+                        podaci['TipPlacanja'] = stavka.find('TipPlacanja').text
                     
                     logging.debug(f'testiranje: {podaci["PozivNaBrojApp"]=}')
 
