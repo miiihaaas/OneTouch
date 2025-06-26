@@ -96,7 +96,7 @@
                 {% if (record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount) > 0 %}
                     {% if record.transaction_record_student.send_mail %}
                     <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
-                    <a class="btn-x btn-primary-x loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}" title="Generišite i pošaljite uplaticu  roditelju"><i class="fa-regular fa-envelope awesomedelete"></i></a>
+                    <a class="btn-x btn-primary-x loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}" title="{% if record.debt_sent %}Ponovo generišite i pošaljite uplatnicu roditelju{% else %}Generišite i pošaljite uplaticu roditelju{% endif %}">{% if record.debt_sent %}<i class="fa-solid fa-envelope awesomedelete"></i>{% else %}<i class="fa-regular fa-envelope awesomedelete"></i>{% endif %}</a>
                     {% else %}
                     <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
                     {% endif %}

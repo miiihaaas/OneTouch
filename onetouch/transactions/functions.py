@@ -9,7 +9,7 @@ from PIL import Image
 from fpdf import FPDF
 from flask import render_template
 from flask_mail import Message
-from onetouch.models import School, Student, StudentPayment
+from onetouch.models import School, Student, StudentPayment, TransactionRecord, db
 from onetouch import mail, app
 
 logger = logging.getLogger('onetouch')
@@ -172,6 +172,17 @@ def send_mail(uplatnica, user_folder, file_name):
     try:
         mail.send(message)
         logger.info(f'Successfully sent email to {parent_email}')
+        
+        # Ažuriraj debt_sent status na True za ovu transakciju
+        # Pronađi odgovarajući TransactionRecord po student_id i ažuriraj status
+        if 'record_id' in uplatnica:
+            record = TransactionRecord.query.get(uplatnica['record_id'])
+            if record:
+                record.debt_sent = True
+                db.session.commit()
+                logger.info(f'Ažuriran debt_sent status za transakciju ID: {uplatnica["record_id"]}')
+            else:
+                logger.warning(f'Nije pronađen TransactionRecord sa ID: {uplatnica["record_id"]}')
     except Exception as e:
         error_msg = f'Error sending email: {str(e)}'
         logger.error(error_msg)
@@ -234,7 +245,8 @@ def prepare_payment_data(record, purpose_of_payment, school_info):
             'racun_primaoca': record.transaction_record_service_item.bank_account,
             'model': '',
             'poziv_na_broj': '',
-            'slanje_mejla_roditelju': record.transaction_record_student.send_mail
+            'slanje_mejla_roditelju': record.transaction_record_student.send_mail,
+            'record_id': record.id
         }
     else:
         data = {
@@ -248,7 +260,8 @@ def prepare_payment_data(record, purpose_of_payment, school_info):
             'racun_primaoca': record.transaction_record_service_item.bank_account,
             'model': '97',
             'poziv_na_broj': record.transaction_record_service_item.reference_number_spiri,
-            'slanje_mejla_roditelju': record.transaction_record_student.send_mail
+            'slanje_mejla_roditelju': record.transaction_record_student.send_mail,
+            'record_id': record.id
         }
     
     return data
