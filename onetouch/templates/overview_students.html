@@ -196,6 +196,9 @@
     
     $(document).ready(function () {
         var table = $('#data').DataTable({
+            // NOVO: Čuvanje stanja tabele
+            "stateSave": true,
+            "stateDuration": 900, // 15 minuta (900 sekundi)
             language: {
                     url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
                 }
