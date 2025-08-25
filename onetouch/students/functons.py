@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def check_if_plus_one(school):
@@ -14,7 +14,7 @@ def check_if_plus_one(school):
         end_of_school_year = datetime(danas.year, 8, 31).date()
 
     # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
-    if start_of_school_year <= school.class_plus_one <= end_of_school_year:
+    if start_of_school_year <= school.class_plus_one - timedelta(days=31) <= end_of_school_year:
         plus_one_button = False
     else:
         plus_one_button = True
