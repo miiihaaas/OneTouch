@@ -1,6 +1,6 @@
 import logging
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint
 from flask import  render_template, url_for, flash, redirect, request, abort
 from onetouch import db, bcrypt
@@ -228,18 +228,18 @@ def class_plus_one():
         if now.month >= 9:
             # ako smo nakon septembra, tekuća školska godina je od septembra ove godine do septembra sledeće
             start_of_school_year = datetime(now.year, 9, 1).date()
-            end_of_school_year = datetime(now.year + 1, 8, 31).date()
+            end_of_school_year = datetime(now.year + 1, 8, 14).date() #! od 15 avgusta se otvara +1 dugme
         else:
             # ako smo pre septembra, tekuća školska godina je od septembra prošle godine do septembra ove godine
             start_of_school_year = datetime(now.year - 1, 9, 1).date()
-            end_of_school_year = datetime(now.year, 8, 31).date()
+            end_of_school_year = datetime(now.year, 8, 14).date() #! od 15 avgusta se otvara +1 dugme
         
         # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
-        if start_of_school_year <= class_plus_one <= end_of_school_year:
-            logger.info(f'Ove godine, razred svih učenika je već promenjen putem masovne promene:\n {now=},\n {start_of_school_year=},\n {end_of_school_year=},\n {class_plus_one=}')
+        if start_of_school_year <= class_plus_one - timedelta(days=31) <= end_of_school_year:
+            logger.info(f'Ove godine, razred svih učenika je već promenjen putem masovne promene:\n {now=},\n {start_of_school_year=},\n {class_plus_one=},\n {end_of_school_year=}')
             flash('Ove godine, razred svih učenika je već promenjen putem masovne promene.', 'info')
         elif class_plus_one < start_of_school_year:
-            logger.info(f'Prebacivanje učenika u sledeći razred:\n {now=},\n {start_of_school_year=},\n {end_of_school_year=},\n {class_plus_one=}')
+            logger.info(f'Prebacivanje učenika u sledeći razred:\n {now=},\n {start_of_school_year=},\n {class_plus_one=},\n {end_of_school_year=}')
             try:
                 for student in students:
                     student.student_class = int(student.student_class) + 1
