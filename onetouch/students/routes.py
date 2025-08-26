@@ -228,7 +228,7 @@ def class_plus_one():
             return redirect(url_for('students.student_list'))
         
         # trenutni datum
-        now = datetime.now()
+        now = datetime.now().date()
         
         # Proveravamo da li smo u dozvoljenom periodu (15. avgust - 30. septembar)
         if not ((now.month == 8 and now.day >= 15) or now.month == 9):
@@ -238,9 +238,11 @@ def class_plus_one():
         
         # Određujemo za koju školsku godinu bi bila trenutna promena
         current_change_school_year = get_school_year_for_change(now)
+        logger.debug(f'{current_change_school_year=}')
         # Proveravamo da li je već rađena promena za istu školsku godinu
         if last_class_plus_one:
             last_change_school_year = get_school_year_for_change(last_class_plus_one)
+            logger.debug(f'{last_change_school_year=}')
             
             if current_change_school_year == last_change_school_year:
                 logger.info(f'Već je urađena promena za školsku godinu {current_change_school_year[0]}/{current_change_school_year[1]}. '
