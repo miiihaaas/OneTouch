@@ -233,13 +233,13 @@ def class_plus_one():
             # ako smo pre septembra, tekuća školska godina je od septembra prošle godine do septembra ove godine
             start_of_school_year = datetime(now.year - 1, 9, 1).date()
             end_of_school_year = datetime(now.year, 8, 14).date() #! od 15 avgusta se otvara +1 dugme
-        
+        class_plus_one_correction = class_plus_one - timedelta(days=31) #! ovim se osigurava da se ako je pršli put urađen +1 u septembru da se prabaci u avgust
         # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
-        if start_of_school_year <= class_plus_one - timedelta(days=31) <= end_of_school_year:
-            logger.info(f'Ove godine, razred svih učenika je već promenjen putem masovne promene:\n {now=},\n {start_of_school_year=},\n {class_plus_one=},\n {end_of_school_year=}')
+        if start_of_school_year <= class_plus_one_correction <= end_of_school_year:
+            logger.info(f'Ove godine, razred svih učenika je već promenjen putem masovne promene:\n {now=},\n {start_of_school_year=},\n {class_plus_one=} ,\n {class_plus_one_correction=},\n {end_of_school_year=}')
             flash('Ove godine, razred svih učenika je već promenjen putem masovne promene.', 'info')
-        elif class_plus_one < start_of_school_year:
-            logger.info(f'Prebacivanje učenika u sledeći razred:\n {now=},\n {start_of_school_year=},\n {class_plus_one=},\n {end_of_school_year=}')
+        elif class_plus_one_correction < start_of_school_year:
+            logger.info(f'Prebacivanje učenika u sledeći razred:\n {now=},\n {start_of_school_year=},\n {class_plus_one=},\n {class_plus_one_correction=},\n {end_of_school_year=}')
             try:
                 for student in students:
                     student.student_class = int(student.student_class) + 1
