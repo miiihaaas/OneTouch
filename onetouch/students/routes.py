@@ -236,10 +236,10 @@ def class_plus_one():
         
         # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
         if start_of_school_year <= class_plus_one <= end_of_school_year:
-            logger.info('Ove godine, razred svih učenika je već promenjen putem masovne promene.')
+            logger.info(f'Ove godine, razred svih učenika je već promenjen putem masovne promene:\n {now=},\n {start_of_school_year=},\n {end_of_school_year=},\n {class_plus_one=}')
             flash('Ove godine, razred svih učenika je već promenjen putem masovne promene.', 'info')
         elif class_plus_one < start_of_school_year:
-            logger.info('Prebacivanje učenika u sledeći razred...')
+            logger.info(f'Prebacivanje učenika u sledeći razred:\n {now=},\n {start_of_school_year=},\n {end_of_school_year=},\n {class_plus_one=}')
             try:
                 for student in students:
                     student.student_class = int(student.student_class) + 1
