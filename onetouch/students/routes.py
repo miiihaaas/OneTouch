@@ -9,7 +9,7 @@ from onetouch.students.forms import EditStudentModalForm, RegisterStudentModalFo
 from flask_login import login_required, current_user
 from flask import jsonify
 
-from onetouch.students.functons import check_if_plus_one
+from onetouch.students.functons import check_if_plus_one, get_school_year_for_change
 from onetouch.suppliers.functions import convert_to_latin
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -216,50 +216,63 @@ def class_plus_one():
         try:
             students = Student.query.filter(Student.student_class < 100).all()
             school = School.query.first()
-            class_plus_one = school.class_plus_one
+            last_class_plus_one = school.class_plus_one
         except SQLAlchemyError as e:
             logger.error(f"Greška pri dohvatanju podataka iz baze: {str(e)}")
             flash('Došlo je do greške pri učitavanju podataka.', 'danger')
             return redirect(url_for('students.student_list'))
-
+        
+        if not students:
+            logger.warning("Nema učenika za prebacivanje u sledeći razred")
+            flash('Nema učenika kojima treba promeniti razred.', 'info')
+            return redirect(url_for('students.student_list'))
+        
         # trenutni datum
         now = datetime.now()
         
-        if now.month >= 9:
-            # ako smo nakon septembra, tekuća školska godina je od septembra ove godine do septembra sledeće
-            start_of_school_year = datetime(now.year, 9, 1).date()
-            end_of_school_year = datetime(now.year + 1, 8, 14).date() #! od 15 avgusta se otvara +1 dugme
-        else:
-            # ako smo pre septembra, tekuća školska godina je od septembra prošle godine do septembra ove godine
-            start_of_school_year = datetime(now.year - 1, 9, 1).date()
-            end_of_school_year = datetime(now.year, 8, 14).date() #! od 15 avgusta se otvara +1 dugme
-        class_plus_one_correction = class_plus_one - timedelta(days=31) #! ovim se osigurava da se ako je pršli put urađen +1 u septembru da se prabaci u avgust
-        # Proveravamo da li datum class_plus_one spada u tekuću školsku godinu
-        if start_of_school_year <= class_plus_one_correction <= end_of_school_year:
-            logger.info(f'Ove godine, razred svih učenika je već promenjen putem masovne promene:\n {now=},\n {start_of_school_year=},\n {class_plus_one=} ,\n {class_plus_one_correction=},\n {end_of_school_year=}')
-            flash('Ove godine, razred svih učenika je već promenjen putem masovne promene.', 'info')
-        elif class_plus_one_correction < start_of_school_year:
-            logger.info(f'Prebacivanje učenika u sledeći razred:\n {now=},\n {start_of_school_year=},\n {class_plus_one=},\n {class_plus_one_correction=},\n {end_of_school_year=}')
-            try:
-                for student in students:
-                    student.student_class = int(student.student_class) + 1
-                school.class_plus_one = now
-                db.session.commit()
-                flash('Razred je uspešno promenjen za sve učenike. Za učenike koji su ponavljali razred, potrebno je ručno ažurirati njihove podatke.', 'success')
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                logger.error(f"Greška pri ažuriranju razreda: {str(e)}")
-                flash('Došlo je do greške pri promeni razreda. Promene nisu sačuvane.', 'danger')
-        else:
-            logger.warning('Pokušaj promene razreda van dozvoljenog perioda.')
-            flash('Došlo je do greške. Nisu promenjeni razredi kod učenika.', 'danger')
-
+        # Proveravamo da li smo u dozvoljenom periodu (15. avgust - 30. septembar)
+        if not ((now.month == 8 and now.day >= 15) or now.month == 9):
+            logger.warning(f'Pokušaj promene razreda van dozvoljenog perioda: {now}')
+            flash('Promena razreda je moguća samo u periodu od 15. avgusta do 30. septembra.', 'warning')
+            return redirect(url_for('students.student_list'))
+        
+        # Određujemo za koju školsku godinu bi bila trenutna promena
+        current_change_school_year = get_school_year_for_change(now)
+        # Proveravamo da li je već rađena promena za istu školsku godinu
+        if last_class_plus_one:
+            last_change_school_year = get_school_year_for_change(last_class_plus_one)
+            
+            if current_change_school_year == last_change_school_year:
+                logger.info(f'Već je urađena promena za školsku godinu {current_change_school_year[0]}/{current_change_school_year[1]}. '
+                            f'Poslednja promena: {last_class_plus_one}, trenutni datum: {now}')
+                flash(f'Razred je već promenjen za školsku godinu {current_change_school_year[0]}/{current_change_school_year[1]}.', 'info')
+                return redirect(url_for('students.student_list'))
+        
+        # Izvršavamo promenu razreda
+        logger.info(f'Prebacivanje učenika u sledeći razred. Datum: {now}, '
+                    f'Školska godina: {current_change_school_year[0]}/{current_change_school_year[1]}')
+        
+        try:
+            for student in students:
+                student.student_class = int(student.student_class) + 1
+            school.class_plus_one = now
+            db.session.commit()
+            
+            flash(f'Razred je uspešno promenjen za sve učenike.\nZa učenike koji su ponavljali razred, potrebno je ručno ažurirati njihove podatke.', 'success')
+            logger.info(f'Uspešno promenjen razred za {len(students)} učenika.')
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logger.error(f"Greška pri ažuriranju razreda: {str(e)}")
+            flash('Došlo je do greške pri promeni razreda. Promene nisu sačuvane.', 'danger')
+        
         return redirect(url_for('students.student_list'))
         
     except Exception as e:
         logger.error(f"Neočekivana greška u class_plus_one: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')
         return redirect(url_for('students.student_list'))
+
 
 @students.route('/student/<int:student_id>/delete', methods=['POST'])
 @login_required
