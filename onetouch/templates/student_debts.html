@@ -199,7 +199,7 @@
         selectFieldClasses.on('change', function() {
             const classes = $(this).val();
             const section = "";
-            table.column(2).search(classes).draw();
+            table.column(2).search('^' + classes + '$', true, false).draw();
             table.column(3).search(section).draw();
         });
 

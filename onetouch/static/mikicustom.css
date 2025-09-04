@@ -164,7 +164,7 @@ form > div.form-group { text-align: center; }
 .btn.btn-danger { background-image: none !important; background-color: #b40164 !important; }
 .btn.btn-danger:hover { background-color: #940052 !important; }
 .btn.btn-secondary, .btn.btn-danger { margin: 0 0 0 0 !important; }
-.btn.btn-primary { background-color: #104e97 !important; background-image: none !important; }
+.btn.btn-primary { background-color: #104e97 !important; background-image: none !important; color: #fff !important; }
 .btn.btn-primary:hover { background-color: #0c3a70 !important; }
 .form-check-input:checked { background-color: #009cdd; border-color: #009cdd; }
 .select2-container { background-color: #fff; }
