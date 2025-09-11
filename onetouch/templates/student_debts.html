@@ -13,7 +13,40 @@
         .mobtable td:nth-of-type(9):before { content: "Olakšica"; }
         .mobtable td:nth-of-type(10):before { content: "Iznos zaduženja"; }
     }
+    
+    .preloader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1.5s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
+
+<!-- Preloader overlay -->
+<div class="preloader-overlay" id="preloader">
+    <div class="spinner"></div>
+</div>
+
 <!-- ovo su učitelji: {{teachers}} -->
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
@@ -112,6 +145,19 @@
 
 {% block scripts %}
 <script>
+    // Funkcije za kontrolu preloadera
+    function showPreloader() {
+        document.getElementById('preloader').style.display = 'flex';
+    }
+    
+    function hidePreloader() {
+        // Postavimo timeout da bismo bili sigurni da će preloader biti sakriven
+        setTimeout(function() {
+            document.getElementById('preloader').style.display = 'none';
+            console.log('Preloader sakriven');
+        }, 300);
+    }
+    
     // Funkcija za izračunavanje iznosa zaduženja
     function dataChanged(studentId) {
         // Dohvati vrednosti iz input polja 'Količina' i 'Olakšica' za određenog studenta
@@ -154,7 +200,15 @@
     });
 
 
-    $(document).ready(function() {
+    // Prikazivanje preloadera čim se stranica počne učitavati
+showPreloader();
+
+$(document).ready(function() {
+        // Sakrij preloader nakon što se stranica u potpunosti učita (sa dodatnim vremenom za pozadinske proračune)
+        setTimeout(function() {
+            hidePreloader();
+        }, 500);
+        
         const selectFieldClasses = $('#classes');
         const selectFieldSection = $('#section');
         const selectFieldServiceItem = $('#service_item'); //
@@ -237,6 +291,7 @@
                 inputFieldPurposeOfPayment.prop('disabled', true);
                 buttonSave.prop('disabled', true);
                 inputFieldInstallmentValue.prop('value', "----");
+                showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
                     url: 'get_service_items',
                     data: {classes: newValue},
@@ -245,6 +300,10 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
+                        hidePreloader(); // Sakrivanje preloadera nakon završetka
+                    },
+                    error: function() {
+                        hidePreloader(); // Sakrivanje preloadera u slučaju greške
                     }
                 })
                 dataChanged(); // call function
@@ -292,6 +351,7 @@
                 });
                 buttonSave.prop('disabled', true);
 
+                showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
                     url: 'get_service_items',
                     data: {classes: newValue},
@@ -302,6 +362,10 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
+                        hidePreloader(); // Sakrivanje preloadera nakon završetka
+                    },
+                    error: function() {
+                        hidePreloader(); // Sakrivanje preloadera u slučaju greške
                     }
                 })
                 dataChanged(); // call function
@@ -332,6 +396,7 @@
                 buttonZaduziSve.prop('disabled', true);
                 inputZaduziSveKolicina.prop('disabled', true);
             } else {
+                showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
                     url: 'get_installments',
                     data: {installments: newValue2},
@@ -393,7 +458,11 @@
                                 $(this).prop('min', 0);
                             });
                         }
+                        hidePreloader(); // Sakrivanje preloadera nakon završetka
                     },
+                    error: function() {
+                        hidePreloader(); // Sakrivanje preloadera u slučaju greške
+                    }
                 })                    
                 dataChanged(); // call function
             }
@@ -430,6 +499,7 @@
                 inputFieldDiscountValue.each(function() {
                     $(this).prop('readonly', false);
                 });
+                // Izbegnuto prikazivanje preloadera kod izbora rate jer izaziva probleme
                 $.ajax({
                     url: 'get_installment_values',
                     data: {installment_values: newValue3,
@@ -465,7 +535,14 @@
                                 errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
                             }
                         });
+                        
                         dataChanged(); // call function
+                        
+                        // Kod za sakrivanje preloadera je uklonjen jer preloader više ne koristimo za izbor rate
+                    },
+                    error: function() {
+                        // Kod za sakrivanje preloadera je uklonjen jer preloader više ne koristimo za izbor rate
+                        console.log('Greška pri dobavljanju podataka za rate');
                     }
                 })
             }
@@ -615,6 +692,7 @@
         }
         console.log('output: ', output)
         console.log(JSON.stringify(output));
+        showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
         $.ajax({
             url: 'submit_records',
             method: 'POST',
@@ -626,7 +704,12 @@
                 console.log('debug: ', response)
                 var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
                 editDebtUrl = editDebtUrl.replace(/\/1$/, '/' + response);
+                hidePreloader(); // Sakrivanje preloadera pre preusmeravanja
                 window.location.href = editDebtUrl;
+            },
+            error: function() {
+                hidePreloader(); // Sakrivanje preloadera u slučaju greške
+                alert('Došlo je do greške prilikom čuvanja podataka. Molimo pokušajte ponovo.');
             }
         })
         buttonSave.prop('disabled', true);
