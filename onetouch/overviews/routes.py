@@ -284,7 +284,8 @@ def overview_student(student_id):
                     continue
             
             data.sort(key=lambda x: (x['service_item_id'], x['date']))
-            unique_services_list.sort(key=lambda x: x['service_item_date'])
+            # unique_services_list.sort(key=lambda x: x['service_item_date'])
+            unique_services_list.sort(key=lambda x: x['id'], reverse=True)
             
             report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
             
