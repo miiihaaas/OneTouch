@@ -135,7 +135,7 @@
 </table>
 <hr>
 
-<table id="data" class="table table-striped no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="summary" class="table table-striped no-footer invoices mobtable" role="grid" aria-describedby="summary_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>Zaduženje:</th>
@@ -177,42 +177,62 @@
     });
 
 
-    // Izračunavanje sumi za svaki ključ
-    var data = JSON.parse('{{ export_data | tojson | safe }}');
-    var zaduzenjeSum = 0;
-    var uplateSum = 0;
-    var saldoSum = 0;
-
-    for (var i = 0; i < data.length; i++) {
-        zaduzenjeSum += data[i].student_debt;
-        uplateSum += data[i].student_payment;
-        saldoSum += data[i].saldo;
-    }
-
-    // Prikazivanje suma u HTML-u
-    zaduzenjeSumElement.textContent = zaduzenjeSum.toFixed(2);
-    uplateSumElement.textContent = uplateSum.toFixed(2);
-    saldoSumElement.textContent = saldoSum.toFixed(2);
+    // Inicijalne vrednosti - biće ažurirane kroz dataSrc callback kada podaci stignu sa servera
+    zaduzenjeSumElement.textContent = "0.00";
+    uplateSumElement.textContent = "0.00";
+    saldoSumElement.textContent = "0.00";
     
     $(document).ready(function () {
+        // Inicijalizacija DataTables sa serverside procesiranjem
         var table = $('#data').DataTable({
-            // NOVO: Čuvanje stanja tabele
+            "processing": true,
+            "serverSide": true,
             "stateSave": true,
             "stateDuration": 900, // 15 minuta (900 sekundi)
-            language: {
-                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            "ajax": {
+                "url": window.location.href,
+                "type": "GET",
+                "dataSrc": function(json) {
+                    // Ažuriranje sume na dnu tabele
+                    $('#zaduzenjeSum').text(json.sums.zaduzenje);
+                    $('#uplateSum').text(json.sums.uplate);
+                    $('#saldoSum').text(json.sums.saldo);
+                    
+                    // Dodaj informaciju o vremenu izvršavanja ako postoji
+                    if (json.performance && json.performance.execution_time) {
+                        var execTime = parseFloat(json.performance.execution_time);
+                        var isCached = json.performance.cached ? "(keširano)" : "";
+                        var estimated = json.performance.estimated_sums ? " (procenjene sume)" : "";
+                        console.log('Vreme izvršavanja: ' + execTime + 's ' + isCached + estimated);
+                        
+                        // Prikaži vreme učitavanja samo ako je veće od 0.5 sekundi
+                        if (execTime > 0.5) {
+                            var loadInfoHtml = '<div class="small text-muted text-right mt-1">Učitano za ' + 
+                                execTime + 's ' + isCached + estimated + '</div>';
+                            $('#summary').after(loadInfoHtml);
+                        }
+                    }
+                    
+                    return json.data;
+                },
+                "data": function(d) {
+                    // Dodaj parameter initial_load=1 za prvo učitavanje
+                    d.initial_load = '1';
+                    return d;
                 }
+            },
+            "columnDefs": [
+                { "className": "text-center", "targets": [2, 3] },
+                { "className": "text-right", "targets": [4, 5, 6] },
+                { "className": "text-center", "targets": [7] },
+                { "orderable": false, "targets": [7] } // Dugme za akcije nije sortirabilno
+            ],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
         });
-        $('#searchUsluga').val('{{service_id}}')
-        $('#searchRazred').on('change', function () {
-            var selectedValue = $(this).val();
-            table.column(2).search(selectedValue).draw();
-        });
-
-        $('#searchOdeljenje').on('change', function () {
-            var selectedValue = $(this).val();
-            table.column(3).search(selectedValue).draw();
-        });
+        
+        $('#searchUsluga').val('{{service_id}}');
 
         // Funkcija koja se poziva pri promeni datuma, razreda, odeljenja
         function handleDateChange() {
@@ -223,7 +243,8 @@
             var serviceId = document.getElementById("searchUsluga").value;
             var debtsCheckbox = document.getElementById("debts").checked;
             var overpaymentsCheckbox = document.getElementById("overpayments").checked;
-            console.log('id usluge: ', serviceId)
+            console.log('id usluge: ', serviceId);
+            
             var currentUrl = window.location.href.split('?')[0];
             var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje + "&debts=" + debtsCheckbox + "&overpayments=" + overpaymentsCheckbox;
             window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma

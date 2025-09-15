@@ -7,6 +7,7 @@ from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from flask_caching import Cache
 # from flask_apscheduler import APScheduler
 
 # Podešavanje logovanja
@@ -26,6 +27,7 @@ handler.setFormatter(logging.Formatter(
     datefmt='%d/%m/%Y %H:%M:%S'
 ))
 
+handler.setLevel(logging.DEBUG)
 logger = logging.getLogger('onetouch')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
@@ -52,6 +54,11 @@ login_manager.login_view = 'users.login'
 login_manager.login_message = 'Morate biti prijavljeni da biste pristupili ovoj stranici.'
 login_manager.login_message_category = 'info'
 app.config['JSON_AS_ASCII'] = False #! da ne bude ascii već utf8
+
+# Konfiguracija za Flask-Caching
+app.config['CACHE_TYPE'] = 'SimpleCache'
+app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 minuta kao podrazumevano vreme
+cache = Cache(app)
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER') # dodati u .env: 'mail.uplatnice.online'
 app.config['MAIL_PORT'] = os.getenv('MAIL_PORT') # dodati u .env: 465
 app.config['MAIL_USE_TLS'] = False

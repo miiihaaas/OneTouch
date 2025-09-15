@@ -7,6 +7,7 @@ from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord
 from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list
 from sqlalchemy.exc import SQLAlchemyError
+from onetouch import db, cache
 
 overviews = Blueprint('overviews', __name__)
 
@@ -59,6 +60,19 @@ def overview_students():
             logging.error(f'Greška pri obradi datuma: {str(e)}')
             flash('Neispravan format datuma.', 'danger')
             return redirect(url_for('main.home'))
+        
+        # Proverava da li je zahtev za DataTables Ajax serverside procesiranje
+        if request.args.get('draw'):
+            try:
+                return get_students_data(request, start_date, end_date, service_id, razred, odeljenje, dugovanje, preplata)
+            except Exception as e:
+                logging.error(f'Greška pri generisanju podataka za DataTables: {str(e)}')
+                return json.dumps({
+                    'draw': int(request.args.get('draw')),
+                    'recordsTotal': 0,
+                    'recordsFiltered': 0,
+                    'data': []
+                }), 500, {'ContentType': 'application/json'}
             
         try:
             # Dobavljanje transakcija iz baze
@@ -117,54 +131,15 @@ def overview_students():
                     })
             logging.debug(f'{options=}')
             
+            # Podaci će biti učitani preko Ajax-a, samo šaljemo inicijalne podatke za prikaz
             export_data = []
-            for record in filtered_records:
-                if service_id == '0' or int(service_id) == record.service_item_id:
-                    if record.student_id in [student['student_id'] for student in export_data]:
-                        existing_record = next((item for item in export_data if item["student_id"] == record.student_id), None)
-                        existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
-                        existing_record['student_payment'] += record.student_debt_total if record.student_payment_id else 0
-                        existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
-
-                    else:
-                        logging.debug(f'{record=}')
-                        new_record = {
-                            'student_id': record.student_id,
-                            'student_name': record.transaction_record_student.student_name,
-                            'student_surname': record.transaction_record_student.student_surname,
-                            'student_class': record.transaction_record_student.student_class,
-                            'student_section': record.transaction_record_student.student_section,
-                            'student_debt': record.student_debt_total if record.student_debt_id else 0,
-                            'student_payment': record.student_debt_total if record.student_payment_id else 0,
-                        }
-                        new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
-                        logging.debug(f'{new_record=}')
-                        if int(new_record['student_id']) > 1:
-                            export_data.append(new_record)
-            # export_data = [dict(t) for t in {tuple(d.items()) for d in export_data}]
-            
-            logging.info(f'{export_data=}')
-            
-            filtered_export_data = []
-            for record in export_data:
-                if dugovanje:
-                    if record['saldo'] > 0:
-                        filtered_export_data.append(record)
-                elif preplata:
-                    if record['saldo'] < 0:
-                        filtered_export_data.append(record)
-            if len(filtered_export_data) > 0:
-                export_data = filtered_export_data
-            
             students = Student.query.filter(Student.student_class < 9).all()
             teachers = Teacher.query.all()
-            
-            report_students = gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje, dugovanje, preplata)
             
             return render_template('overview_students.html', 
                                     title='Pregled po učeniku', 
                                     legend="Pregled po učeniku", 
-                                    export_data=export_data,
+                                    export_data=export_data,  # prazan niz, podaci će biti učitani preko Ajax-a
                                     students=students,
                                     teachers=teachers,
                                     start_date=start_date,
@@ -186,6 +161,385 @@ def overview_students():
         logging.error(f'Neočekivana greška u overview_students: {str(e)}')
         flash('Došlo je do neočekivane greške.', 'danger')
         return redirect(url_for('main.home'))
+
+
+@cache.memoize(timeout=60)  # Keširaj rezultate na 1 minut
+def get_students_data(request, start_date, end_date, service_id, razred, odeljenje, dugovanje, preplata):
+    """
+    Funkcija za serverside procesiranje DataTables za pregled učenika - optimizovana za performanse sa keširanjem
+    """
+    import time
+    import traceback
+    start_time = time.time()
+    
+    # Važni parametri za DataTables paginaciju
+    draw = int(request.args.get('draw', 1))
+    start_row = int(request.args.get('start', 0))
+    length = int(request.args.get('length', 10))
+    search_value = request.args.get('search[value]', '')
+    order_column_index = int(request.args.get('order[0][column]', 0))
+    order_dir = request.args.get('order[0][dir]', 'asc')
+    
+    # Kreiraj jedinstveni ključ za keš
+    cache_key = f"students_data:{start_date}:{end_date}:{service_id}:{razred}:{odeljenje}:{dugovanje}:{preplata}:{search_value}:{order_column_index}:{order_dir}:{start_row}:{length}"
+    
+    # Proveri da li postoji keširani rezultat
+    cached_result = cache.get(cache_key)
+    if cached_result:
+        logging.info(f'Koristi se keširani rezultat za ključ: {cache_key}')
+        return cached_result
+    
+    try:
+        
+        # Import potrebnih modula
+        from sqlalchemy import func, case, text, and_, or_
+        from onetouch.models import StudentDebt, StudentPayment, Student, TransactionRecord
+        
+        # Direktno koristimo SQLAlchemy Core za agregaciju - mnogo brže od ORM-a
+        # Kreiramo subupite za dugovanja i uplate
+        db_session = db.session
+        
+        logging.info(f'Početak izvršavanja get_students_data - vreme: {time.time() - start_time:.2f}s')
+        
+        # Pripremamo uslove filtriranja koji će biti isti za oba subupita
+        filter_conditions = []
+        
+        # Filter za razred i odeljenje
+        if razred != '':
+            filter_conditions.append(Student.student_class == int(razred))
+        if odeljenje != '':
+            filter_conditions.append(Student.student_section == int(odeljenje))
+            
+        # Filter za uslugu
+        if service_id != '0':
+            filter_conditions.append(TransactionRecord.service_item_id == int(service_id))
+            
+        # Filter za ID učenika > 1 (ignorisanje tehničkih stavki)
+        filter_conditions.append(Student.id > 1)
+        filter_conditions.append(Student.student_class < 9)
+        
+        logging.info(f'Priprema filtera - vreme: {time.time() - start_time:.2f}s')
+        
+        # Priprema filtera pre konstrukcije SQL upita
+        razred_filter = f"AND s.student_class = {int(razred)}" if razred != '' else ""
+        odeljenje_filter = f"AND s.student_section = {int(odeljenje)}" if odeljenje != '' else ""
+        service_filter = f"AND tr.service_item_id = {int(service_id)}" if service_id != '0' else ""
+        
+        # Filter za dugovanje/preplatu
+        if dugovanje:
+            dugovanje_filter = "(total_debt - total_payment) > 0"
+        elif preplata:
+            dugovanje_filter = "(total_debt - total_payment) < 0"
+        else:
+            dugovanje_filter = "1=1"  # Uvek tačan uslov
+            
+        # Pretraga
+        if search_value:
+            search_term = search_value.lower()
+            search_condition = f"WHERE CAST(student_id AS CHAR) LIKE '%{search_term}%' OR LOWER(student_name) LIKE '%{search_term}%' OR LOWER(student_surname) LIKE '%{search_term}%' OR CAST(student_class AS CHAR) LIKE '%{search_term}%' OR CAST(student_section AS CHAR) LIKE '%{search_term}%'"
+        else:
+            search_condition = ""
+        
+        # Postavka za sortiranje
+        if order_column_index == 0:
+            order_column = 'student_id'
+        elif order_column_index == 1:
+            order_column = 'student_name'  # Sortiranje po imenu
+        elif order_column_index == 2:
+            order_column = 'student_class'
+        elif order_column_index == 3:
+            order_column = 'student_section'
+        elif order_column_index == 4:
+            order_column = 'total_debt'
+        elif order_column_index == 5:
+            order_column = 'total_payment'
+        elif order_column_index == 6:
+            order_column = '(total_debt - total_payment)'  # Saldo
+        else:
+            order_column = 'student_id'  # Default vrednost
+            
+        # Direktan SQL upit za brzu agregaciju podataka po učeniku
+        query_str = f"""
+            WITH student_totals AS (
+                -- Agregacija dugovanja po studentu
+                SELECT 
+                    s.id as student_id,
+                    s.student_name,
+                    s.student_surname,
+                    s.student_class,
+                    s.student_section,
+                    COALESCE(SUM(CASE WHEN tr.student_debt_id IS NOT NULL THEN tr.student_debt_total ELSE 0 END), 0) as total_debt,
+                    COALESCE(SUM(CASE WHEN tr.student_payment_id IS NOT NULL THEN tr.student_debt_total ELSE 0 END), 0) as total_payment
+                FROM 
+                    student s
+                LEFT JOIN 
+                    transaction_record tr ON s.id = tr.student_id
+                LEFT JOIN 
+                    student_debt sd ON tr.student_debt_id = sd.id
+                LEFT JOIN 
+                    student_payment sp ON tr.student_payment_id = sp.id
+                WHERE 
+                    s.id > 1 AND s.student_class < 9
+                    AND (sd.student_debt_date BETWEEN :start_date AND :end_date OR sd.student_debt_date IS NULL)
+                    AND (sp.payment_date BETWEEN :start_date AND :end_date OR sp.payment_date IS NULL)
+                    -- Dodatni filteri za razred, odeljenje i uslugu
+                    {razred_filter}
+                    {odeljenje_filter}
+                    {service_filter}
+                    -- Jedan od njih mora biti popunjen da bi zapis bio validan
+                    AND (tr.student_debt_id IS NOT NULL OR tr.student_payment_id IS NOT NULL)
+                GROUP BY 
+                    s.id, s.student_name, s.student_surname, s.student_class, s.student_section
+                HAVING
+                    -- Filter za dugovanje/preplatu
+                    {dugovanje_filter}
+            )
+            SELECT * FROM student_totals
+            {search_condition}
+            ORDER BY {order_column} {order_dir}
+            LIMIT :limit OFFSET :offset
+        """
+        
+        query = text(query_str)
+        
+        # Pripremamo parametre za SQL upit - samo vrednosti, ne SQL delovi
+        params = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'limit': length,
+            'offset': start_row
+        }
+        
+        logging.info(f'SQL upit pripremljen - vreme: {time.time() - start_time:.2f}s')
+            
+        # Izvršavanje upita
+        result = db_session.execute(query, params)
+        rows = result.fetchall()
+        
+        logging.info(f'SQL upit izvršen - vreme: {time.time() - start_time:.2f}s')
+        
+        # Optimizovani upit za brojanje ukupnih zapisa (mnogo brži)
+        # Koristimo samo ID polja bez nepotrebnih JOIN-ova kad je to moguće
+        count_query_str = f"""
+            SELECT COUNT(DISTINCT s.id) as total_count
+            FROM 
+                student s
+            JOIN 
+                transaction_record tr ON s.id = tr.student_id
+            LEFT JOIN 
+                student_debt sd ON tr.student_debt_id = sd.id
+            LEFT JOIN 
+                student_payment sp ON tr.student_payment_id = sp.id
+            WHERE 
+                s.id > 1 AND s.student_class < 9
+                AND (sd.student_debt_date BETWEEN :start_date AND :end_date OR sd.student_debt_date IS NULL)
+                AND (sp.payment_date BETWEEN :start_date AND :end_date OR sp.payment_date IS NULL)
+                -- Dodatni filteri za razred, odeljenje i uslugu
+                {razred_filter}
+                {odeljenje_filter}
+                {service_filter}
+                -- Jedan od njih mora biti popunjen da bi zapis bio validan
+                AND (tr.student_debt_id IS NOT NULL OR tr.student_payment_id IS NOT NULL)
+        """
+        
+        # Dodajemo HAVING uslov samo ako je potreban za dugovanje/preplatu
+        if dugovanje or preplata:
+            count_query_str = f"""
+                SELECT COUNT(*) FROM (
+                    SELECT 
+                        s.id as student_id,
+                        COALESCE(SUM(CASE WHEN tr.student_debt_id IS NOT NULL THEN tr.student_debt_total ELSE 0 END), 0) as total_debt,
+                        COALESCE(SUM(CASE WHEN tr.student_payment_id IS NOT NULL THEN tr.student_debt_total ELSE 0 END), 0) as total_payment
+                    FROM 
+                        student s
+                    JOIN 
+                        transaction_record tr ON s.id = tr.student_id
+                    LEFT JOIN 
+                        student_debt sd ON tr.student_debt_id = sd.id
+                    LEFT JOIN 
+                        student_payment sp ON tr.student_payment_id = sp.id
+                    WHERE 
+                        s.id > 1 AND s.student_class < 9
+                        AND (sd.student_debt_date BETWEEN :start_date AND :end_date OR sd.student_debt_date IS NULL)
+                        AND (sp.payment_date BETWEEN :start_date AND :end_date OR sp.payment_date IS NULL)
+                        -- Dodatni filteri za razred, odeljenje i uslugu
+                        {razred_filter}
+                        {odeljenje_filter}
+                        {service_filter}
+                        -- Jedan od njih mora biti popunjen da bi zapis bio validan
+                        AND (tr.student_debt_id IS NOT NULL OR tr.student_payment_id IS NOT NULL)
+                    GROUP BY 
+                        s.id
+                    HAVING
+                        -- Filter za dugovanje/preplatu
+                        {dugovanje_filter}
+                ) as count_subq
+                {search_condition}
+            """
+        elif search_value:
+            count_query_str += f" {search_condition}"
+        count_query = text(count_query_str)
+        
+        count_result = db_session.execute(count_query, {
+            'start_date': start_date,
+            'end_date': end_date
+        })
+        total_records = count_result.scalar()
+        
+        logging.info(f'Ukupan broj zapisa izbrojan - vreme: {time.time() - start_time:.2f}s')
+        
+        # Koristimo podatke iz prve stranice za procenu suma ako je inicijalno učitavanje
+        # Ovaj pristup će biti brz za prvo učitavanje, a kasnije ćemo imati tačne sume
+        if start_row == 0 and request.args.get('initial_load', '0') == '1':
+            # Za inicijalno učitavanje procenjujemo sume samo iz podataka prve stranice
+            sums_query_str = None
+            # Vrednosti ćemo izračunati iz već učitanih podataka za prvu stranicu
+            logging.info(f'Korišćenje procenjenih suma za prvo učitavanje - vreme: {time.time() - start_time:.2f}s')
+        else:
+            # Standardno računanje suma za sve podatke
+            sums_query_str = f"""
+                SELECT 
+                    COALESCE(SUM(total_debt), 0) as sum_debt,
+                    COALESCE(SUM(total_payment), 0) as sum_payment,
+                    COALESCE(SUM(total_debt - total_payment), 0) as sum_saldo
+                FROM (
+                    SELECT 
+                        s.id as student_id,
+                        COALESCE(SUM(CASE WHEN tr.student_debt_id IS NOT NULL THEN tr.student_debt_total ELSE 0 END), 0) as total_debt,
+                        COALESCE(SUM(CASE WHEN tr.student_payment_id IS NOT NULL THEN tr.student_debt_total ELSE 0 END), 0) as total_payment
+                    FROM 
+                        student s
+                    JOIN 
+                        transaction_record tr ON s.id = tr.student_id
+                    LEFT JOIN 
+                        student_debt sd ON tr.student_debt_id = sd.id
+                    LEFT JOIN 
+                        student_payment sp ON tr.student_payment_id = sp.id
+                    WHERE 
+                        s.id > 1 AND s.student_class < 9
+                        AND (sd.student_debt_date BETWEEN :start_date AND :end_date OR sd.student_debt_date IS NULL)
+                        AND (sp.payment_date BETWEEN :start_date AND :end_date OR sp.payment_date IS NULL)
+                        -- Dodatni filteri za razred, odeljenje i uslugu
+                        {razred_filter}
+                        {odeljenje_filter}
+                        {service_filter}
+                        -- Jedan od njih mora biti popunjen da bi zapis bio validan
+                        AND (tr.student_debt_id IS NOT NULL OR tr.student_payment_id IS NOT NULL)
+                    GROUP BY 
+                        s.id
+                    HAVING
+                        -- Filter za dugovanje/preplatu
+                        {dugovanje_filter}
+                ) as sums_subq
+                {search_condition}
+            """
+            sums_query = text(sums_query_str)
+        
+        # Računanje suma - optimizovano za brzo inicijalno učitavanje
+        if sums_query_str is None:
+            # Koristimo podatke iz prve stranice za aproksimaciju suma
+            # Kasnije će biti ažurirano tačnim vrednostima kroz sledeće pozive
+            if rows:
+                # Računamo sume iz dobijenih redova podataka
+                sum_zaduzenje = sum(float(row[5]) if row[5] is not None else 0 for row in rows)
+                sum_uplate = sum(float(row[6]) if row[6] is not None else 0 for row in rows)
+                sum_saldo = sum_zaduzenje - sum_uplate
+                
+                # Procena ukupnih suma (množimo sa faktorom na osnovu broja ukupnih zapisa)
+                if total_records > 0 and length > 0:
+                    factor = float(total_records) / min(length, len(rows))
+                    sum_zaduzenje *= factor
+                    sum_uplate *= factor
+                    sum_saldo *= factor
+            else:
+                sum_zaduzenje = 0.0
+                sum_uplate = 0.0
+                sum_saldo = 0.0
+        else:
+            # Standardni pristup za računanje suma
+            sums_result = db_session.execute(sums_query, {
+                'start_date': start_date,
+                'end_date': end_date
+            })
+            sums = sums_result.fetchone()
+            sum_zaduzenje = float(sums[0]) if sums[0] is not None else 0
+            sum_uplate = float(sums[1]) if sums[1] is not None else 0
+            sum_saldo = float(sums[2]) if sums[2] is not None else 0
+        
+        logging.info(f'Sume izračunate - vreme: {time.time() - start_time:.2f}s')
+        
+        # Formatiranje rezultata za DataTables
+        data_for_table = []
+        for row in rows:
+            student_id = row[0]
+            student_name = row[1]
+            student_surname = row[2]
+            student_class = row[3]
+            student_section = row[4]
+            student_debt = float(row[5]) if row[5] is not None else 0
+            student_payment = float(row[6]) if row[6] is not None else 0
+            saldo = student_debt - student_payment
+            
+            student_id_formatted = "{:04d}".format(student_id)
+            student_name_formatted = f"{student_name} {student_surname}"
+            student_debt_formatted = "{:.2f}".format(student_debt)
+            student_payment_formatted = "{:.2f}".format(student_payment)
+            saldo_formatted = "{:.2f}".format(saldo)
+            
+            # Link za pregled kartice stanja
+            action_button = f'<a href="{url_for("overviews.overview_student", student_id=student_id)}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a>'
+            
+            data_for_table.append([
+                student_id_formatted,
+                student_name_formatted,
+                student_class,
+                student_section,
+                student_debt_formatted,
+                student_payment_formatted,
+                saldo_formatted,
+                action_button
+            ])
+
+        end_time = time.time()
+        logging.info(f'Ukupno vreme izvršavanja get_students_data: {end_time - start_time:.2f}s')
+        
+        # Formiranje odgovora za DataTables
+        response = {
+            'draw': draw,
+            'recordsTotal': total_records,
+            'recordsFiltered': total_records,
+            'data': data_for_table,
+            'sums': {
+                'zaduzenje': "{:.2f}".format(sum_zaduzenje),
+                'uplate': "{:.2f}".format(sum_uplate),
+                'saldo': "{:.2f}".format(sum_saldo)
+            },
+            'performance': {
+                'execution_time': "{:.2f}".format(time.time() - start_time),
+                'cached': False,
+                'estimated_sums': (sums_query_str is None)
+            }
+        }
+        
+        result = (json.dumps(response), 200, {'ContentType': 'application/json'})
+        
+        # Sačuvaj rezultat u keš
+        cache.set(cache_key, result, timeout=60)
+        
+        return result
+        
+    except Exception as e:
+        end_time = time.time()
+        logging.error(f'Greška u get_students_data: {str(e)}. Vreme izvršavanja: {end_time - start_time:.2f}s')
+        traceback_info = traceback.format_exc()
+        logging.error(f'Traceback: {traceback_info}')
+        return json.dumps({
+            'draw': int(request.args.get('draw')),
+            'recordsTotal': 0,
+            'recordsFiltered': 0,
+            'data': [],
+            'error': str(e)
+        }), 500, {'ContentType': 'application/json'}
 
 
 @overviews.route("/overview_student/<int:student_id>", methods=['GET', 'POST'])
