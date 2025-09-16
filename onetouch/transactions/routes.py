@@ -424,12 +424,14 @@ def debts_archive_list():
         end_date = request.args.get('end_date')
         
         if start_date is None or end_date is None:
-            if danas.month < 9:
-                start_date = danas.replace(month=9, day=1, year=danas.year-1)
-                end_date = danas.replace(month=8, day=31)
-            else:
-                start_date = danas.replace(month=9, day=1)
-                end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            start_date = danas.replace(month=9, day=1, year=2020)
+            end_date = danas.replace(month=8, day=31, year=danas.year)
+            # if danas.month < 9:
+            #     start_date = danas.replace(month=9, day=1, year=danas.year-1)
+            #     end_date = danas.replace(month=8, day=31)
+            # else:
+            #     start_date = danas.replace(month=9, day=1)
+            #     end_date = danas.replace(month=8, day=31, year=danas.year+1)
         
         logging.debug(f'{start_date=}, {end_date=}')
         
@@ -482,11 +484,13 @@ def payments_archive_list():
         end_date = request.args.get('end_date')
         
         if start_date is None or end_date is None:
-            if date.today().month < 9:
-                start_date = date.today().replace(day=1, month=9, year=date.today().year-1).isoformat()
-            else:
-                start_date = date.today().replace(day=1, month=9).isoformat()
-            end_date = date.today().isoformat()
+            start_date = date.today().replace(day=1, month=9, year=2020).isoformat()
+            end_date = date.today().replace(day=31, month=8, year=date.today().year).isoformat()
+            # if date.today().month < 9:
+            #     start_date = date.today().replace(day=1, month=9, year=date.today().year-1).isoformat()
+            # else:
+            #     start_date = date.today().replace(day=1, month=9).isoformat()
+            # end_date = date.today().isoformat()
         
         payments = StudentPayment.query.filter(
             StudentPayment.payment_date.between(start_date, 

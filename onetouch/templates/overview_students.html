@@ -128,7 +128,7 @@
             <td style="text-align: right;">{{ "{:.2f}".format(student['student_debt']) }}</td>
             <td style="text-align: right;">{{ "{:.2f}".format(student['student_payment']) }}</td>
             <td style="text-align: right;">{{ "{:.2f}".format(student['saldo']) }}</td>
-            <td style="text-align: center;"><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a></td>
+            <td style="text-align: center;"><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x loading" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></i></a></td>
         </tr>
         {% endfor %}
     </tbody>

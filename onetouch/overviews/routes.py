@@ -487,7 +487,7 @@ def get_students_data(request, start_date, end_date, service_id, razred, odeljen
             saldo_formatted = "{:.2f}".format(saldo)
             
             # Link za pregled kartice stanja
-            action_button = f'<a href="{url_for("overviews.overview_student", student_id=student_id)}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a>'
+            action_button = f'<a href="{url_for("overviews.overview_student", student_id=student_id)}" class="btn-x btn-primary-x loading" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></i></a>'
             
             data_for_table.append([
                 student_id_formatted,
