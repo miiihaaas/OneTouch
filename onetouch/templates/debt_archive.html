@@ -1,5 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Učenik"; }
+        .mobtable td:nth-of-type(2):before { content: "Poziv na broj"; }
+        .mobtable td:nth-of-type(3):before { content: "Detalji usluge"; }
+        .mobtable td:nth-of-type(4):before { content: "Količina"; }
+        .mobtable td:nth-of-type(5):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(6):before { content: "Olakšica"; }
+        .mobtable td:nth-of-type(7):before { content: "Iznos zaduženja"; }
+        .mobtable td:nth-of-type(8):before { content: "Akcije"; }
+    }
+</style>
 <h1>Razredni starešina: {{ teacher.teacher_name }} {{ teacher.teacher_surname }}</h1>
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
@@ -17,8 +29,9 @@
     <label for="today_date" class="form-control-label">Datum zaduživanja</label>
     <input id="today_date" name="today_date" type="text" class="form-control" value="{{ debt.student_debt_date.strftime('%d.%m.%Y.') }}" disabled>
 </div>
-<div class="form-group" style="display: inline-block;">
-    <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/dept_report.pdf') }}" target="_blank">Štampa zaduženja</a>
+<div class="form-group cstm-4" style="display: inline-block; position: relative; top: -2px;">
+    <!-- <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/debt_report.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
+    <a id="resetButton" class="btn btn-primary" href="{{ url_for('transactions.get_report', filename='debt_report.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
 </div>
 {% if new_students %}
 <div class="form-group" style="display: inline-block;">
@@ -56,7 +69,7 @@
 </div>
 {% endif %}
 <hr>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
     <thead>
         <tr>
             <th>Učenik</th>
@@ -79,11 +92,11 @@
             <td style="text-align: right;" id="installment_{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.studetn_debt_installment_value) }}</td>
             <td style="text-align: right;" id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.student_debt_discount)}}</td>
             <td style="text-align: right;" id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}}</td>
-            <td  style="text-align: center;">
+            <td  style="text-align: right;">
                 {% if (record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount) > 0 %}
                     {% if record.transaction_record_student.send_mail %}
                     <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
-                    <a class="btn-x btn-primary-x loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}" title="Generišite i pošaljite uplaticu  roditelju"><i class="fa-regular fa-envelope awesomedelete"></i></a>
+                    <a class="btn-x btn-primary-x loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}" title="{% if record.debt_sent %}Ponovo generišite i pošaljite uplatnicu roditelju{% else %}Generišite i pošaljite uplaticu roditelju{% endif %}">{% if record.debt_sent %}<i class="fa-solid fa-envelope awesomedelete"></i>{% else %}<i class="fa-regular fa-envelope awesomedelete"></i>{% endif %}</a>
                     {% else %}
                     <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
                     {% endif %}
@@ -100,12 +113,10 @@
 </div>
 <div class="form-group">
     <button class="btn btn-primary loading" id="save_button" name="save_button">Sačuvajte</button>
-    <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
+    <!-- <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
+    <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a> -->
+    <a class="btn btn-primary" href="{{ url_for('transactions.get_payment_slip', filename='uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
     <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a>
-</div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
 </div>
 
 {% endblock content%}
@@ -118,6 +129,7 @@
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             },
+            "paging": false, // Isključuje paginaciju
             "lengthMenu": [50, 100, 200, 400, 800],
             "pageLength": 800,
         });

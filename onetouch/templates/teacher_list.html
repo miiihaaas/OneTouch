@@ -1,8 +1,22 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID starešine"; }
+        .mobtable td:nth-of-type(2):before { content: "Ime"; }
+        .mobtable td:nth-of-type(3):before { content: "Prezime"; }
+        .mobtable td:nth-of-type(4):before { content: "Razred"; }
+        .mobtable td:nth-of-type(5):before { content: "Odeljenje"; }
+        {% if not license_expired %}
+        .mobtable td:nth-of-type(6):before { content: "Akcije"; }
+        {% endif %}
+    }
+</style>
 <div class="row form-group align-items-end">
     <div class="col form-group">
-        <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog odeljenskog starešine</a>
+        {% if not license_expired %}
+        <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog odeljenskog starešine</a>
+        {% endif %}
     </div>
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
@@ -25,7 +39,7 @@
     </div>
     <hr>
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID starešine</th>
@@ -33,7 +47,9 @@
             <th>Prezime</th>
             <th>Razred</th>
             <th>Odeljenje</th>
+            {% if not license_expired %}
             <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -44,6 +60,7 @@
             <td>{{ teacher.teacher_surname }}</td>
             <td>{{ teacher.teacher_class }}</td>
             <td>{{ teacher.teacher_section }}</td>
+            {% if not license_expired %}
             <td><a href="#" class="btn-x btn-info-x" data-toggle="modal" data-target="#EditModal{{teacher.id}}" title="Izmenite profil starešine"><i class="fa fa-edit awesomeedit" aria-hidden="true"></i></a>
                 <a href="#" class="btn-x btn-danger-x" data-toggle="modal" data-target="#DeleteModal{{teacher.id}}" title="Obrišite profil starešine"><i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i></a></td>
         </tr>
@@ -58,14 +75,15 @@
                         </button>
                     </div>
                 <div class="modal-body">
-                <label for="input_password">Da bi ste obrisali profil odeljenskog starešine "{{ teacher.teacher_name }} {{ teacher.teacher_surname }}" potrebno je potvrditi svojom lozinkom:</label>
+                    <label for="input_password">Da bi ste obrisali profil odeljenskog starešine "{{ teacher.teacher_name }} {{ teacher.teacher_surname }}" potrebno je potvrditi svojom lozinkom:</label>
+                    <form action="{{ url_for('teachers.delete_teacher', teacher_id=teacher.id) }}" method="post">
+                        <input class="form-control" type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
+                    
                 </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                        <form action="{{ url_for('teachers.delete_teacher', teacher_id=teacher.id) }}" method="post">
-                            <input class="btn btn-danger" type="submit" value="Obrišite profil odeljenskog starešine">
-                            <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
-                        </form>
+                        <input class="btn btn-danger" type="submit" value="Obrišite profil odeljenskog rarešine">
+                    </form>
                     </div>
                 </div>
             </div>
@@ -160,12 +178,13 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                            {{ edit_form.submit_edit(class="btn btn-info") }}
+                            {{ edit_form.submit_edit(class="btn btn-primary") }}
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>
@@ -240,7 +259,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                     <div class="form-group"></div>
-                        {{ register_form.submit_register(class="btn btn-outline-info") }}
+                        {{ register_form.submit_register(class="btn btn-primary") }}
                     </div>
                 </div>
             </div>
@@ -254,7 +273,10 @@
     <script>
         $(document).ready(function () {
             var table = $('#data').DataTable({
-                    columnDefs: [
+                // NOVO: Čuvanje stanja tabele
+                "stateSave": true,
+                "stateDuration": 900, // 15 minuta (900 sekundi)
+                columnDefs: [
                     {
                         // targets: [5],
                         visible: false,
@@ -278,4 +300,4 @@
         });
     </script>
 
-{% endblock %}
+{% endblock scripts%}

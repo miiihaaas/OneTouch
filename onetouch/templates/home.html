@@ -1,34 +1,40 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1 class="mb-4" style="text-align: center;  font-size: xx-large;">Brzi linkovi</h1>
-<div class="container" style="width: 600px;">
+<!--<h2 class="mb-4 mt-4" style="text-align: center;  font-size: x-large; padding-top: 50px;">Brzi linkovi</h2>-->
+<div class="container">
     <div class="row mb-2">
-        <div class="col">
-            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{url_for('transactions.student_debts')}}" style="font-size: 15px;">Zaduživanje učenika</a>
+        <div class="home-icon-row">
+            <div class="icon-row">
+                <div class="home-icon-box">
+                    <a href="{{url_for('transactions.student_debts')}}"><img src="{{ url_for('static', filename='img/icon-zaduzivanje-ucenika.png') }}"></a>
+                    <p>Zaduživanje učenika</p>
+                </div>
+                <div class="home-icon-box">
+                    <a href="{{ url_for('transactions.posting_payment') }}"><img src="{{ url_for('static', filename='img/icon-knjizenje-uplata.png') }}"></a>
+                    <p>Knjiženje uplata</p>
+                </div>
+            </div>
+            <div class="icon-row">
+                <div class="home-icon-box">
+                    <a href="{{ url_for('overviews.overview_students') }}"><img src="{{ url_for('static', filename='img/icon-pregled-po-uceniku.png') }}"></a>
+                    <p>Pregled po učeniku</p>
+                </div>
+                <div class="home-icon-box">
+                    <a id="school" name="school" href="{{ url_for('overviews.overview_sections') }}"><img src="{{ url_for('static', filename='img/icon-pregled-skole.png') }}"></a>
+                    <p>Pregled škole</p>
+                </div>
+            </div>
+            <div class="icon-row">
+                <div class="home-icon-box">
+                    <a href="{{ url_for('transactions.debts_archive_list') }}"><img src="{{ url_for('static', filename='img/icon-arhiva-naloga.png') }}"></a>
+                    <p>Arhiva naloga</p>
+                </div>
+                <div class="home-icon-box">
+                    <a href="{{ url_for('transactions.payments_archive_list') }}"><img src="{{ url_for('static', filename='img/icon-arhiva-izvoda.png') }}"></a>
+                    <p>Arhiva izvoda</p>
+                </div>
+            </div>
         </div>
-        <div class="col">
-            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.posting_payment') }}" style="font-size: 15px;">Knjiženje uplata</a>
-        </div>
-    </div>
-    <div class="row mb-2">
-        <div class="col">
-            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('overviews.overview_students') }}" style="font-size: 15px;">Pregled po učeniku</a>
-        </div>
-        <div class="col">
-            <a id="school" name="school" class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('overviews.overview_sections') }}" style="font-size: 15px;">Pregled škole</a>
-        </div>
-    </div>
-    <div class="row mb-4">
-        <div class="col">
-            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.debts_archive_list') }}" style="font-size: 15px;">Arhiva naloga</a>
-        </div>
-        <div class="col">
-            <a class="btn btn-primary btn-block mt-2 mb-2 loading" href="{{ url_for('transactions.payments_archive_list') }}" style="font-size: 15px;">Arhiva izvoda</a>
-        </div>
-    </div>
-    <div class="loading-overlay">
-        <div class="spinner"></div>
-        <div>  Učitava se stranica. Molim Vas sačekajte...</div>
     </div>
 </div>
 {% endblock content%}

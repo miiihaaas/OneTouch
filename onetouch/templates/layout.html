@@ -16,34 +16,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/eaa4d75133.js" crossorigin="anonymous"></script>
+    <!-- <script src="https://kit.fontawesome.com/6acaa27a4b.js" crossorigin="anonymous"></script> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- selet2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='mikicustom.css') }}">
-    
+
     <style>
-      #sidebar {
-        transition: margin-left 0.3s;
-        overflow-x: hidden;
-      }
-  
-      #sidebar.active {
-        margin-left: -300px; /* Adjust this value based on your sidebar width */
-      }
-      .sidebar-active #navbarToggle .navbar-nav li {
-        display: none;
-      }.navbar-nav .nav-item {
-        opacity: 0;
-        transition: opacity 0.5s ease; /* Dodajte tranziciju za opacity */
-      }
-    
-      .navbar-nav .nav-item.hidden {
-        opacity: 0;
-        pointer-events: none; /* Onemogućite interakcije za skrivene elemente */
-      }
+      #sidebar { transition: margin-left 0.3s; overflow-x: hidden; }
+      #sidebar.active { margin-left: -300px; }
+      .sidebar-active #navbarToggle .navbar-nav li { display: none; }
+      .navbar-nav .nav-item { opacity: 0; transition: opacity 0.5s ease; }
+      .navbar-nav .nav-item.hidden { opacity: 0; pointer-events: none; }
     </style>
-    
+
     {% if title %}
       <title>OneTouch - {{ title }}</title>
     {% else %}
@@ -53,14 +40,16 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   </head>
-  <body>
+  <body class="{{ route_name }}">
     <header class="site-header">
       <nav class="navbar navbar-expand-md navbar-dark bg-steel">
+
         {% if current_user.is_authenticated %}
         <button type="button" id="sidebarToggle" style="background: transparent; border: none;">
           <i class="fa-solid fa-bars awesomedelete" style="color: white;"></i>
         </button>
         {% endif %}
+
         <div class="container">
           {% if current_user.is_authenticated %}
           <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
@@ -70,7 +59,7 @@
             <div class="navbar-nav">
               {% if current_user.is_authenticated %}
                 <li class="nav-item dropdown dropdown--align-right">
-                  <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Unos podataka</a>
+                  <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Podaci</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
                     <a class="dropdown-item" href="{{ url_for('students.student_list') }}">Učenici</a>
                     <a class="dropdown-item" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
@@ -111,20 +100,19 @@
         </div>
       </nav>
     </header>
-    
-
+    <legend class="">{{ legend | safe }}</legend>
     <div class="wrapper d-flex align-items-stretch">
+      
       {% if current_user.is_authenticated %}
       <nav id="sidebar" class>
         <div class="p-4 pt-5">
-          <a href="{{url_for('main.home')}}"><img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" style="width: 95%;"></a>
-          
+          <!--<a href="{{url_for('main.home')}}"><img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" style="width: 95%;"></a>-->
           <div class="accordion leftcolacc" id="accordionMenu">
-            <!-- <a href="{{ url_for('main.home') }}" class="homelink">Početna strana</a> -->
+            <!--<a href="{{ url_for('main.home') }}" class="homelink">Početna strana</a>-->
             <div class="accordion-item">
               <h2 class="accordion-header" id="headingOne">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-                  Unos podataka
+                  Podaci
                 </button>
               </h2>
               <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionMenu">
@@ -181,11 +169,11 @@
         </div>
       </nav>
       {% endif %}
-      
+
       <main role="main" class="container">
         <div class="row">
           <div class="col-md-12">
-            <legend class="">{{ legend }}</legend>
+            <!--<legend class="">{{ legend | safe }}</legend>-->
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
                 {% for category, message in messages %}
@@ -196,6 +184,10 @@
               {% endif %}
             {% endwith %}
             {% block content %}{% endblock %}
+            <div class="loading-overlay">
+              <div class="spinner"></div>
+              <div>   Molim Vas sačekajte...</div>
+            </div>
           </div>
         </div>
       </main>
@@ -224,6 +216,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     {% block scripts %}{% endblock %}
+
     <script>
       document.addEventListener("DOMContentLoaded", function () {
           // Get the sidebar and button elements
@@ -278,12 +271,7 @@
           toggleSidebar();
       });
     </script>
-  
-  
-  
-  
-  
-  
+
     <script>
       // skripta koja porkeće div.loading-overlay kod dugmića koji u class imaju "loading" 
       //a služi za dugmiće koje zahtevaju duži rad u backendu kako bi onemogućili korisniku da klikne  neko dugme dok se ne izvši funkcija u bakendu
@@ -297,6 +285,14 @@
         $(window).on("load", function () {
           $(".loading-overlay").removeClass("active");
         });
+    });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelector(".loading-overlay").classList.add("active");
+    });
+    window.addEventListener("load", function() {
+      document.querySelector(".loading-overlay").classList.remove("active");
     });
   </script>
   <script>
@@ -333,5 +329,31 @@
 			}
 		});
 	</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Uzmite trenutni URL
+      var currentPath = window.location.pathname;
+
+      // Uzmite sve podstavke u meniju sa klasom 'dropdown-item'
+      var menuItems = document.querySelectorAll('.dropdown-item');
+
+      // Iterirajte kroz sve podstavke u meniju
+      menuItems.forEach(function (menuItem) {
+          var href = menuItem.getAttribute('href');
+
+          // Proverite da li trenutni URL tačno odgovara href vrednosti
+          if (href && currentPath === href) {
+              // Dodajte klasu 'active' na aktivnu podstavku
+              menuItem.classList.add('active');
+
+              // Dodajte klasu 'active' i na glavnu stavku (roditeljski element <li> ili <a>)
+              var parentDropdown = menuItem.closest('li').querySelector('.nav-link');
+              if (parentDropdown) {
+                  parentDropdown.classList.add('active');
+              }
+          }
+      });
+  });
+</script>
   </body>
 </html>

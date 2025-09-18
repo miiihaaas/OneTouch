@@ -1,6 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="row form-group">
+<style>
+    @media (max-width: 991px)  {
+        /*.mobtable td:nth-of-type(1):before { content: "Razred"; }
+        .mobtable td:nth-of-type(2):before { content: "Odeljenje"; }*/
+        .mobtable td:nth-of-type(1):before { content: "Odeljenski starešina"; }
+        .mobtable td:nth-of-type(2):before { content: "Zaduženje"; }
+        .mobtable td:nth-of-type(3):before { content: "Uplate"; }
+        .mobtable td:nth-of-type(4):before { content: "Saldo"; }
+        .mobtable td:nth-of-type(5):before { content: "Akcije"; }
+    }
+</style>
+<div class="row form-group align-flex-end">
     <div class="col-md-3 form-group">
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
@@ -46,7 +57,7 @@
         <select id="searchOdeljenje" class="form-select">
             {% if odeljenje|string == "" %}
                 <option value="">Sva odeljenja</option>
-                {% for section in range(1,15) %}
+                {% for section in range(0,17) %}
                     <option value="{{ section }}">{{ section }}</option>
                 {% endfor %}
             {% else %}
@@ -61,23 +72,24 @@
             {% endif %}
         </select>
     </div>
-    <div class="col">
+    <div class="col form-group cstm-1">
         <label for="start-date" class="form-label">Početni datum:</label>
-        <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
+        <input class="form-control" type="date" id="start-date" name="start-date" value="{{ start_date }}" max="">
     </div>
-    <div class="col">
+    <div class="col form-group cstm-1">
         <label for="end-date" class="form-label">Krajnji datum:</label>
-        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
+        <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
     </div>
-    <div class="col-md-1 mt-1">
+    <div class="col-md-1 form-group cstm-2">
         <a id="resetButton" class="btn btn-danger" href="./overview_sections">Reset filtera</a>
     </div>
-    <div class="col-md-1  mt-1">
-        <a id="resetButton" class="btn btn-promary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank">Štampa pregleda</a>
+    <div class="col-md-1 form-group">
+        <!-- <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/report_school.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
+        <a id="resetButton" class="btn btn-primary" href="{{ url_for('transactions.get_report', filename='report_school.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
     </div>
     <hr>
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>Razred</th>
@@ -102,11 +114,21 @@
     </tbody>
 </table>
 <hr>
-<div>
-    <p>Zaduženje: <span id="zaduzenjeSum"></span></p>
-    <p>Uplate: <span id="uplateSum"></span></p>
-    <p>Saldo: <span id="saldoSum"></span></p>
-</div>
+<table id="data" class="table table-striped no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <thead>
+        <tr role="row">
+            <th>Zaduženje:</th>
+            <th>Uplate:</th>
+            <th>Saldo:</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span id="zaduzenjeSum"></span></td>
+            <td><span id="uplateSum"></span></td>
+            <td><span id="saldoSum"></span></td>
+        </tr>
+</table>
 {% endblock content%}
 {% block scripts %}
 <script>

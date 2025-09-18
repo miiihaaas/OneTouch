@@ -1,5 +1,15 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Broj bankovnog računa"; }
+        .mobtable td:nth-of-type(2):before { content: "Uplatilac"; }
+        .mobtable td:nth-of-type(3):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(4):before { content: "Poziv na broj"; }
+        .mobtable td:nth-of-type(5):before { content: "Identifikator"; }
+        .mobtable td:nth-of-type(6):before { content: "Svrha uplate"; }
+    }
+</style>
 <form method="POST" action="{{url_for('transactions.posting_payment')}}" enctype="multipart/form-data">
     <div class="row">
         <div class="col">
@@ -37,7 +47,7 @@
     </div>
     {% if stavke %}
     <hr>
-    <table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+    <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
         <thead>
             <tr>
                 <th>Broj bankovnog računa</th>
@@ -54,7 +64,7 @@
                 <td><input type="text" class="form-control" value="{{ item['RacunZaduzenja'] }}" readonly></td>
                 <td><textarea name="uplatilac" class="form-control" readonly>{{ item['NazivZaduzenja'] }}</textarea></td>
                 <td><input name="iznos" type="text" class="form-control" value="{{ item['Iznos'] }}" readonly></td>
-                <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input {{ item['Validnost'] }}" value="{{ item['PozivOdobrenja'] }}" readonly></td>
+                <td><input name="poziv_na_broj__" type="text" class="form-control poziv-odobrenja-input {{ item['Validnost'] }}" value="{{ item['PozivOdobrenja'] }}" readonly></td>
                 <td><input name="poziv_na_broj" type="text" class="form-control poziv-odobrenja-input {{ item['Validnost'] }}" value="{{ item['PozivNaBrojApp'] }}" readonly></td>
                 <td><textarea name="svrha_uplate" class="form-control" readonly>{{ item['SvrhaDoznake'] }}</textarea></td>
             </tr>
@@ -63,10 +73,7 @@
     </table>
     {% endif %}
 </form>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
-</div>
+
 {% endblock content%}
 
 {% block scripts %}

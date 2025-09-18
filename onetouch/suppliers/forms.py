@@ -5,7 +5,8 @@ from onetouch import db
 from onetouch.models import Supplier, School
 
 
-school=School.query.first()
+# school=School.query.first()
+
 
 class RegisterSupplierModalForm(FlaskForm):
     supplier_name = StringField('Naziv dobavljača', validators=[DataRequired()])
@@ -40,11 +41,17 @@ class EditServiceModalForm(FlaskForm):
 
 
 class RegisterServiceProfileModalForm(FlaskForm):
+    def __init__(self, *args, **kwargs):
+        super(RegisterServiceProfileModalForm, self).__init__(*args, **kwargs)
+        school = School.query.first()
+        self.bank_account.choices = [(f'{account["reference_number_spiri"]}', f'{account["reference_number_spiri"]} | {account["bank_account_number"]}') for account in school.school_bank_accounts['bank_accounts']]
+
     service_item_name = StringField('Detalji usluge', validators=[DataRequired()])
     service_item_date = DateField('Datum: ', format='%Y-%m-%d', validators=[Optional()])
     supplier_id = SelectField('Dobavljač', choices=[])
     service_id = SelectField('Tip usluge', choices=[])
-    bank_account = SelectField('Broj bankovnog računa', choices=[account['bank_account_number'] for account in school.school_bank_accounts['bank_accounts']])
+    # bank_account = SelectField('Broj bankovnog računa', choices=[(f'{account["reference_number_spiri"]}', f'{account["reference_number_spiri"]} | {account["bank_account_number"]}') for account in school.school_bank_accounts['bank_accounts']])
+    bank_account = SelectField('Broj bankovnog računa', choices=[])
     # reference_number_spiri = StringField('Poziv na broj')
     service_item_class = StringField('Razred') #! morada bude strin koji će da čuva listu odabranih razleda
     price = DecimalField('Cena', validators=[DataRequired()])
@@ -65,11 +72,17 @@ class RegisterServiceProfileModalForm(FlaskForm):
 
 
 class EditServiceProfileModalForm(FlaskForm):
+    def __init__(self, *args, **kwargs):
+        super(EditServiceProfileModalForm, self).__init__(*args, **kwargs)
+        school = School.query.first()
+        self.bank_account.choices = [(f'{account["reference_number_spiri"]}', f'{account["reference_number_spiri"]} | {account["bank_account_number"]}') for account in school.school_bank_accounts['bank_accounts']]
+
     service_item_name = StringField('Detalji usluge', validators=[DataRequired()])
     service_item_date = DateField('Datum: ', format='%Y-%m-%d', validators=[Optional()])
     supplier_id = SelectField('Dobavljač', choices=[])
     service_id = SelectField('Tip usluge', choices=[])
-    bank_account = SelectField('Broj bankovnog računa', choices=[account['bank_account_number'] for account in school.school_bank_accounts['bank_accounts']])
+    # bank_account = SelectField('Broj bankovnog računa', choices=[(f'{account["reference_number_spiri"]}', f'{account["reference_number_spiri"]} | {account["bank_account_number"]}') for account in school.school_bank_accounts['bank_accounts']])
+    bank_account = SelectField('Broj bankovnog računa', choices=[])
     # reference_number_spiri = StringField('Poziv na broj')
     service_item_class = StringField('Razred')
     price = DecimalField('Cena', validators=[DataRequired()])
@@ -88,3 +101,10 @@ class EditServiceProfileModalForm(FlaskForm):
     installment_12 = DecimalField('Rata 12', validators=[Optional()])
     archived = BooleanField('Usluga arhivirana')
     submit_edit = SubmitField('Sačuvajte')
+
+class ConfirmServiceModalForm(FlaskForm):
+    confirm = SubmitField('Da, nastavi registraciju')
+    cancel = SubmitField('Ne, ovo je duplikat')
+
+    def reset(self):
+        self.__init__()

@@ -10,7 +10,7 @@
         <div class="content-section">
             <form method="POST" action="">
                 {{ form.hidden_tag() }}
-                <fieldset class="form-group">
+                <fieldset class="form-group-m0">
                     <!-- <legend class="border-bottom mb-4">Prijava</legend> -->
                     <div class="form-group">
                         <i class="fa-regular fa-envelope"></i> {{ form.email.label(class="form-control-label") }} 
@@ -41,13 +41,15 @@
                     <div class="form-check">
                         {{ form.remember(class="form-check-input") }}
                         {{ form.remember.label(class="form-check-label") }}
+                        <div>
+                            <small class="text-muted">
+                                <a href="{{url_for('users.reset_request')}}">Zaboravili ste lozinku?</a>
+                            </small>
+                        </div>
                     </div>
                 </fieldset>
                 <div class="form-group">
-                    {{ form.submit(class="btn btn-outline-info") }}
-                    <small class="text-muted ml-2">
-                    <a href="{{url_for('users.reset_request')}}">Zaboravili ste lozinku?</a>
-                    </small>
+                    {{ form.submit(class="btn btn-primary") }}
                 </div>
             </form>
         </div>

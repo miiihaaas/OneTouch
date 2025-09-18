@@ -1,6 +1,18 @@
 {% extends "layout.html" %}
 {% block content %}
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Učenik"; }
+        .mobtable td:nth-of-type(2):before { content: "Identifikacija"; }
+        .mobtable td:nth-of-type(3):before { content: "ID učenika"; }
+        .mobtable td:nth-of-type(4):before { content: "ID usluge"; }
+        .mobtable td:nth-of-type(5):before { content: "Detalji usluge"; }
+        .mobtable td:nth-of-type(6):before { content: "Svrha uplate"; }
+        .mobtable td:nth-of-type(7):before { content: "Uplatilac"; }
+        .mobtable td:nth-of-type(8):before { content: "Iznos"; }
+    }
+</style>
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
     <thead>
         <tr>
             <th></th>
@@ -57,7 +69,7 @@
     <button  id="save_button" class="btn btn-primary loading">Sačuvajte izmene</button>
 </div>
 <hr>
-<table id="export_data" class="table table-striped dataTable no-footer invoices" role="grid">
+<table id="export_data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
     <thead>
         <tr>
             <th>ID usluge</th>
@@ -77,19 +89,18 @@
 </table>
 
 <div class="col">
-    <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/export.pdf') }}" target="_blank">Izvoz podataka</a>
-</div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
-</div>
+    <!-- <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/export.pdf') }}" target="_blank">Izvoz podataka</a> -->
+    <a class="btn btn-primary" href="{{ url_for('transactions.get_payment_slip', filename='export.pdf') }}" target="_blank">Izvoz podataka</a></div>
+
 {% endblock content%}
 
 {% block scripts %}
 <script>
     // Dodajte funkciju za dobijanje imena i prezimena studenta na osnovu ID-a
     function get_student_name(studentId) {
-        var students = JSON.parse('{{ students|safe }}');
+        console.log(students);
+        var students = {{ students|safe }};
+        // var students = JSON.parse('{{ students|safe }}'); // ovo je radilo u lokalu ali na serveru ne
         var student = students.find(function (s) {
             console.log('iz funkcije - s: ', s)
             return s.student_id === parseInt(studentId);
@@ -101,7 +112,8 @@
     }
     // Dodajte funkciju za dobijanje naziva usluge na osnovu ID-a
     function get_service_name(serviceId) {
-        var services = JSON.parse('{{ services|safe }}');
+        var services = {{ services|safe }};
+        // var services = JSON.parse('{{ services|safe }}'); // ovo je radilo u lokalu ali na serveru ne
         var service = services.find(function (s) {
             console.log('iz funkcije - s: ', s)
             return s.service_id === parseInt(serviceId);
@@ -117,6 +129,7 @@
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             },
+            "paging": false, // Isključuje paginaciju
             "lengthMenu": [50, 100, 200, 400, 800],
             "pageLength": 800,
         });

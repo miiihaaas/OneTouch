@@ -1,8 +1,23 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID učenika"; }
+        .mobtable td:nth-of-type(2):before { content: "Ime"; }
+        .mobtable td:nth-of-type(3):before { content: "Prezime"; }
+        .mobtable td:nth-of-type(4):before { content: "Razred"; }
+        .mobtable td:nth-of-type(5):before { content: "Odeljenje"; }
+        .mobtable td:nth-of-type(6):before { content: "Mejl roditelja"; }
+        {% if not license_expired %}
+        .mobtable td:nth-of-type(7):before { content: "Akcije"; }
+        {% endif %}
+    }
+</style>
 <div class="row form-group align-items-end">
     <div class="col form-group">
-        <a href="#" class="btn btn-issnfo" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+        {% if not license_expired %}
+        <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog učenika</a>
+        {% endif %}
     </div>
     <div class="col form-group">
         <label for="searchRazred">Pretraga po razredu:</label>
@@ -23,13 +38,19 @@
         </select>
     </div>
     <div class="col form-group">
-        {% if danas >= active_date_start and danas <= active_date_end %}
-            <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
-            <a href="{{ url_for('main.instructions', _anchor='plus_one')}}" target="_blank">Upustvo</a>
+        {% if not license_expired %}
+            {% if plus_one_button %}
+                {% if danas >= active_date_start and danas <= active_date_end %}
+                    <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#PlusJedanRazredModal">+1 razred</a>
+                    <a href="{{ url_for('main.instructions', _anchor='plus_one')}}" target="_blank">Upustvo</a>
+                {% endif %}
+            {% endif %}
         {% endif %}
     </div>
 </div>
 <hr>
+
+{% if not license_expired %}
 <!-- Modal Edit -->
 <div class="modal fade" id="EditModal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -123,7 +144,7 @@
             </div>
                 <div class="modal-footer">
                     <button type="radio" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ edit_form.submit_edit(class="btn btn-info") }}
+                    {{ edit_form.submit_edit(class="btn btn-primary") }}
                 </div>
             </div>
         </form>
@@ -212,7 +233,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                     <div class="form-group">
-                        {{ register_form.submit_register(class="btn btn-outline-info") }}
+                        {{ register_form.submit_register(class="btn btn-primary") }}
                     </div>
                 </div>
             </div>
@@ -244,25 +265,26 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="DeleteModalLabel">Potvrda</h5>
+                <h5 class="modal-title" id="DeleteModalLabel">Potvrda brisanja učenika iz baze</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-        <div class="modal-body">
-        <label id="input_password_label" for="input_password">Da bi ste obrisali profil učenika TEST potrebno je potvrditi svojom lozinkom:</label>
-        </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+            <div class="modal-body">
+                <p id="input_password_label" for="input_password">Da bi ste obrisali profil učenika TEST potrebno je potvrditi svojom lozinkom:</p>
                 <form action="" method="post" id="deleteForm">
-                    <input class="btn btn-danger" type="submit" value="Obrišite Učenika">
-                    <input type="password" id="input_password" name="input_password" value="" placeholder="potvrdite lozinkom">
+                    <input class="form-control"  type="password" id="input_password" name="input_password" value="" placeholder="Unesite lozinku">
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary mr-5px" data-dismiss="modal">Otkažite</button>
+                <button class="btn btn-danger" form="deleteForm" type="submit">Obrišite Učenika</button>
             </div>
         </div>
     </div>
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+{% endif %}
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th>ID učenika</th>
@@ -271,7 +293,9 @@
             <th>Razred</th>
             <th>Odeljenje</th>
             <th>Mejl roditelja</th>
+            {% if not license_expired %}
             <th></th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -341,6 +365,9 @@
                 },
             },
             serverSide: true,
+            // NOVO: Čuvanje stanja tabele
+            stateSave: true,
+            stateDuration: 900, // 15 minuta (900 sekundi)
             columns: [
                 {data: 'id'},
                 {data: 'student_name'},
@@ -354,15 +381,15 @@
                         // Generisanje HTML za novu kolonu
                         if (row.parent_email) {
                             if (row.send_mail) {
-                                return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                                return `<td><i class="fa fa-envelope activemail" title="Šalje se mejl roditelju"></i> ${row.parent_email}</td>`;
                             } else {
-                                return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> | ${row.parent_email}</td>`;
+                                return `<td><i class="fa fa-envelope nonactivemail" title="Ne šalje se mejl roditelju"></i> ${row.parent_email}</td>`;
                             }
                         } else {
                             return '<td></td>';
                         }
                     },
-                },
+                }{% if not license_expired %},
                 {
                     data: null,
                     render: function (data, type, row) {
@@ -389,7 +416,7 @@
                             </a>
                         </td>`;
                     },
-                }
+                }{% endif %}
             ],
             order: [[3, 'asc'], [4, 'asc'], [2, 'asc'],],
             language: {

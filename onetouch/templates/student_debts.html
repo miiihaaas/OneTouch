@@ -1,5 +1,52 @@
 {% extends "layout.html" %}
 {% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Ime"; }
+        .mobtable td:nth-of-type(2):before { content: "Prezime"; }
+        .mobtable td:nth-of-type(3):before { content: "Razred"; }
+        .mobtable td:nth-of-type(4):before { content: "Odeljenje"; }
+        .mobtable td:nth-of-type(5):before { content: "Poziv na broj"; }
+        .mobtable td:nth-of-type(6):before { content: "Usluga"; }
+        .mobtable td:nth-of-type(7):before { content: "Količina"; }
+        .mobtable td:nth-of-type(8):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(9):before { content: "Olakšica"; }
+        .mobtable td:nth-of-type(10):before { content: "Iznos zaduženja"; }
+    }
+    
+    .preloader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.7);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1.5s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+
+<!-- Preloader overlay -->
+<div class="preloader-overlay" id="preloader">
+    <div class="spinner"></div>
+</div>
+
 <!-- ovo su učitelji: {{teachers}} -->
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
@@ -14,14 +61,15 @@
     <label for="section" class="form-control-label">Odeljenje</label>
     <select name="section" id="section" class="form-select" disabled>
         <option value="">Selektujte odeljenje</option>
-        {% for i in range(1,15) %}
+        {% for i in range(0,17) %}
         <option value="{{i}}">{{i}}</option>
         {% endfor %}
     </select>
 </div>
-<div class="form-group" style="display: inline-block;">
+<div class="form-group spornispan" style="display: inline-block;">
     <label for="service_item" class="form-control-label">Usluga</label>
-    <select name="service_item" id="service_item" class="form-select js-example-basic-single" disabled>
+    <!--<select name="service_item" id="service_item" class="form-select js-example-basic-single" disabled>-->
+    <select name="service_item" id="service_item" class="form-select" disabled>
         <option value="0">Selektujte uslugu</option>
     </select>
 </div>
@@ -42,14 +90,18 @@
     <label for="today_date" class="form-control-label">Datum</label>
     <input type="date" id="today_date" class="form-control" disabled>
 </div>
-<div class="form-group" style="display: inline-block;">
-    <label for="zaduzi_sve_kolicina" class="form-control-label">Količina</label>
-    <input id="zaduzi_sve_kolicina" class="form-control" type="number" min="0" value="1" disabled style="width: 30%;">
-    <button id="zaduzi_sve" class="btn btn-primary" type="button" disabled>zaduži sve učenike</button>
+<div class="form-group" style="display: inline-block; vertical-align: top;">
+    <div class="kolicina-btn-box">
+        <div>
+            <label for="zaduzi_sve_kolicina" class="form-control-label">Količina</label>
+            <input id="zaduzi_sve_kolicina" class="form-control" type="number" min="0" value="1" disabled style="width: 30%;">
+        </div>
+        <button id="zaduzi_sve" class="btn btn-primary" type="button" disabled>zaduži sve učenike</button>
+    </div>
 </div>
 <div class="form-group" style="display: inline-block;">
 </div>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid" aria-describedby="data_info" style="width: 968px;">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info" style="width: 968px;">
     <thead>
         <tr role="row">
             <th style="width: 80px;">Ime</th>
@@ -87,24 +139,39 @@
     <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
 </div>
 <div class="form-group">
-    <button class="btn btn-info loading disable-button" id="save_button" disabled>Sačuvajte</button>
-</div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
+    <button class="btn btn-primary loading disable-button" id="save_button" disabled>Sačuvajte</button>
 </div>
 {% endblock content %}
 
 {% block scripts %}
 <script>
+    // Funkcije za kontrolu preloadera
+    function showPreloader() {
+        document.getElementById('preloader').style.display = 'flex';
+    }
+    
+    function hidePreloader() {
+        // Postavimo timeout da bismo bili sigurni da će preloader biti sakriven
+        setTimeout(function() {
+            document.getElementById('preloader').style.display = 'none';
+            console.log('Preloader sakriven');
+        }, 300);
+    }
+    
     // Funkcija za izračunavanje iznosa zaduženja
     function dataChanged(studentId) {
         // Dohvati vrednosti iz input polja 'Količina' i 'Olakšica' za određenog studenta
-        var kolicina = parseFloat(document.getElementById("kolicina_" + studentId).value);
-        var olaksice = parseFloat(document.getElementById("olaksice_" + studentId).value);
+        var kolicinaValue = document.getElementById("kolicina_" + studentId).value;
+        var olaksiceValue = document.getElementById("olaksice_" + studentId).value;
+        var iznosValue = document.getElementById("iznos-" + studentId).value;
 
-        // Dohvati vrednost iznosa iz odgovarajućeg input polja za taj student
-        var iznos = parseFloat(document.getElementById("iznos-" + studentId).value);
+        // Konvertuj prazne stringove u "0" pre parseFloat
+        kolicinaValue = kolicinaValue === "" ? "0" : kolicinaValue;
+        olaksiceValue = olaksiceValue === "" ? "0" : olaksiceValue;
+        
+        var kolicina = parseFloat(kolicinaValue);
+        var olaksice = parseFloat(olaksiceValue);
+        var iznos = parseFloat(iznosValue);
 
         // Izračunaj iznos zaduženja
         var iznosZaduzenja = (kolicina * iznos) - olaksice;
@@ -133,7 +200,15 @@
     });
 
 
-    $(document).ready(function() {
+    // Prikazivanje preloadera čim se stranica počne učitavati
+showPreloader();
+
+$(document).ready(function() {
+        // Sakrij preloader nakon što se stranica u potpunosti učita (sa dodatnim vremenom za pozadinske proračune)
+        setTimeout(function() {
+            hidePreloader();
+        }, 500);
+        
         const selectFieldClasses = $('#classes');
         const selectFieldSection = $('#section');
         const selectFieldServiceItem = $('#service_item'); //
@@ -166,6 +241,7 @@
                 { targets: 'sort', orderData: 'data-sort'}
             ],
             order: [[1, 'asc'], [0, 'asc']],
+            "paging": false, // Isključuje paginaciju
             "lengthMenu": [10, 25, 50, 100, 200, 400, 800],
             "pageLength": 100,
         });
@@ -177,7 +253,7 @@
         selectFieldClasses.on('change', function() {
             const classes = $(this).val();
             const section = "";
-            table.column(2).search(classes).draw();
+            table.column(2).search('^' + classes + '$', true, false).draw();
             table.column(3).search(section).draw();
         });
 
@@ -215,6 +291,7 @@
                 inputFieldPurposeOfPayment.prop('disabled', true);
                 buttonSave.prop('disabled', true);
                 inputFieldInstallmentValue.prop('value', "----");
+                showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
                     url: 'get_service_items',
                     data: {classes: newValue},
@@ -223,6 +300,10 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
+                        hidePreloader(); // Sakrivanje preloadera nakon završetka
+                    },
+                    error: function() {
+                        hidePreloader(); // Sakrivanje preloadera u slučaju greške
                     }
                 })
                 dataChanged(); // call function
@@ -233,7 +314,7 @@
             const newValue = selectFieldClasses.val();
             const newValue4 = selectFieldSection.val()
             console.log('selectkovano odeljenje - nova vrednost: ', newValue4);
-            if (selectFieldSection.val() === "0") {
+            if (selectFieldSection.val() === "") {
                 console.log('selektovano odeljenje je 0');
                 selectFieldServiceItem.prop('disabled', true);
                 selectFieldServiceItem.prop('value', 0);
@@ -270,6 +351,7 @@
                 });
                 buttonSave.prop('disabled', true);
 
+                showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
                     url: 'get_service_items',
                     data: {classes: newValue},
@@ -280,6 +362,10 @@
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
                         buttonSave.prop('disabled', true);
+                        hidePreloader(); // Sakrivanje preloadera nakon završetka
+                    },
+                    error: function() {
+                        hidePreloader(); // Sakrivanje preloadera u slučaju greške
                     }
                 })
                 dataChanged(); // call function
@@ -310,6 +396,7 @@
                 buttonZaduziSve.prop('disabled', true);
                 inputZaduziSveKolicina.prop('disabled', true);
             } else {
+                showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
                     url: 'get_installments',
                     data: {installments: newValue2},
@@ -371,7 +458,11 @@
                                 $(this).prop('min', 0);
                             });
                         }
+                        hidePreloader(); // Sakrivanje preloadera nakon završetka
                     },
+                    error: function() {
+                        hidePreloader(); // Sakrivanje preloadera u slučaju greške
+                    }
                 })                    
                 dataChanged(); // call function
             }
@@ -408,6 +499,7 @@
                 inputFieldDiscountValue.each(function() {
                     $(this).prop('readonly', false);
                 });
+                // Izbegnuto prikazivanje preloadera kod izbora rate jer izaziva probleme
                 $.ajax({
                     url: 'get_installment_values',
                     data: {installment_values: newValue3,
@@ -421,11 +513,16 @@
                             console.log('vrednost rate-- posle izmene rednog broja rate: ', cell.innerText);
 
                             const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
-                            const selectedInstallmentText = selectFieldInstallment.find('option:selected').text(); // ovde treba dodati if form da ako ima samo jena rata da const bude "" (prazan string)
+                            // Nova logika za selectedInstallmentText
+                            let selectedInstallmentText = "";
+                            const options = selectFieldInstallment.find('option').not(':first'); // Izuzimamo prvu opciju ('selektujte ratu')
+                            if (options.length > 1) {
+                                selectedInstallmentText = ` / ${selectFieldInstallment.find('option:selected').text()}`;
+                            }
 
 
 
-                            inputFieldPurposeOfPayment.prop('value', selectedServiceText + ' / ' + selectedInstallmentText); // izmeniti tako da vrednost bude kombinacija usluga + kasnije ime i prezime učenika kada generiše uplatnicu
+                            inputFieldPurposeOfPayment.prop('value', (selectedServiceText + selectedInstallmentText).trim()); 
                             inputFieldPurposeOfPayment.prop('disabled', false);
                             inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
                             if (inputFieldPurposeOfPayment.val().length > 35) {
@@ -438,7 +535,14 @@
                                 errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
                             }
                         });
+                        
                         dataChanged(); // call function
+                        
+                        // Kod za sakrivanje preloadera je uklonjen jer preloader više ne koristimo za izbor rate
+                    },
+                    error: function() {
+                        // Kod za sakrivanje preloadera je uklonjen jer preloader više ne koristimo za izbor rate
+                        console.log('Greška pri dobavljanju podataka za rate');
                     }
                 })
             }
@@ -588,6 +692,7 @@
         }
         console.log('output: ', output)
         console.log(JSON.stringify(output));
+        showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
         $.ajax({
             url: 'submit_records',
             method: 'POST',
@@ -599,7 +704,12 @@
                 console.log('debug: ', response)
                 var editDebtUrl = "{{ url_for('transactions.debt_archive', debt_id='1') }}";
                 editDebtUrl = editDebtUrl.replace(/\/1$/, '/' + response);
+                hidePreloader(); // Sakrivanje preloadera pre preusmeravanja
                 window.location.href = editDebtUrl;
+            },
+            error: function() {
+                hidePreloader(); // Sakrivanje preloadera u slučaju greške
+                alert('Došlo je do greške prilikom čuvanja podataka. Molimo pokušajte ponovo.');
             }
         })
         buttonSave.prop('disabled', true);

@@ -4,6 +4,7 @@
 
 # Manualy added
 #TODO: komanda za brisanje fajlova sa gita: git rm -r --cached .\your\file\destination\file.extension
+.claude/
 instance/
 # run.py
 onetouch/site.db
@@ -23,6 +24,7 @@ venv/
 venvOneTouch/
 onetouch/static/pdf_forms/*.*
 .vscode/
+konekcija_sa_serverom.md
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -213,3 +215,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/python,windows
+
+# windsurf rules
+.windsurfrules

@@ -1,6 +1,6 @@
 from onetouch import app, db, login_manager
 from flask_login import UserMixin
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous.url_safe import URLSafeTimedSerializer
 
 
 @login_manager.user_loader
@@ -16,14 +16,26 @@ class User(db.Model, UserMixin): #! ovo je samo administrator škole
     user_password = db.Column(db.String(255), nullable=False)
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     
+    # def get_reset_token(self, expires_sec=1800):
+    #     s = Serializer(app.config['SECRET_KEY'], expires_sec)
+    #     return s.dumps({'user_id': self.id}).decode('utf-8')
     def get_reset_token(self, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id}).decode('utf-8')
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        return s.dumps({'user_id': self.id})  # ne treba više decode('utf-8')
+    # @staticmethod
+    # def verify_reset_token(token):
+    #     s = Serializer(app.config['SECRET_KEY'], salt='reset-key')
+    #     try:
+    #         user_id = s.loads(token)['user_id']
+    #     except:
+    #         return None
+    #     return User.query.get(user_id)
+
     @staticmethod
     def verify_reset_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
         try:
-            user_id = s.loads(token)['user_id']
+            user_id = s.loads(token, max_age=1800)['user_id']  # dodajemo max_age parametar
         except:
             return None
         return User.query.get(user_id)
@@ -40,7 +52,26 @@ class School(db.Model):
     school_city = db.Column(db.String(255), nullable=False)
     school_municipality = db.Column(db.String(255), nullable=False)
     school_bank_accounts = db.Column(db.JSON, nullable=False, default=[])
+    school_phone_number = db.Column(db.String(255), nullable=False, default=None) #! kontakt telefon škole koji se stavlja u mejl koji se šalje roditeljima za uplatnicu
+    school_email = db.Column(db.String(255), nullable=False, default=None) #! kontakt mejl škole koji se stavlja u mejl koji se šalje roditeljima za uplatnicu
+    # school_max_number_of_class = db.Column(db.Integer, nullable=False) #! maximalan broj razreda: osnovna 8, srednja 4, muzička 6
+    class_plus_one = db.Column(db.Date, nullable=False)
+    license_expiry_date = db.Column(db.Date, nullable=True)
+    last_license_email_date = db.Column(db.Date, nullable=True)
     users = db.relationship('User', backref='user_school', lazy=True)
+    
+    def days_until_license_expiry(self):
+        if not self.license_expiry_date:
+            return None
+        try:
+            from datetime import date
+            today = date.today()
+            delta = self.license_expiry_date - today
+            return delta.days
+        except Exception as e:
+            import logging
+            logging.error(f"Greška pri izračunavanju dana do isteka licence: {str(e)}")
+            return None
 
 
 class Supplier(db.Model):
@@ -69,7 +100,7 @@ class ServiceItem(db.Model):
     service_id = db.Column(db.Integer, db.ForeignKey('service.id'), nullable=False)
     bank_account = db.Column(db.String(255), nullable=False) #todo doraj u SPIRI MYSQL tabele na serveru
     reference_number_spiri = db.Column(db.String(255), nullable=False) #todo doraj u SPIRI MYSQL tabele na serveru
-    service_item_class = db.Column(db.Integer, nullable=True) #! ovo treba da je dropdown meni sa cekbox itemima koji kada se čekiraju imaju listu kao input
+    service_item_class = db.Column(db.String(255), nullable=True) #! ovo treba da je dropdown meni sa cekbox itemima koji kada se čekiraju imaju listu kao input
     price = db.Column(db.Float, nullable=False)
     # discount = db.Column(db.Float, nullable=False)
     installment_number = db.Column(db.Integer)
@@ -136,8 +167,8 @@ class StudentPayment(db.Model):
 
 class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata po detetu 
     id = db.Column(db.Integer, primary_key=True)
-    student_debt_id = db.Column(db.Integer, db.ForeignKey('student_debt.id'), nullable=False)
-    student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=False)
+    student_debt_id = db.Column(db.Integer, db.ForeignKey('student_debt.id'), nullable=True)
+    student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=True)
     service_item_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=True)
     student_debt_installment_number = db.Column(db.Integer, nullable=True)
@@ -149,6 +180,7 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     payer = db.Column(db.String(255), nullable=True)
     reference_number = db.Column(db.String(100), nullable=True)
     payment_error = db.Column(db.Boolean, nullable=True, default=False)
+    debt_sent = db.Column(db.Boolean, nullable=True, default=False)
 
 with app.app_context():
     db.create_all()

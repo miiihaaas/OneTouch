@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section error-page">
+        <div class="error-container text-center">
+            <h1 class="error-title mb-4">404</h1>
+            <h2 class="error-subtitle mb-4">Stranica nije pronađena</h2>
+            <p class="error-message mb-5">Stranica koju tražite ne postoji. Molimo proverite URL adresu i pokušajte ponovo.</p>
+            <div class="error-action">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('main.home') }}">Nazad na početnu</a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,6 +1,16 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="row">
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Datum"; }
+        .mobtable td:nth-of-type(2):before { content: "Razred"; }
+        .mobtable td:nth-of-type(3):before { content: "Odeljenje"; }
+        .mobtable td:nth-of-type(4):before { content: "Detalji usluge"; }
+        .mobtable td:nth-of-type(5):before { content: "Svrha uplate"; }
+        .mobtable td:nth-of-type(6):before { content: "Akcije"; }
+    }
+</style>
+<div class="row align-items-end">
     <div class="col">
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
@@ -26,7 +36,7 @@
         <select id="searchOdeljenje" class="form-select">
             {% if odeljenje|string == "" %}
                 <option value="">Sva odeljenja</option>
-                {% for section in range(1,15) %}
+                {% for section in range(0,17) %}
                     <option value="{{ section }}">{{ section }}</option>
                 {% endfor %}
             {% else %}
@@ -43,18 +53,18 @@
     </div>
     <div class="col">
         <label for="start-date" class="form-label">Početni datum:</label>
-        <input class="form-control mb-2" type="date" id="start-date" name="start-date" value="{{ start_date }}">
+        <input class="form-control" type="date" id="start-date" name="start-date" value="{{ start_date }}">
     </div>
     <div class="col">
         <label for="end-date" class="form-label">Krajnji datum:</label>
-        <input class="form-control mb-4" type="date" id="end-date" name="end-date" value="{{ end_date }}">
+        <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
     <div class="col">
         <a class="btn btn-danger" href="./debts_archive_list">Reset filtera</a>
     </div>
 </div>
 <hr>
-<table id="data" class="table table-striped dataTable no-footer invoices" role="grid">
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
     <thead>
         <tr>
             <th>Datum</th>
@@ -97,15 +107,11 @@
                 Da li ste sigurni da želite da izbrišete nalog? Sva zaduženja učenika će biti izbrisana.
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Odustani</button>
-                <button type="button" class="btn btn-danger loading" id="confirmDeleteButton">Izbriši</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Odustanite</button>
+                <button type="button" class="btn btn-danger loading" id="confirmDeleteButton">Izbrišite</button>
             </div>
         </div>
     </div>
-</div>
-<div class="loading-overlay">
-    <div class="spinner"></div>
-    <div>   Molim Vas sačekajte...</div>
 </div>
 {% endblock content%}
 
@@ -117,6 +123,9 @@
                 url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
             },
             "order": [[1, 'desc']],
+            // NOVO: Čuvanje stanja tabele
+            "stateSave": true,
+            "stateDuration": 900, // 15 minuta (900 sekundi)
             "columnDefs": [
                 { "targets": [1], "visible": false }
             ]
