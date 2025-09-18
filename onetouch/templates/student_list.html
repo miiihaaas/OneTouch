@@ -144,7 +144,7 @@
             </div>
                 <div class="modal-footer">
                     <button type="radio" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ edit_form.submit_edit(class="btn btn-primary") }}
+                    {{ edit_form.submit_edit(class="btn btn-primary loading") }}
                 </div>
             </div>
         </form>
@@ -233,7 +233,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                     <div class="form-group">
-                        {{ register_form.submit_register(class="btn btn-primary") }}
+                        {{ register_form.submit_register(class="btn btn-primary loading") }}
                     </div>
                 </div>
             </div>
@@ -278,7 +278,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary mr-5px" data-dismiss="modal">Otkažite</button>
-                <button class="btn btn-danger" form="deleteForm" type="submit">Obrišite Učenika</button>
+                <button class="btn btn-danger loading" form="deleteForm" type="submit">Obrišite Učenika</button>
             </div>
         </div>
     </div>

@@ -61,33 +61,33 @@
                 <li class="nav-item dropdown dropdown--align-right">
                   <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Podaci</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="{{ url_for('students.student_list') }}">Učenici</a>
-                    <a class="dropdown-item" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
-                    <a class="dropdown-item" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
-                    <a class="dropdown-item" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
-                    <a class="dropdown-item" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
-                    <a class="dropdown-item" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
+                    <a class="dropdown-item loading" href="{{ url_for('students.student_list') }}">Učenici</a>
+                    <a class="dropdown-item loading" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
+                    <a class="dropdown-item loading" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
+                    <a class="dropdown-item loading" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
+                    <a class="dropdown-item loading" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
+                    <a class="dropdown-item loading" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
                   </div>
                 </li>
                 <li class="nav-item dropdown dropdown--align-right">
                   <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Knjiženje</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="{{ url_for('transactions.student_debts') }}">Zaduživanje učenika</a>
-                    <a class="dropdown-item" href="{{ url_for('transactions.posting_payment') }}">Knjiženje uplata</a>
+                    <a class="dropdown-item loading" href="{{ url_for('transactions.student_debts') }}">Zaduživanje učenika</a>
+                    <a class="dropdown-item loading" href="{{ url_for('transactions.posting_payment') }}">Knjiženje uplata</a>
                   </div>
                 </li>
                 <li class="nav-item dropdown dropdown--align-right">
                   <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Pregled</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="{{ url_for('overviews.overview_students') }}">Učenik</a>
-                    <a class="dropdown-item" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
+                    <a class="dropdown-item loading" href="{{ url_for('overviews.overview_students') }}">Učenik</a>
+                    <a class="dropdown-item loading" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
                   </div>
                 </li>
                 <li class="nav-item dropdown dropdown--align-right mr-4">
                   <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Arhiva</a>
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-                    <a class="dropdown-item" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
-                    <a class="dropdown-item" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
+                    <a class="dropdown-item loading" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
+                    <a class="dropdown-item loading" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
                   </div>
                 </li>
                 <!-- <i class="fa-solid fa-window-minimize fa-rotate-90 awesomedelete mt-2" style="color: white;"></i> -->
@@ -117,12 +117,12 @@
               </h2>
               <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('students.student_list') }}" id="student_list">Učenici</a>
-                  <a class="nav-item nav-link" href="{{ url_for('teachers.teacher_list') }}" id="teacher_list">Odeljenske starešine</a>
-                  <a class="nav-item nav-link" href="{{ url_for('schools.school_profile') }}" id="school">Podaci škole</a>
-                  <a class="nav-item nav-link" href="{{ url_for('suppliers.supplier_list') }}" id="supplier_list">Dobavljači</a>
-                  <a class="nav-item nav-link" href="{{ url_for('suppliers.service_list') }}" id="service_list">Tip usluge</a>
-                  <a class="nav-item nav-link" href="{{ url_for('suppliers.service_profile_list') }}" id="service_profile_list">Detalji usluge</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('students.student_list') }}" id="student_list">Učenici</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('teachers.teacher_list') }}" id="teacher_list">Odeljenske starešine</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('schools.school_profile') }}" id="school">Podaci škole</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('suppliers.supplier_list') }}" id="supplier_list">Dobavljači</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('suppliers.service_list') }}" id="service_list">Tip usluge</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('suppliers.service_profile_list') }}" id="service_profile_list">Detalji usluge</a>
                 </div>
               </div>
             </div>
@@ -134,8 +134,8 @@
               </h2>
               <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.student_debts') }}" id="student_debts">Zaduživanje učenika</a>
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.posting_payment') }}" id="posting_payment">Knjiženje uplata</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('transactions.student_debts') }}" id="student_debts">Zaduživanje učenika</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('transactions.posting_payment') }}" id="posting_payment">Knjiženje uplata</a>
                 </div>
               </div>
             </div>
@@ -147,8 +147,8 @@
               </h2>
               <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('overviews.overview_students') }}" id="overview_students">Učenik</a>
-                  <a class="nav-item nav-link" href="{{ url_for('overviews.overview_sections') }}" id="overview_sections">Škola</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('overviews.overview_students') }}" id="overview_students">Učenik</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('overviews.overview_sections') }}" id="overview_sections">Škola</a>
                 </div>
               </div>
             </div>
@@ -160,8 +160,8 @@
               </h2>
               <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionMenu">
                 <div class="accordion-body">
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.debts_archive_list') }}" id="debts_archive_list">Arhiva naloga</a>
-                  <a class="nav-item nav-link" href="{{ url_for('transactions.payments_archive_list') }}" id="payments_archive_list">Arhiva izvoda</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('transactions.debts_archive_list') }}" id="debts_archive_list">Arhiva naloga</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('transactions.payments_archive_list') }}" id="payments_archive_list">Arhiva izvoda</a>
                 </div>
               </div>
             </div>
