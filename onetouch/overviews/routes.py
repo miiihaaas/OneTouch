@@ -1,11 +1,14 @@
 import itertools
 import json
 import logging
+import os
 from datetime import datetime, date
 from flask import Blueprint, render_template, url_for, flash, redirect, request, abort
 from flask_login import login_required, current_user
-from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord
-from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list
+from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord, School
+from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list, send_mail
+from flask_mail import Message
+from onetouch import mail, app
 from sqlalchemy.exc import SQLAlchemyError
 
 overviews = Blueprint('overviews', __name__)
@@ -452,3 +455,143 @@ def overview_sections():
                             odeljenje=odeljenje,
                             route_name=route_name,)
 
+
+@overviews.route("/send_student_report_email/<int:student_id>")
+@login_required
+def send_student_report_email(student_id):
+    try:
+        # Dobavljanje podataka o učeniku
+        student = Student.query.get_or_404(student_id)
+        
+        # Provera da li učenik ima definisan mejl roditelja
+        if not student.parent_email:
+            flash('Učenik nema definisan mejl roditelja.', 'danger')
+            return redirect(url_for('overviews.overview_student', student_id=student_id))
+            
+        # Dobavljanje perioda iz URL parametara
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        danas = date.today()
+        
+        # Postavljanje podrazumevanih vrednosti za datume ako nisu specifikovani
+        if start_date is None or end_date is None:
+            start_date = danas.replace(month=9, day=1, year=2020)
+            if danas.month < 9:
+                end_date = danas.replace(month=8, day=31)
+            else:
+                end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                
+        # Konverzija datuma ako su stringovi
+        if isinstance(start_date, str):
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            
+        # Dobavljanje transakcija za učenika
+        transaction_records = TransactionRecord.query.filter_by(student_id=student_id).all()
+        
+        data = []
+        unique_services_list = []
+        
+        # Obrada transakcija - isti kod kao u overview_student
+        for record in transaction_records:
+            if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total > 0:
+                try:
+                    service_data = {
+                        'id': record.service_item_id,
+                        'service_debt_id': record.student_debt_id if record.student_debt_id else ServiceItem.query.get_or_404(int(record.service_item_id)).id,
+                        'service_item_date': record.transaction_record_service_item.service_item_date,
+                        'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
+                        'date': record.transaction_record_student_debt.student_debt_date if record.student_debt_id else record.transaction_record_student_payment.payment_date,
+                    }
+                    
+                    if service_data['date'].date() >= start_date and service_data['date'].date() <= end_date:
+                        unique_services_list.append(service_data)
+                        
+                except SQLAlchemyError as e:
+                    logging.error(f'Greška pri dohvatanju podataka o usluzi: {str(e)}')
+                    continue
+            
+            try:
+                if record.student_debt_id:
+                    rata = sum(1 for item in data if item["service_item_id"] == record.service_item_id) + 1
+                    description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name} / Rata {rata}'
+                    date_ = record.transaction_record_student_debt.student_debt_date
+                elif record.student_payment_id:
+                    description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
+                    date_ = record.transaction_record_student_payment.payment_date
+                    
+                if record.student_debt_total:
+                    test_data = {
+                        'id': record.id,
+                        'service_item_id': record.service_item_id,
+                        'student_payment_id': record.student_payment_id,
+                        'date': date_,
+                        'description': description,
+                        'debt_amount': record.student_debt_total if record.student_debt_id else 0,
+                        'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+                    }
+                    
+                    if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
+                        saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == test_data['service_item_id']]
+                        test_data['saldo'] = saldo_sum[-1] + test_data['debt_amount'] - test_data['payment_amount']
+                    else:
+                        test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
+                        
+                    data.append(test_data)
+                    
+            except Exception as e:
+                logging.error(f'Greška pri obradi transakcije (ID: {record.id}): {str(e)}')
+                continue
+        
+        data.sort(key=lambda x: (x['service_item_id'], x['date']))
+        unique_services_list.sort(key=lambda x: x['id'], reverse=True)
+        
+        # Generisanje izveštaja
+        gen_report_student(data, unique_services_list, student, start_date, end_date)
+        
+        # Putanja do generisanog izveštaja
+        project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
+        user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+        file_path = f'{user_folder}/report_student.pdf'
+        file_name = 'report_student.pdf'
+        
+        # Slanje mejla
+        school = School.query.first()
+        student_name = f'{student.student_name} {student.student_surname}'
+        parent_email = student.parent_email
+        
+        try:
+            sender_email = 'noreply@uplatnice.online'
+            subject = f"{school.school_name} / Izveštaj za učenika: {student_name} ({student.student_class}/{student.student_section})" 
+            
+            message = Message(subject, 
+                            sender=sender_email,
+                            recipients=[parent_email])
+            
+            # Telo mejla
+            message.html = render_template(
+                'message_html_send_report.html',
+                student=student,
+                school=school,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            # Prilaganje PDF izveštaja
+            with app.open_resource(file_path) as attachment:
+                message.attach(file_name, 'application/pdf', attachment.read())
+                
+            mail.send(message)
+            flash('Izveštaj je uspešno poslat na mejl roditelja.', 'success')
+            logging.info(f'Izveštaj poslat na mejl: {parent_email} za učenika: {student_name}')
+            
+        except Exception as e:
+            flash(f'Došlo je do greške prilikom slanja izveštaja: {str(e)}', 'danger')
+            logging.error(f'Greška pri slanju izveštaja na mejl: {str(e)}')
+            
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+        
+    except Exception as e:
+        flash(f'Došlo je do neočekivane greške: {str(e)}', 'danger')
+        logging.error(f'Neočekivana greška u send_student_report_email: {str(e)}')
+        return redirect(url_for('overviews.overview_student', student_id=student_id))

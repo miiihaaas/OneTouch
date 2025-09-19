@@ -29,7 +29,10 @@
     </div>
     <div class="col mtb-8px cstm-3">
         <!-- <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('static', filename='reports/report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
-        <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('transactions.get_report', filename='report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
+        <a class="btn btn-primary mt-4" id="print-report" name="print-report" title="Generiši izveštaj u PDF formatu" href="{{ url_for('transactions.get_report', filename='report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
+        {% if student.parent_email %}
+        <a class="btn btn-primary mt-4 ms-2" id="email-report" name="email-report" title="Pošaljite izveštaj na mejl roditelja: {{ student.parent_email }}" href="{{ url_for('overviews.send_student_report_email', student_id=student.id, start_date=start_date, end_date=end_date) }}"><i class="fa-solid fa-envelope big-print"></i></a>
+        {% endif %}
     </div>
 </div>
 {% for service in unique_services_list %}
