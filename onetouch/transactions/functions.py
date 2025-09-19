@@ -233,16 +233,43 @@ def export_payment_stats(data):
 def prepare_payment_data(record, purpose_of_payment, school_info):
     """Priprema podatke za uplatnicu iz zapisa."""
     
+    # Dobavi podatke o bankovnom računu
+    school = School.query.first()
+    bank_account_number = record.transaction_record_service_item.bank_account
+    
+    # Pronađi podaci o primaocu iz bankovnog računa
+    recipient_name = ""
+    recipient_address = ""
+    for account in school.school_bank_accounts.get('bank_accounts', []):
+        if account.get('bank_account_number') == bank_account_number:
+            recipient_name = account.get('recipient_name', "")
+            recipient_address = account.get('recipient_address', "")
+            break
+            
+    # Implementacija logike za primaoca
+    if not recipient_name and not recipient_address:
+        # Slučaj 1: Ako su oba polja prazna, koristi naziv i adresu škole
+        primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+    elif recipient_name and not recipient_address:
+        # Slučaj 2: Ako je upisan naziv primaoca, ali ne i adresa, koristi samo naziv
+        primalac = recipient_name
+    elif not recipient_name and recipient_address:
+        # Slučaj 3: Ako je upisana adresa, a ne i naziv, koristi naziv i adresu škole
+        primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+    else:
+        # Ako su oba polja popunjena, koristi oba
+        primalac = f"{recipient_name}\r\n{recipient_address}"
+    
     if record.transaction_record_service_item.reference_number_spiri == "":
         data = {
             'student_id': record.transaction_record_student.id,
             'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
             'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
-            'primalac': school_info,
+            'primalac': primalac,
             'sifra_placanja': 221,
             'valuta': 'RSD',
             'iznos': record.student_debt_total,
-            'racun_primaoca': record.transaction_record_service_item.bank_account,
+            'racun_primaoca': bank_account_number,
             'model': '',
             'poziv_na_broj': '',
             'slanje_mejla_roditelju': record.transaction_record_student.send_mail,
@@ -253,11 +280,11 @@ def prepare_payment_data(record, purpose_of_payment, school_info):
             'student_id': record.transaction_record_student.id,
             'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
             'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
-            'primalac': school_info,
+            'primalac': primalac,
             'sifra_placanja': 253,
             'valuta': 'RSD',
             'iznos': record.student_debt_total,
-            'racun_primaoca': record.transaction_record_service_item.bank_account,
+            'racun_primaoca': bank_account_number,
             'model': '97',
             'poziv_na_broj': record.transaction_record_service_item.reference_number_spiri,
             'slanje_mejla_roditelju': record.transaction_record_student.send_mail,
@@ -276,12 +303,15 @@ def prepare_qr_data(payment_data, school_info):
     racun = racun[:3] + racun[3:].zfill(15)
     dug = "RSD" + str(payment_data['iznos']).replace('.', ',')
     
+    # Koristi primalac iz payment_data umesto school_info
+    primalac_name = payment_data['primalac'].split('\r\n')[0]  # Uzima samo prvu liniju za QR kod
+    
     qr_data = {
         "K": "PR",
         "V": "01",
         "C": "1",
         "R": racun,
-        "N": school_info if len(school_info) < 70 else school_info[:70],
+        "N": primalac_name if len(primalac_name) < 70 else primalac_name[:70],
         "I": dug,
         "P": payment_data['uplatilac'],
         "SF": payment_data['sifra_placanja'],
@@ -492,7 +522,6 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     """Glavna funkcija za generisanje uplatnica."""
     data_list = []
     qr_code_images = []
-    # path = f'{project_folder}/static/payment_slips/user_{current_user.id}'
     
     # Kreiranje user-specifičnog foldera za PDF
     user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
@@ -505,7 +534,8 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             payment_data = prepare_payment_data(record, purpose_of_payment, school_info)
             data_list.append(payment_data)
             
-            qr_data = prepare_qr_data(payment_data, school_info)
+            # Koristi prilagođeni primalac iz payment_data
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
             qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], 
                                                 project_folder, current_user)
             if qr_code_filename:
@@ -532,7 +562,6 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         
         if single:
             file_name = 'uplatnica.pdf'
-            # pdf.output(path + file_name)
             pdf.output(f'{user_folder}/{file_name}')
             if uplatnica['slanje_mejla_roditelju'] and send:
                 send_mail(uplatnica, user_folder, file_name)
@@ -557,10 +586,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             pdf.add_page()
             pdf.set_font('DejaVuSansCondensed', 'B', 16)
             pdf.multi_cell(0, 20, 'Nema zaduženih učenika ili je svim zaduženim učenicima aktivirana opcija slanja generisanih uplatnica putem e-maila...', align='C')
-        # pdf.output(path + file_name)
         pdf.output(f'{user_folder}/{file_name}')
-    # else:
-    #     file_name = 'uplatnica.pdf'
     
     cleanup_qr_codes(project_folder, current_user)
     return file_name

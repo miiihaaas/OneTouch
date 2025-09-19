@@ -43,13 +43,10 @@ def overview_students():
             # Postavljanje datuma
             if start_date is None or end_date is None:
                 start_date = danas.replace(month=9, day=1, year=2020)
-                end_date = danas.replace(month=8, day=31, year=danas.year)
-                # if danas.month < 9:
-                #     start_date = danas.replace(month=9, day=1, year=danas.year-1)
-                #     end_date = danas.replace(month=8, day=31)
-                # else:
-                #     start_date = danas.replace(month=9, day=1)
-                #     end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                if danas.month < 9:
+                    end_date = danas.replace(month=8, day=31)
+                else:
+                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
             
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -210,14 +207,10 @@ def overview_student(student_id):
             
             if start_date is None or end_date is None:
                 start_date = danas.replace(month=9, day=1, year=2020)
-                end_date = danas.replace(month=8, day=31, year=danas.year)
-                # if danas.month < 9:
-                #     start_date = danas.replace(month=9, day=1, year=danas.year-1)
-                #     end_date = danas.replace(month=8, day=31)
-                # else:
-                #     start_date = danas.replace(month=9, day=1)
-                #     end_date = danas.replace(month=8, day=31, year=danas.year+1)
-                    
+                if danas.month < 9:
+                    end_date = danas.replace(month=8, day=31)
+                else:
+                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -334,13 +327,10 @@ def overview_sections():
     logging.debug(f'{start_date=} {end_date=} {service_id=}')
     if start_date is None or end_date is None:
         start_date = danas.replace(month=9, day=1, year=2020)
-        end_date = danas.replace(month=8, day=31, year=danas.year)
-        # if danas.month < 9:
-        #     start_date = danas.replace(month=9, day=1, year=danas.year-1)
-        #     end_date = danas.replace(month=8, day=31)
-        # else:
-        #     start_date = danas.replace(month=9, day=1)
-        #     end_date = danas.replace(month=8, day=31, year=danas.year+1)
+        if danas.month < 9:
+            end_date = danas.replace(month=8, day=31)
+        else:
+            end_date = danas.replace(month=8, day=31, year=danas.year+1)
     logging.debug(f'posle if bloka: {start_date=} {end_date=}')
     if type(start_date) is str:
         # Konvertuj start_date i end_date u datetime.date objekte
