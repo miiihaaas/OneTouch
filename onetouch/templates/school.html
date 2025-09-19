@@ -1,147 +1,310 @@
 {% extends "layout.html" %}
-{% block content %}
 
-<div class="content-section">
-    <form method="POST" action="">
+{% block content %}
+<style>
+    /* Stil za overriding ograničenja širine iz layout.html */
+    .container {
+        max-width: 100%;
+    }
+    .col-md-12 {
+        padding: 0;
+    }
+    main.container {
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+        width: 100%;
+    }
+    .row {
+        margin: 0;
+    }
+</style>
+
+<div class="content-section w-100" style="max-width: 100%; padding: 0; margin-top: 10px; margin-bottom: 20px;">
+    <form method="POST" action="" style="width: 100%;">
         {{ form.hidden_tag() }}
-        <fieldset class="form-group m0">
-            <!-- Informacije o školi -->
-            <h4 class="mb-3">Informacije o školi</h4>
-            <div class="form-group">
-                {{ form.school_name.label(class="form-control-label") }} 
-                {% if form.school_name.errors %} 
-                    {{ form.school_name(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in form.school_name.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %} 
-                    {{ form.school_name(class="form-control form-control-lg") }} 
-                {% endif %}
-            </div>
-            
-            <!-- Adresa -->
-            <h4 class="mb-3 mt-4">Adresa</h4>
-            <div class="form-group">
-                {{ form.school_address.label(class="form-control-label") }} 
-                {% if form.school_address.errors %} 
-                    {{ form.school_address(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in form.school_address.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %} 
-                    {{ form.school_address(class="form-control form-control-lg") }} 
-                {% endif %}
-            </div>
-            <div class="row">
-                <div class="col-md-6 form-group">
-                    {{ form.school_zip_code.label(class="form-control-label") }} 
-                    {% if form.school_zip_code.errors %} 
-                        {{ form.school_zip_code(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.school_zip_code.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
+        <fieldset class="form-group m0" style="max-width: 100%; margin: 0; padding: 0;">
+            <div class="container-fluid px-4">
+                <div class="row">
+                    <!-- LEVI STUBAC - Informacije o školi, Adresa i Kontakt informacije -->
+                    <div class="col-md-6">
+                        <!-- Informacije o školi -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Informacije o školi</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    {{ form.school_name.label(class="form-control-label") }} 
+                                    {% if form.school_name.errors %} 
+                                        {{ form.school_name(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.school_name.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %} 
+                                        {{ form.school_name(class="form-control form-control-lg") }} 
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                    {% else %} 
-                        {{ form.school_zip_code(class="form-control form-control-lg") }} 
-                    {% endif %}
-                </div>
-                <div class="col-md-6 form-group">
-                    {{ form.school_city.label(class="form-control-label") }} 
-                    {% if form.school_city.errors %} 
-                        {{ form.school_city(class="form-control form-control-lg is-invalid") }}
-                        <div class="invalid-feedback">
-                            {% for error in form.school_city.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
+                        
+                        <!-- Adresa -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Adresa</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    {{ form.school_address.label(class="form-control-label") }} 
+                                    {% if form.school_address.errors %} 
+                                        {{ form.school_address(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.school_address.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %} 
+                                        {{ form.school_address(class="form-control form-control-lg") }} 
+                                    {% endif %}
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        {{ form.school_zip_code.label(class="form-control-label") }} 
+                                        {% if form.school_zip_code.errors %} 
+                                            {{ form.school_zip_code(class="form-control form-control-lg is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.school_zip_code.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %} 
+                                            {{ form.school_zip_code(class="form-control form-control-lg") }} 
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.school_city.label(class="form-control-label") }} 
+                                        {% if form.school_city.errors %} 
+                                            {{ form.school_city(class="form-control form-control-lg is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in form.school_city.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %} 
+                                            {{ form.school_city(class="form-control form-control-lg") }} 
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    {{ form.school_municipality.label(class="form-control-label") }} 
+                                    {% if form.school_municipality.errors %} 
+                                        {{ form.school_municipality(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.school_municipality.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %} 
+                                        {{ form.school_municipality(class="form-control form-control-lg") }} 
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                    {% else %} 
-                        {{ form.school_city(class="form-control form-control-lg") }} 
-                    {% endif %}
-                </div>
-            </div>
-            <div class="form-group">
-                {{ form.school_municipality.label(class="form-control-label") }} 
-                {% if form.school_municipality.errors %} 
-                    {{ form.school_municipality(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in form.school_municipality.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %} 
-                    {{ form.school_municipality(class="form-control form-control-lg") }} 
-                {% endif %}
-            </div>
-            
-            <!-- Kontakt informacije -->
-            <h4 class="mb-3 mt-4">Kontakt informacije</h4>
-            <div class="form-group">
-                {{ form.school_phone_number.label(class="form-control-label") }} 
-                {% if form.school_phone_number.errors %} 
-                    {{ form.school_phone_number(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in form.school_phone_number.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %} 
-                    {{ form.school_phone_number(class="form-control form-control-lg") }} 
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ form.school_email.label(class="form-control-label") }} 
-                {% if form.school_email.errors %} 
-                    {{ form.school_email(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in form.school_email.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %} 
-                    {{ form.school_email(class="form-control form-control-lg") }} 
-                {% endif %}
-            </div>
-            
-            <!-- Finansijske informacije -->
-            <h4 class="mb-3 mt-4">Finansijske informacije</h4>
-            {% for bank_account in form.school_bank_accounts %}
-            {{ bank_account.hidden_tag() }}
-            <div class="row mb-3">
-                <div class="col-md-6 form-group">
-                    {{ bank_account.bank_account_number.label(class="form-control-label") }}
-                    {% if bank_account.bank_account_number.errors %}
-                        <div class="invalid-feedback">
-                            {% for error in bank_account.bank_account_number.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
+                        
+                        <!-- Kontakt informacije -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Kontakt informacije</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    {{ form.school_phone_number.label(class="form-control-label") }} 
+                                    {% if form.school_phone_number.errors %} 
+                                        {{ form.school_phone_number(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.school_phone_number.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %} 
+                                        {{ form.school_phone_number(class="form-control form-control-lg") }} 
+                                    {% endif %}
+                                </div>
+                                <div class="form-group">
+                                    {{ form.school_email.label(class="form-control-label") }} 
+                                    {% if form.school_email.errors %} 
+                                        {{ form.school_email(class="form-control form-control-lg is-invalid") }}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.school_email.errors %}
+                                                <span>{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %} 
+                                        {{ form.school_email(class="form-control form-control-lg") }} 
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                    {% endif %}
-                    {{ bank_account.bank_account_number(class="form-control form-control-lg", value=bank_account.bank_account_number.data) }}
-                </div>
-                <div class="col-md-6 form-group">
-                    {{ bank_account.reference_number_spiri.label(class="form-control-label") }}
-                    {% if bank_account.reference_number_spiri.errors %}
-                        <div class="invalid-feedback">
-                            {% for error in bank_account.reference_number_spiri.errors %}
-                                <span>{{ error }}</span>
-                            {% endfor %}
+                    </div>
+                    
+                    <!-- DESNI STUBAC - Finansijske informacije -->
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Finansijske informacije</h4>
+                            </div>
+                            <div class="card-body">
+                                {% for bank_account in form.school_bank_accounts %}
+                                <div class="card mb-3 border-0 shadow-sm bank-account-card">
+                                    <div class="card-body bg-light">
+                                        {{ bank_account.hidden_tag() }}
+                                        <div class="form-group mb-3">
+                                            {{ bank_account.bank_account_number.label(class="form-control-label") }}
+                                            {% if bank_account.bank_account_number.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in bank_account.bank_account_number.errors %}
+                                                        <span>{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                            {{ bank_account.bank_account_number(class="form-control form-control-lg", value=bank_account.bank_account_number.data) }}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            {{ bank_account.reference_number_spiri.label(class="form-control-label") }}
+                                            {% if bank_account.reference_number_spiri.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in bank_account.reference_number_spiri.errors %}
+                                                        <span>{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                            {{ bank_account.reference_number_spiri(class="form-control form-control-lg", value=bank_account.reference_number_spiri.data) }}
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            {{ bank_account.recipient_name.label(class="form-control-label") }}
+                                            {% if bank_account.recipient_name.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in bank_account.recipient_name.errors %}
+                                                        <span>{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                            {{ bank_account.recipient_name(class="form-control form-control-lg recipient-name", value=bank_account.recipient_name.data, oninput="handleRecipientNameChange(this)") }}
+                                        </div>
+                                        <div class="form-group">
+                                            {{ bank_account.recipient_address.label(class="form-control-label") }}
+                                            {% if bank_account.recipient_address.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in bank_account.recipient_address.errors %}
+                                                        <span>{{ error }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                            {{ bank_account.recipient_address(class="form-control form-control-lg recipient-address", value=bank_account.recipient_address.data, disabled=(not bank_account.recipient_name.data)) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
-                    {% endif %}
-                    {{ bank_account.reference_number_spiri(class="form-control form-control-lg", value=bank_account.reference_number_spiri.data) }}
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
-            
-            <!-- Dugme za slanje -->
-            <div class="mt-4 text-center">
-                {{ form.submit(class="btn btn-primary btn-in-center loading") }}
+                
+                <!-- Dugme za slanje -->
+                <div class="row">
+                    <div class="col-12 mt-4 text-center">
+                        {{ form.submit(class="btn btn-primary btn-lg btn-in-center loading") }}
+                    </div>
+                </div>
             </div>
         </fieldset>
     </form>
 </div>
 {% endblock content%}
+
+{% block scripts %}
+<script>
+    function handleRecipientNameChange(nameInput) {
+        // Pronađi odgovarajući element adrese (sledeći input sa klasom recipient-address u istom redu)
+        const addressInput = nameInput.closest('.card-body').querySelector('.recipient-address');
+        
+        if (nameInput.value.trim() === '') {
+            // Ako je naziv primaoca prazan, obriši vrednost adrese i onemogući polje
+            addressInput.value = '';
+            addressInput.disabled = true;
+        } else {
+            // Ako naziv primaoca ima vrednost, omogući polje adrese
+            addressInput.disabled = false;
+        }
+    }
+    
+    // Inicijalizacija za sve postojeće elemente
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.recipient-name').forEach(function(nameInput) {
+            handleRecipientNameChange(nameInput);
+        });
+        
+        // Uklanja ograničenja širine za glavne kontejnere
+        document.querySelectorAll('main.container').forEach(function(container) {
+            container.style.maxWidth = '100%';
+            container.style.width = '100%';
+            container.style.padding = '0';
+            container.style.margin = '0';
+        });
+        
+        document.querySelectorAll('.col-md-12').forEach(function(col) {
+            col.style.padding = '0';
+        });
+        
+        document.querySelectorAll('.row').forEach(function(row) {
+            row.style.margin = '0';
+            row.style.width = '100%';
+        });
+    });
+</script>
+<style>
+    .bank-account-card {
+        transition: all 0.3s ease;
+    }
+    .bank-account-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .form-control-lg:focus {
+        border-color: #104e97;
+        box-shadow: 0 0 0 0.2rem rgba(16, 78, 151, 0.25);
+    }
+    .bg-implicit-deepblue, .bg-implicit-skyblue {
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+    }
+    .card {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .card-header h4 {
+        font-weight: 600;
+    }
+    /* Responzivnost za mobilne uređaje */
+    @media (max-width: 768px) {
+        .col-md-6 {
+            margin-bottom: 20px;
+        }
+        .btn-lg {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .bank-account-card {
+            margin-bottom: 20px;
+        }
+        .container-fluid {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+        main.container {
+            padding: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
