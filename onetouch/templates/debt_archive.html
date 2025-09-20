@@ -106,10 +106,20 @@
         {% endfor %}
     </tbody>
 </table>
-<div class="form-group">
-    <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
-    <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
-    <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+<div class="row">
+    <div class="col-md-9">
+        <div class="form-group">
+            <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
+            <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
+            <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="student_count" class="form-control-label">Broj zaduženih učenika</label>
+            <input type="text" id="student_count" name="student_count" class="form-control form-control-lg" readonly value="0">
+        </div>
+    </div>
 </div>
 <div class="form-group">
     <button class="btn btn-primary loading" id="save_button" name="save_button">Sačuvajte</button>
@@ -123,7 +133,24 @@
 
 {% block scripts %}
 <script>
-    $(document).ready(function() {
+            // Funkcija za brojanje zaduženih učenika (količina > 0)
+        function countChargedStudents() {
+            var count = 0;
+            var kolicinaElems = document.querySelectorAll('[id^="kolicina_"]');
+            
+            kolicinaElems.forEach(function(elem) {
+                var kolicina = parseFloat(elem.textContent || 0);
+                if (kolicina > 0) {
+                    count++;
+                }
+            });
+            
+            // Ažuriranje polja za prikaz broja zaduženih učenika
+            document.getElementById('student_count').value = count;
+            return count;
+        }
+        
+$(document).ready(function() {
         // Kreiranje tabele
         var table = $('#data').DataTable({
             language: {
@@ -133,6 +160,10 @@
             "lengthMenu": [50, 100, 200, 400, 800],
             "pageLength": 800,
         });
+        
+        // Inicijalno prebrojavanje zaduženih učenika
+        countChargedStudents();
+        
         // Postavljanje događaja nakon izmjene ćelija "Količina" i "Olakšica"
         $('.edit-cell').on('input', function() {
             var id = $(this).data('id');
@@ -142,6 +173,9 @@
             console.log('test vrednosti radte: ', parseFloat($('#installment').val()))
             var iznosZaduzenja = (kolicina * iznosRate) - olaksice;
             $('#iznos_zaduženja_' + id).text(iznosZaduzenja.toFixed(2));
+            
+            // Ažuriraj broj zaduženih učenika nakon svake promene
+            countChargedStudents();
         });
         
         const inputFieldPurposeOfPayment = $('#purpose_of_payment');
@@ -179,6 +213,10 @@
             var rows = table.find('tr');
             console.log('redovi: ', rows)
             console.log('broj redova: ', rows.length)
+            
+            // Ažuriraj broj zaduženih učenika pre slanja podataka
+            countChargedStudents();
+            
             var records = []
             for (var i = 1; i < rows.length; i++) {
                 // var studentIdCell = rows[i].querySelector('[id^="poziv_na_broj_"]');
