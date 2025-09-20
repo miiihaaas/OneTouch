@@ -663,33 +663,91 @@ def service_total_payment_slip(service_id, student_id):
             flash("Ne postoji preostali dug za ovu uslugu.", "warning")
             return redirect(url_for('overviews.overview_student', student_id=student_id))
         
-        # Postavljamo ukupan iznos za plaćanje
-        temp_record.student_debt_total = remaining_balance
-        
         # Priprema svrhe plaćanja sa naznakom da se radi o preostalom dugu
         purpose_of_payment = service_item.service_item_service.service_name + ' - ' + service_item.service_item_name
         if "Ekskurzija" in purpose_of_payment:
             purpose_of_payment += " --- bez Rata 1..."
-        
-        records = [temp_record]
-        single = True
-        send = False
-        
-        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-        
-        if not file_name:
-            raise ValueError("Greška pri generisanju uplatnice")
-        
-        # Priprema za slanje fajla
+            
+        # Umesto da koristimo privremeni objekat, direktno ćemo generisati uplatnicu
+        # Potrebni podaci za generisanje uplatnice
         current_file_path = os.path.abspath(__file__)
         project_folder = os.path.dirname(os.path.dirname((current_file_path)))
-        
         user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
+        
+        # Kreiramo PDF dokument direktno
+        from fpdf import FPDF
+        
+        # Dobavljamo podatke o bankovnom računu
+        bank_account_number = service_item.bank_account
+        
+        # Implementacija logike za primaoca
+        recipient_name = ""
+        recipient_address = ""
+        for account in school.school_bank_accounts.get('bank_accounts', []):
+            if account.get('bank_account_number') == bank_account_number:
+                recipient_name = account.get('recipient_name', "")
+                recipient_address = account.get('recipient_address', "")
+                break
+        
+        # Određivanje primaoca
+        if not recipient_name and not recipient_address:
+            primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+        elif recipient_name and not recipient_address:
+            primalac = recipient_name
+        elif not recipient_name and recipient_address:
+            primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+        else:
+            primalac = f"{recipient_name}\r\n{recipient_address}"
+        
+        # Kreiramo podatke potrebne za generisanje PDF-a sa svim potrebnim parametrima
+        # ali bez čuvanja podataka u bazi
+        
+        payment_data = {
+            'student_id': student_id,
+            'uplatilac': student.student_name + ' ' + student.student_surname,
+            'svrha_uplate': f"{student_id:04d}-{service_id:03d} " + purpose_of_payment,
+            'primalac': primalac,
+            'sifra_placanja': 253 if service_item.reference_number_spiri else 221,
+            'valuta': 'RSD',
+            'iznos': remaining_balance,
+            'racun_primaoca': bank_account_number,
+            'model': '97' if service_item.reference_number_spiri else '',
+            'poziv_na_broj': service_item.reference_number_spiri if service_item.reference_number_spiri else '',
+        }
+        
+        # Generisanje PDF-a bez korišćenja privremenog TransactionRecord objekta
+        file_name = 'uplatnica_saldo.pdf'
         file_path = f'{user_folder}/{file_name}'
         
-        return send_file(file_path, as_attachment=False)
+        try:
+            # Poziv funkcije za direktno generisanje uplatnice
+            from onetouch.transactions.functions import add_fonts, setup_pdf_page, add_payment_slip_content, PDF, prepare_qr_data, generate_qr_code, cleanup_qr_codes
+            
+            pdf = PDF()
+            add_fonts(pdf)
+            y, y_qr = setup_pdf_page(pdf, 1)
+            
+            # Generisanje QR koda ako je potrebno
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user)
+            
+            # Dodavanje sadržaja uplatnice
+            add_payment_slip_content(pdf, payment_data, y, y_qr, project_folder, current_user)
+            
+            # Generisanje PDF-a
+            pdf.output(file_path)
+            
+            # Čišćenje privremenih QR kodova
+            cleanup_qr_codes(project_folder, current_user)
+            
+            # Slanje fajla korisniku
+            return send_file(file_path, as_attachment=False)
+            
+        except Exception as e:
+            logging.error(f"Greška pri generisanju PDF-a: {str(e)}")
+            raise ValueError(f"Greška pri generisanju uplatnice: {str(e)}")
         
     except ValueError as e:
         logging.error(f"Greška sa podacima: {str(e)}")
