@@ -592,6 +592,56 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     return file_name
 
 
+def uplatnice_gen_selected(records, purpose_of_payment, school_info, school, single, send):
+    """Generiše uplatnice samo za selektovane učenike."""
+    data_list = []
+    qr_code_images = []
+    
+    # Kreiranje user-specifičnog foldera za PDF
+    user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    
+    # Priprema podataka i generisanje QR kodova
+    for record in records:
+        if record.student_debt_total > 0:
+            payment_data = prepare_payment_data(record, purpose_of_payment, school_info)
+            data_list.append(payment_data)
+            
+            # Koristi prilagođeni primalac iz payment_data
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], 
+                                                project_folder, current_user)
+            if qr_code_filename:
+                qr_code_images.append(qr_code_filename)
+    
+    # Kreiranje PDF-a
+    pdf = PDF()
+    add_fonts(pdf)
+    counter = 1
+    
+    if not data_list:
+        # Ako nema uplatnica za štampanje, kreiraj prazan PDF sa objašnjenjem
+        pdf.add_page()
+        pdf.set_font('DejaVuSansCondensed', 'B', 16)
+        pdf.multi_cell(0, 20, 'Nema selektovanih učenika sa važećim uplatnicama.', align='C')
+        file_name = 'selektovane_uplatnice.pdf'
+        pdf.output(f'{user_folder}/{file_name}')
+    else:
+        # Generisanje uplatnica
+        for uplatnica in data_list:
+            y, y_qr = setup_pdf_page(pdf, counter)
+            add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_user)
+            counter += 1
+        
+        file_name = 'selektovane_uplatnice.pdf'
+        pdf.output(f'{user_folder}/{file_name}')
+    
+    # Čišćenje privremenih QR kodova
+    cleanup_qr_codes(project_folder, current_user)
+    return file_name
+
+
 def gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje, dugovanje, preplata):
     school = School.query.first()
     service_name = ''

@@ -8,11 +8,10 @@ from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User
-from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report
+from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected
 from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint('transactions', __name__)
-
 
 @transactions.route('/student_debts', methods=['POST', 'GET'])
 @login_required
@@ -715,6 +714,67 @@ def send_payment_slips(debt_id):
     except Exception as e:
         logging.error(f"Neočekivana greška: {str(e)}")
         flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+
+@transactions.route('/print_selected_slips/<int:debt_id>', methods=['GET'])
+@login_required
+def print_selected_slips(debt_id):
+    """Generiše uplatnice za selektovane učenike."""
+    try:
+        # Dobavljanje ID-jeva selektovanih učenika iz URL parametra
+        record_ids = request.args.get('ids', '')
+        if not record_ids:
+            flash('Niste izabrali nijednog učenika za štampanje uplatnica.', 'warning')
+            return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+        
+        record_id_list = [int(id) for id in record_ids.split(',')]
+        logging.debug(f'Štampanje uplatnica za sledeće zapise: {record_id_list}')
+        
+        # Provera zaduženja
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+            
+        purpose_of_payment = debt.purpose_of_payment
+        
+        # Provera škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
+        # Pronalaženje transakcija po ID-jevima
+        records = TransactionRecord.query.filter(TransactionRecord.id.in_(record_id_list)).all()
+        
+        if not records:
+            raise ValueError(f"Nisu pronađene transakcije sa zadatim ID-jevima")
+        
+        # Generisanje PDF-a sa selektovanim uplatnicama
+        single = False
+        send = False
+        file_name = uplatnice_gen_selected(records, purpose_of_payment, school_info, school, single, send)
+        
+        if not file_name:
+            raise ValueError("Greška pri generisanju uplatnica")
+            
+        # Vraćanje generisanog PDF-a
+        user_folder = f'static/payment_slips/user_{current_user.id}'
+        file_path = f'{user_folder}/{file_name}'
+        return send_from_directory(user_folder, file_name, as_attachment=False)
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri generisanju uplatnica", "danger")
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 
