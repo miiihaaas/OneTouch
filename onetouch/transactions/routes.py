@@ -621,11 +621,9 @@ def debt_archive(debt_id):
         logging.debug(f'provera broja đaka: {students=}, {len(students)=}')
         
         # Provera novih učenika
-        new_students = []
-        if len(students) > len(records):
-            record_ids = set([record.transaction_record_student.id for record in records])
-            new_students = [student for student in students if student.id not in record_ids]
-            logging.debug(f'{record_ids=}; {new_students=}')
+        record_ids = set([record.transaction_record_student.id for record in records])
+        new_students = [student for student in students if student.id not in record_ids]
+        logging.debug(f'{record_ids=}; {new_students=}')
         
         # Generisanje uplatnice
         single = False
