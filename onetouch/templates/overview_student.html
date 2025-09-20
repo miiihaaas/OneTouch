@@ -9,6 +9,16 @@
         .mobtable td:nth-of-type(5):before { content: "Saldo"; }
         .mobtable td:nth-of-type(6):before { content: "Akcije"; }
     }
+    
+    .table-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .table-footer small {
+        font-weight: bold;
+        color: #495057;
+    }
 </style>
 <div class="row">
     <div class="col">
@@ -91,6 +101,28 @@
             </tr> -->
             {% endif %}
         {% endfor %}
+        
+        {% set service_balance = namespace(value=0) %}
+        {% set last_record = namespace(value=None) %}
+        {% for record in data if record['service_item_id'] == service['id'] %}
+            {% set last_record.value = record %}
+        {% endfor %}
+        {% if last_record.value %}
+            {% set service_balance.value = last_record.value['saldo'] %}
+        {% endif %}
+        
+        {% if service_balance.value > 0 %}
+        <tr class="table-footer">
+            <td colspan="5" style="text-align: right;">
+                <small>Preostali dug za uslugu: {{ "{:.2f}".format(service_balance.value) }}</small>
+            </td>
+            <td style="text-align: center;">
+                <a class="btn-x btn-primary-x" href="{{ url_for('transactions.service_total_payment_slip', service_id=service['id'], student_id=student.id) }}" target="_blank" title="Generišite uplatnicu za preostali dug">
+                    <i class="fa-solid fa-money-bill-1-wave awesomeedit"></i>
+                </a>
+            </td>
+        </tr>
+        {% endif %}
     </tbody>
 </table>
 {% endfor %}

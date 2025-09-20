@@ -583,6 +583,132 @@ def single_payment_slip(record_id):
         return redirect(url_for('transactions.payments_archive_list'))
 
 
+@transactions.route('/service_total_payment_slip/<int:service_id>/<int:student_id>', methods=['GET'])
+@login_required
+def service_total_payment_slip(service_id, student_id):
+    """Generiše uplatnicu za ukupan preostali dug za određenu uslugu"""
+    try:
+        # Pronalaženje studenta
+        student = Student.query.get_or_404(student_id)
+        if not student:
+            raise ValueError(f"Učenik sa ID {student_id} nije pronađen")
+            
+        # Pronalaženje usluge
+        service_item = ServiceItem.query.get_or_404(service_id)
+        if not service_item:
+            raise ValueError(f"Usluga sa ID {service_id} nije pronađena")
+            
+        # Pronalaženje škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
+        # Kreiramo privremeni TransactionRecord objekat koji će sadržati potrebne podatke
+        # Uzimamo samo iznos preostalog duga i detalje usluge
+        temp_record = TransactionRecord()
+        temp_record.id = 0  # Privremeni ID
+        temp_record.student_id = student_id
+        temp_record.transaction_record_student = student
+        temp_record.service_item_id = service_id
+        temp_record.transaction_record_service_item = service_item
+        
+        # Računamo ukupan saldo za ovu uslugu za ovog učenika
+        transaction_records = TransactionRecord.query.filter_by(student_id=student_id, service_item_id=service_id).all()
+        
+        data = []
+        # Obrada transakcija kao u overview_student
+        for record in transaction_records:
+            try:
+                if record.student_debt_id:
+                    rata = sum(1 for item in data if item["service_item_id"] == record.service_item_id) + 1
+                    description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name} / Rata {rata}'
+                    date_ = record.transaction_record_student_debt.student_debt_date
+                elif record.student_payment_id:
+                    description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
+                    date_ = record.transaction_record_student_payment.payment_date
+                    
+                if record.student_debt_total:
+                    record_data = {
+                        'id': record.id,
+                        'service_item_id': record.service_item_id,
+                        'student_payment_id': record.student_payment_id,
+                        'date': date_,
+                        'description': description,
+                        'debt_amount': record.student_debt_total if record.student_debt_id else 0,
+                        'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+                    }
+                    
+                    if record_data['service_item_id'] in [item['service_item_id'] for item in data]:
+                        saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == record_data['service_item_id']]
+                        record_data['saldo'] = saldo_sum[-1] + record_data['debt_amount'] - record_data['payment_amount']
+                    else:
+                        record_data['saldo'] = record_data['debt_amount'] - record_data['payment_amount']
+                        
+                    data.append(record_data)
+            except Exception as e:
+                logging.error(f'Greška pri obradi transakcije (ID: {record.id}): {str(e)}')
+                continue
+                
+        # Sortiramo podatke po datumu
+        data.sort(key=lambda x: x['date'])
+        
+        # Uzimamo saldo iz poslednje transakcije
+        remaining_balance = data[-1]['saldo'] if data else 0
+        
+        logging.debug(f"preostali saldo={remaining_balance}")
+        
+        if remaining_balance <= 0:
+            flash("Ne postoji preostali dug za ovu uslugu.", "warning")
+            return redirect(url_for('overviews.overview_student', student_id=student_id))
+        
+        # Postavljamo ukupan iznos za plaćanje
+        temp_record.student_debt_total = remaining_balance
+        
+        # Priprema svrhe plaćanja sa naznakom da se radi o preostalom dugu
+        purpose_of_payment = service_item.service_item_service.service_name + ' - ' + service_item.service_item_name
+        if "Ekskurzija" in purpose_of_payment:
+            purpose_of_payment += " --- bez Rata 1..."
+        
+        records = [temp_record]
+        single = True
+        send = False
+        
+        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+        
+        if not file_name:
+            raise ValueError("Greška pri generisanju uplatnice")
+        
+        # Priprema za slanje fajla
+        current_file_path = os.path.abspath(__file__)
+        project_folder = os.path.dirname(os.path.dirname((current_file_path)))
+        
+        user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        file_path = f'{user_folder}/{file_name}'
+        
+        return send_file(file_path, as_attachment=False)
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Generisana uplatnica nije pronađena", "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri generisanju uplatnice", "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+
+
 @transactions.route('/debt_archive/<int:debt_id>', methods=['GET', 'POST'])
 def debt_archive(debt_id):
     if not current_user.is_authenticated:
