@@ -52,9 +52,11 @@
 
         <div class="container">
           {% if current_user.is_authenticated %}
-          <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
-          <a class="navbar-brand mr-4" href="{{url_for('main.news')}}"><i class="fa-solid fa-newspaper"></i></a>
-          <a class="navbar-brand mr-4" href="{{url_for('main.instructions')}}"><i class="fa-solid fa-book"></i></a>
+          <div class="col">
+            <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
+            <a class="navbar-brand mr-4" href="{{url_for('main.news')}}"><i class="fa-solid fa-newspaper"></i></a>
+            <a class="navbar-brand mr-4" href="{{url_for('main.instructions')}}"><i class="fa-solid fa-book"></i></a>
+          </div>
           {% endif %}
           <div class="collapse navbar-collapse" id="navbarToggle">
             <!-- Navbar Right Side -->
