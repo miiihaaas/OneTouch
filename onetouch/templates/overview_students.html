@@ -14,17 +14,17 @@
 <div class="row form-group align-items-end">
     <div class="form-check form-switch">
         {% if dugovanje %}
-        <input class="form-check-input" type="checkbox" role="switch" id="debts" checked>
+        <input class="form-check-input loading" type="checkbox" role="switch" id="debts" checked>
         {% else %}
-        <input class="form-check-input" type="checkbox" role="switch" id="debts">
+        <input class="form-check-input loading" type="checkbox" role="switch" id="debts">
         {% endif %}
         <label class="form-check-label" for="debts">Dugovanja</label>
     </div>
     <div class="form-check form-switch">
         {% if preplata %}
-        <input class="form-check-input" type="checkbox" role="switch" id="overpayments" checked>
+        <input class="form-check-input loading" type="checkbox" role="switch" id="overpayments" checked>
         {% else %}
-        <input class="form-check-input" type="checkbox" role="switch" id="overpayments">
+        <input class="form-check-input loading" type="checkbox" role="switch" id="overpayments">
         {% endif %}
         <label class="form-check-label" for="overpayments">Preplate</label>
     </div>
@@ -101,7 +101,7 @@
     </div>
     <div class="col form-group cstm-3">
         <!-- <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/report_student_list.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
-        <a id="resetButton" class="btn btn-primary" href="{{ url_for('transactions.get_report', filename='report_student_list.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
+        <a id="resetButton" class="btn btn-primary loading" href="{{ url_for('transactions.get_report', filename='report_student_list.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
     </div>
     <hr>
 </div>
@@ -128,7 +128,7 @@
             <td style="text-align: right;">{{ "{:.2f}".format(student['student_debt']) }}</td>
             <td style="text-align: right;">{{ "{:.2f}".format(student['student_payment']) }}</td>
             <td style="text-align: right;">{{ "{:.2f}".format(student['saldo']) }}</td>
-            <td style="text-align: center;"><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></a></td>
+            <td style="text-align: center;"><a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x loading" title="Pregled kartice stanja"><i class="fa fa-magnifying-glass awesomeedit"></i></a></td>
         </tr>
         {% endfor %}
     </tbody>

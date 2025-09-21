@@ -2,14 +2,15 @@
 {% block content %}
 <style>
     @media (max-width: 991px)  {
-        .mobtable td:nth-of-type(1):before { content: "Učenik"; }
-        .mobtable td:nth-of-type(2):before { content: "Poziv na broj"; }
-        .mobtable td:nth-of-type(3):before { content: "Detalji usluge"; }
-        .mobtable td:nth-of-type(4):before { content: "Količina"; }
-        .mobtable td:nth-of-type(5):before { content: "Iznos"; }
-        .mobtable td:nth-of-type(6):before { content: "Olakšica"; }
-        .mobtable td:nth-of-type(7):before { content: "Iznos zaduženja"; }
-        .mobtable td:nth-of-type(8):before { content: "Akcije"; }
+        .mobtable td:nth-of-type(1):before { content: "Selektujte"; }
+        .mobtable td:nth-of-type(2):before { content: "Učenik"; }
+        .mobtable td:nth-of-type(3):before { content: "Poziv na broj"; }
+        .mobtable td:nth-of-type(4):before { content: "Detalji usluge"; }
+        .mobtable td:nth-of-type(5):before { content: "Količina"; }
+        .mobtable td:nth-of-type(6):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(7):before { content: "Olakšica"; }
+        .mobtable td:nth-of-type(8):before { content: "Iznos zaduženja"; }
+        .mobtable td:nth-of-type(9):before { content: "Akcije"; }
     }
 </style>
 <h1>Razredni starešina: {{ teacher.teacher_name }} {{ teacher.teacher_surname }}</h1>
@@ -61,7 +62,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    <button type="submit" class="btn btn-info loading">Dodajte učenika u listu</button>
+                    <button type="submit" class="btn btn-primary loading">Dodajte učenika u listu</button>
                 </div>
             </form>
         </div>
@@ -72,6 +73,7 @@
 <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
     <thead>
         <tr>
+            <th style="width: 30px;"><input type="checkbox" id="selectAll" title="Selektujte sve učenike"></th>
             <th>Učenik</th>
             <th>Poziv na broj</th>
             <th>Detalji usluge</th>
@@ -85,7 +87,8 @@
     <tbody>
         {% for record in records %}
         <tr>
-            <td><a class="btn btn-primary" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a></td>
+            <td style="text-align: center;">{% if (record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount) > 0 %}<input type="checkbox" class="student-select" data-id="{{ record.id }}" title="Izaberite za grupno štampanje">{% endif %}</td>
+            <td><a class="btn btn-primary loading" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a></td>
             <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
             <td>{{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_service_item.service_item_name }}</td>
             <td style="text-align: center;" id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
@@ -106,16 +109,25 @@
         {% endfor %}
     </tbody>
 </table>
-<div class="form-group">
-    <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
-    <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
-    <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+<div class="row">
+    <div class="col-md-9">
+        <div class="form-group">
+            <label for="purpose_of_payment" class="form-control-label">Svrha uplate</label>
+            <input type="text" id="purpose_of_payment" class="form-control form-control-lg" value="{{ purpose_of_payment }}">
+            <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="student_count" class="form-control-label">Broj zaduženih učenika</label>
+            <input type="text" id="student_count" name="student_count" class="form-control form-control-lg" readonly value="0">
+        </div>
+    </div>
 </div>
 <div class="form-group">
     <button class="btn btn-primary loading" id="save_button" name="save_button">Sačuvajte</button>
-    <!-- <a class="btn btn-primary" href="{{ url_for('static', filename='payment_slips/uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
-    <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a> -->
     <a class="btn btn-primary" href="{{ url_for('transactions.get_payment_slip', filename='uplatnice.pdf') }}" target="_blank">Generišite sve uplatnice</a>
+    <a id="printSelectedBtn" class="btn btn-primary" href="#">Generišite selektovane uplatnice</a>
     <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="">Pošaljite uplatnice roditeljima</a>
 </div>
 
@@ -123,7 +135,46 @@
 
 {% block scripts %}
 <script>
-    $(document).ready(function() {
+            // Funkcija za brojanje zaduženih učenika (količina > 0)
+        function countChargedStudents() {
+            var count = 0;
+            var kolicinaElems = document.querySelectorAll('[id^="kolicina_"]');
+            
+            kolicinaElems.forEach(function(elem) {
+                var kolicina = parseFloat(elem.textContent || 0);
+                if (kolicina > 0) {
+                    count++;
+                }
+            });
+            
+            // Ažuriranje polja za prikaz broja zaduženih učenika
+            document.getElementById('student_count').value = count;
+            return count;
+        }
+        
+$(document).ready(function() {
+        // Selektovanje/deselektovanje svih učenika
+        $('#selectAll').on('change', function() {
+            $('.student-select').prop('checked', $(this).prop('checked'));
+        });
+        
+        // Štampanje selektovanih uplatnica
+        $('#printSelectedBtn').on('click', function(e) {
+            e.preventDefault();
+            
+            const selectedIds = [];
+            $('.student-select:checked').each(function() {
+                selectedIds.push($(this).data('id'));
+            });
+            
+            if (selectedIds.length === 0) {
+                alert('Morate selektovati bar jednog učenika za štampanje uplatnica.');
+                return;
+            }
+            
+            const url = '{{ url_for("transactions.print_selected_slips", debt_id=request.view_args["debt_id"]) }}' + '?ids=' + selectedIds.join(',');
+            window.open(url, '_blank');
+        });
         // Kreiranje tabele
         var table = $('#data').DataTable({
             language: {
@@ -132,7 +183,18 @@
             "paging": false, // Isključuje paginaciju
             "lengthMenu": [50, 100, 200, 400, 800],
             "pageLength": 800,
+            "columnDefs": [
+                { 
+                    "orderable": false,
+                    "targets": [0, 3]
+                }
+            ],
+            "order": [[4, 'desc']],
         });
+        
+        // Inicijalno prebrojavanje zaduženih učenika
+        countChargedStudents();
+        
         // Postavljanje događaja nakon izmjene ćelija "Količina" i "Olakšica"
         $('.edit-cell').on('input', function() {
             var id = $(this).data('id');
@@ -142,6 +204,9 @@
             console.log('test vrednosti radte: ', parseFloat($('#installment').val()))
             var iznosZaduzenja = (kolicina * iznosRate) - olaksice;
             $('#iznos_zaduženja_' + id).text(iznosZaduzenja.toFixed(2));
+            
+            // Ažuriraj broj zaduženih učenika nakon svake promene
+            countChargedStudents();
         });
         
         const inputFieldPurposeOfPayment = $('#purpose_of_payment');
@@ -179,6 +244,10 @@
             var rows = table.find('tr');
             console.log('redovi: ', rows)
             console.log('broj redova: ', rows.length)
+            
+            // Ažuriraj broj zaduženih učenika pre slanja podataka
+            countChargedStudents();
+            
             var records = []
             for (var i = 1; i < rows.length; i++) {
                 // var studentIdCell = rows[i].querySelector('[id^="poziv_na_broj_"]');

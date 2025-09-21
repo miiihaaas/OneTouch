@@ -390,7 +390,7 @@
                         <input class="form-control w-100" type="text" id="result-input" readonly value="" hidden>
                     </div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ edit_form.submit_edit(class="btn btn-primary") }}
+                    {{ edit_form.submit_edit(class="btn btn-primary loading") }}
                 </div>
             </form>
         </div>
@@ -669,7 +669,7 @@
                         <input class="form-control w-100" type="text" id="result-input-register" readonly value="" hidden>
                     </div>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ register_form.submit_register(class="btn btn-primary", disabled="disabled") }}
+                    {{ register_form.submit_register(class="btn btn-primary loading", disabled="disabled") }}
                 </div>
             </div>
         </form>

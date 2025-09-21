@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">{{ title }}</h4>
+                </div>
+                <div class="card-body text-center">
+                    <i class="fa fa-check-circle text-success fa-5x mb-3"></i>
+                    <p class="card-text lead">{{ message }}</p>
+                    {% if pdf_links %}
+                        <div class="mt-4">
+                            {% for pdf in pdf_links %}
+                                <a href="{{ pdf.url }}" target="_blank" class="btn btn-primary me-2 mb-2">
+                                    <i class="fa fa-file-pdf me-1"></i> {{ pdf.name }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="mt-4">
+                        <button onclick="window.close();" class="btn btn-secondary">Zatvori ovaj tab</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if auto_close %}
+<script>
+    // Automatski otvaranje PDF linkova u novim tabovima
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for pdf in pdf_links %}
+            window.open('{{ pdf.url }}', '_blank');
+        {% endfor %}
+    });
+</script>
+{% endif %}
+{% endblock content %}

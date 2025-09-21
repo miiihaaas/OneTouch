@@ -8,11 +8,10 @@ from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User
-from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report
+from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected
 from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint('transactions', __name__)
-
 
 @transactions.route('/student_debts', methods=['POST', 'GET'])
 @login_required
@@ -424,11 +423,10 @@ def debts_archive_list():
         end_date = request.args.get('end_date')
         
         if start_date is None or end_date is None:
+            start_date = danas.replace(month=9, day=1, year=2020)
             if danas.month < 9:
-                start_date = danas.replace(month=9, day=1, year=danas.year-1)
                 end_date = danas.replace(month=8, day=31)
             else:
-                start_date = danas.replace(month=9, day=1)
                 end_date = danas.replace(month=8, day=31, year=danas.year+1)
         
         logging.debug(f'{start_date=}, {end_date=}')
@@ -482,10 +480,7 @@ def payments_archive_list():
         end_date = request.args.get('end_date')
         
         if start_date is None or end_date is None:
-            if date.today().month < 9:
-                start_date = date.today().replace(day=1, month=9, year=date.today().year-1).isoformat()
-            else:
-                start_date = date.today().replace(day=1, month=9).isoformat()
+            start_date = date.today().replace(day=1, month=9, year=2020).isoformat()
             end_date = date.today().isoformat()
         
         payments = StudentPayment.query.filter(
@@ -588,6 +583,190 @@ def single_payment_slip(record_id):
         return redirect(url_for('transactions.payments_archive_list'))
 
 
+@transactions.route('/service_total_payment_slip/<int:service_id>/<int:student_id>', methods=['GET'])
+@login_required
+def service_total_payment_slip(service_id, student_id):
+    """Generiše uplatnicu za ukupan preostali dug za određenu uslugu"""
+    try:
+        # Pronalaženje studenta
+        student = Student.query.get_or_404(student_id)
+        if not student:
+            raise ValueError(f"Učenik sa ID {student_id} nije pronađen")
+            
+        # Pronalaženje usluge
+        service_item = ServiceItem.query.get_or_404(service_id)
+        if not service_item:
+            raise ValueError(f"Usluga sa ID {service_id} nije pronađena")
+            
+        # Pronalaženje škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
+        # Kreiramo privremeni TransactionRecord objekat koji će sadržati potrebne podatke
+        # Uzimamo samo iznos preostalog duga i detalje usluge
+        temp_record = TransactionRecord()
+        temp_record.id = 0  # Privremeni ID
+        temp_record.student_id = student_id
+        temp_record.transaction_record_student = student
+        temp_record.service_item_id = service_id
+        temp_record.transaction_record_service_item = service_item
+        
+        # Računamo ukupan saldo za ovu uslugu za ovog učenika
+        transaction_records = TransactionRecord.query.filter_by(student_id=student_id, service_item_id=service_id).all()
+        
+        data = []
+        # Obrada transakcija kao u overview_student
+        for record in transaction_records:
+            try:
+                if record.student_debt_id:
+                    rata = sum(1 for item in data if item["service_item_id"] == record.service_item_id) + 1
+                    description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name} / Rata {rata}'
+                    date_ = record.transaction_record_student_debt.student_debt_date
+                elif record.student_payment_id:
+                    description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
+                    date_ = record.transaction_record_student_payment.payment_date
+                    
+                if record.student_debt_total:
+                    record_data = {
+                        'id': record.id,
+                        'service_item_id': record.service_item_id,
+                        'student_payment_id': record.student_payment_id,
+                        'date': date_,
+                        'description': description,
+                        'debt_amount': record.student_debt_total if record.student_debt_id else 0,
+                        'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+                    }
+                    
+                    if record_data['service_item_id'] in [item['service_item_id'] for item in data]:
+                        saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == record_data['service_item_id']]
+                        record_data['saldo'] = saldo_sum[-1] + record_data['debt_amount'] - record_data['payment_amount']
+                    else:
+                        record_data['saldo'] = record_data['debt_amount'] - record_data['payment_amount']
+                        
+                    data.append(record_data)
+            except Exception as e:
+                logging.error(f'Greška pri obradi transakcije (ID: {record.id}): {str(e)}')
+                continue
+                
+        # Sortiramo podatke po datumu
+        data.sort(key=lambda x: x['date'])
+        
+        # Uzimamo saldo iz poslednje transakcije
+        remaining_balance = data[-1]['saldo'] if data else 0
+        
+        logging.debug(f"preostali saldo={remaining_balance}")
+        
+        if remaining_balance <= 0:
+            flash("Ne postoji preostali dug za ovu uslugu.", "warning")
+            return redirect(url_for('overviews.overview_student', student_id=student_id))
+        
+        # Priprema svrhe plaćanja sa naznakom da se radi o preostalom dugu
+        purpose_of_payment = service_item.service_item_service.service_name + ' - ' + service_item.service_item_name
+        if "Ekskurzija" in purpose_of_payment:
+            purpose_of_payment += " --- bez Rata 1..."
+            
+        # Umesto da koristimo privremeni objekat, direktno ćemo generisati uplatnicu
+        # Potrebni podaci za generisanje uplatnice
+        current_file_path = os.path.abspath(__file__)
+        project_folder = os.path.dirname(os.path.dirname((current_file_path)))
+        user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        
+        # Kreiramo PDF dokument direktno
+        from fpdf import FPDF
+        
+        # Dobavljamo podatke o bankovnom računu
+        bank_account_number = service_item.bank_account
+        
+        # Implementacija logike za primaoca
+        recipient_name = ""
+        recipient_address = ""
+        for account in school.school_bank_accounts.get('bank_accounts', []):
+            if account.get('bank_account_number') == bank_account_number:
+                recipient_name = account.get('recipient_name', "")
+                recipient_address = account.get('recipient_address', "")
+                break
+        
+        # Određivanje primaoca
+        if not recipient_name and not recipient_address:
+            primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+        elif recipient_name and not recipient_address:
+            primalac = recipient_name
+        elif not recipient_name and recipient_address:
+            primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+        else:
+            primalac = f"{recipient_name}\r\n{recipient_address}"
+        
+        # Kreiramo podatke potrebne za generisanje PDF-a sa svim potrebnim parametrima
+        # ali bez čuvanja podataka u bazi
+        
+        payment_data = {
+            'student_id': student_id,
+            'uplatilac': student.student_name + ' ' + student.student_surname,
+            'svrha_uplate': f"{student_id:04d}-{service_id:03d} " + purpose_of_payment,
+            'primalac': primalac,
+            'sifra_placanja': 253 if service_item.reference_number_spiri else 221,
+            'valuta': 'RSD',
+            'iznos': remaining_balance,
+            'racun_primaoca': bank_account_number,
+            'model': '97' if service_item.reference_number_spiri else '',
+            'poziv_na_broj': service_item.reference_number_spiri if service_item.reference_number_spiri else '',
+        }
+        
+        # Generisanje PDF-a bez korišćenja privremenog TransactionRecord objekta
+        file_name = 'uplatnica_saldo.pdf'
+        file_path = f'{user_folder}/{file_name}'
+        
+        try:
+            # Poziv funkcije za direktno generisanje uplatnice
+            from onetouch.transactions.functions import add_fonts, setup_pdf_page, add_payment_slip_content, PDF, prepare_qr_data, generate_qr_code, cleanup_qr_codes
+            
+            pdf = PDF()
+            add_fonts(pdf)
+            y, y_qr = setup_pdf_page(pdf, 1)
+            
+            # Generisanje QR koda ako je potrebno
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user.id)
+            
+            # Dodavanje sadržaja uplatnice
+            add_payment_slip_content(pdf, payment_data, y, y_qr, project_folder, current_user)
+            
+            # Generisanje PDF-a
+            pdf.output(file_path)
+            
+            # Čišćenje privremenih QR kodova
+            cleanup_qr_codes(project_folder, current_user.id)
+            
+            # Slanje fajla korisniku
+            return send_file(file_path, as_attachment=False)
+            
+        except Exception as e:
+            logging.error(f"Greška pri generisanju PDF-a: {str(e)}")
+            raise ValueError(f"Greška pri generisanju uplatnice: {str(e)}")
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Generisana uplatnica nije pronađena", "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri generisanju uplatnice", "danger")
+        return redirect(url_for('overviews.overview_student', student_id=student_id))
+
+
 @transactions.route('/debt_archive/<int:debt_id>', methods=['GET', 'POST'])
 def debt_archive(debt_id):
     if not current_user.is_authenticated:
@@ -625,11 +804,9 @@ def debt_archive(debt_id):
         logging.debug(f'provera broja đaka: {students=}, {len(students)=}')
         
         # Provera novih učenika
-        new_students = []
-        if len(students) > len(records):
-            record_ids = set([record.transaction_record_student.id for record in records])
-            new_students = [student for student in students if student.id not in record_ids]
-            logging.debug(f'{record_ids=}; {new_students=}')
+        record_ids = set([record.transaction_record_student.id for record in records])
+        new_students = [student for student in students if student.id not in record_ids]
+        logging.debug(f'{record_ids=}; {new_students=}')
         
         # Generisanje uplatnice
         single = False
@@ -721,6 +898,67 @@ def send_payment_slips(debt_id):
     except Exception as e:
         logging.error(f"Neočekivana greška: {str(e)}")
         flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+
+@transactions.route('/print_selected_slips/<int:debt_id>', methods=['GET'])
+@login_required
+def print_selected_slips(debt_id):
+    """Generiše uplatnice za selektovane učenike."""
+    try:
+        # Dobavljanje ID-jeva selektovanih učenika iz URL parametra
+        record_ids = request.args.get('ids', '')
+        if not record_ids:
+            flash('Niste izabrali nijednog učenika za štampanje uplatnica.', 'warning')
+            return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+        
+        record_id_list = [int(id) for id in record_ids.split(',')]
+        logging.debug(f'Štampanje uplatnica za sledeće zapise: {record_id_list}')
+        
+        # Provera zaduženja
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+            
+        purpose_of_payment = debt.purpose_of_payment
+        
+        # Provera škole
+        school = School.query.first()
+        if not school:
+            raise ValueError("Podaci o školi nisu pronađeni")
+            
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
+        # Pronalaženje transakcija po ID-jevima
+        records = TransactionRecord.query.filter(TransactionRecord.id.in_(record_id_list)).all()
+        
+        if not records:
+            raise ValueError(f"Nisu pronađene transakcije sa zadatim ID-jevima")
+        
+        # Generisanje PDF-a sa selektovanim uplatnicama
+        single = False
+        send = False
+        file_name = uplatnice_gen_selected(records, purpose_of_payment, school_info, school, single, send)
+        
+        if not file_name:
+            raise ValueError("Greška pri generisanju uplatnica")
+            
+        # Vraćanje generisanog PDF-a
+        user_folder = f'static/payment_slips/user_{current_user.id}'
+        file_path = f'{user_folder}/{file_name}'
+        return send_from_directory(user_folder, file_name, as_attachment=False)
+        
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri generisanju uplatnica", "danger")
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 

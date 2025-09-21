@@ -38,6 +38,9 @@
         </select>
     </div>
     <div class="col form-group">
+        <a href="javascript:void(0);" onclick="exportToExcel()" class="btn btn-secondary" title="Izvod učenika u Excel formatu"><i class="fa-solid fa-file-excel"></i></a>
+    </div>
+    <div class="col form-group">
         {% if not license_expired %}
             {% if plus_one_button %}
                 {% if danas >= active_date_start and danas <= active_date_end %}
@@ -144,7 +147,7 @@
             </div>
                 <div class="modal-footer">
                     <button type="radio" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    {{ edit_form.submit_edit(class="btn btn-primary") }}
+                    {{ edit_form.submit_edit(class="btn btn-primary loading") }}
                 </div>
             </div>
         </form>
@@ -233,7 +236,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                     <div class="form-group">
-                        {{ register_form.submit_register(class="btn btn-primary") }}
+                        {{ register_form.submit_register(class="btn btn-primary loading") }}
                     </div>
                 </div>
             </div>
@@ -278,7 +281,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary mr-5px" data-dismiss="modal">Otkažite</button>
-                <button class="btn btn-danger" form="deleteForm" type="submit">Obrišite Učenika</button>
+                <button class="btn btn-danger loading" form="deleteForm" type="submit">Obrišite Učenika</button>
             </div>
         </div>
     </div>
@@ -305,6 +308,28 @@
 
 {% block scripts %}
 <script>
+    function exportToExcel() {
+        // Dohvatanje vrednosti filtera
+        var razred = document.getElementById('searchRazred').value;
+        var odeljenje = document.getElementById('searchOdeljenje').value;
+        
+        // Kreiranje URL-a sa parametrima
+        var url = "{{ url_for('students.export_students_excel') }}";
+        var params = [];
+        if (razred) {
+            params.push('razred=' + razred);
+        }
+        if (odeljenje) {
+            params.push('odeljenje=' + odeljenje);
+        }
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+        
+        // Redirekcija na URL za preuzimanje
+        window.location.href = url;
+    }
+    
     function deleteStudent(studentId, studentName) {
         var form = document.getElementById('deleteForm')
         console.log('kliknuto na kanticu: ', studentId)

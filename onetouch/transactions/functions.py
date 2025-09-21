@@ -233,16 +233,43 @@ def export_payment_stats(data):
 def prepare_payment_data(record, purpose_of_payment, school_info):
     """Priprema podatke za uplatnicu iz zapisa."""
     
+    # Dobavi podatke o bankovnom računu
+    school = School.query.first()
+    bank_account_number = record.transaction_record_service_item.bank_account
+    
+    # Pronađi podaci o primaocu iz bankovnog računa
+    recipient_name = ""
+    recipient_address = ""
+    for account in school.school_bank_accounts.get('bank_accounts', []):
+        if account.get('bank_account_number') == bank_account_number:
+            recipient_name = account.get('recipient_name', "")
+            recipient_address = account.get('recipient_address', "")
+            break
+            
+    # Implementacija logike za primaoca
+    if not recipient_name and not recipient_address:
+        # Slučaj 1: Ako su oba polja prazna, koristi naziv i adresu škole
+        primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+    elif recipient_name and not recipient_address:
+        # Slučaj 2: Ako je upisan naziv primaoca, ali ne i adresa, koristi samo naziv
+        primalac = recipient_name
+    elif not recipient_name and recipient_address:
+        # Slučaj 3: Ako je upisana adresa, a ne i naziv, koristi naziv i adresu škole
+        primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+    else:
+        # Ako su oba polja popunjena, koristi oba
+        primalac = f"{recipient_name}\r\n{recipient_address}"
+    
     if record.transaction_record_service_item.reference_number_spiri == "":
         data = {
             'student_id': record.transaction_record_student.id,
             'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
             'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
-            'primalac': school_info,
+            'primalac': primalac,
             'sifra_placanja': 221,
             'valuta': 'RSD',
             'iznos': record.student_debt_total,
-            'racun_primaoca': record.transaction_record_service_item.bank_account,
+            'racun_primaoca': bank_account_number,
             'model': '',
             'poziv_na_broj': '',
             'slanje_mejla_roditelju': record.transaction_record_student.send_mail,
@@ -253,11 +280,11 @@ def prepare_payment_data(record, purpose_of_payment, school_info):
             'student_id': record.transaction_record_student.id,
             'uplatilac': record.transaction_record_student.student_name + ' ' + record.transaction_record_student.student_surname,
             'svrha_uplate': f"{record.student_id:04d}-{record.service_item_id:03d} " + purpose_of_payment,
-            'primalac': school_info,
+            'primalac': primalac,
             'sifra_placanja': 253,
             'valuta': 'RSD',
             'iznos': record.student_debt_total,
-            'racun_primaoca': record.transaction_record_service_item.bank_account,
+            'racun_primaoca': bank_account_number,
             'model': '97',
             'poziv_na_broj': record.transaction_record_service_item.reference_number_spiri,
             'slanje_mejla_roditelju': record.transaction_record_student.send_mail,
@@ -276,12 +303,15 @@ def prepare_qr_data(payment_data, school_info):
     racun = racun[:3] + racun[3:].zfill(15)
     dug = "RSD" + str(payment_data['iznos']).replace('.', ',')
     
+    # Koristi primalac iz payment_data umesto school_info
+    primalac_name = payment_data['primalac'].split('\r\n')[0]  # Uzima samo prvu liniju za QR kod
+    
     qr_data = {
         "K": "PR",
         "V": "01",
         "C": "1",
         "R": racun,
-        "N": school_info if len(school_info) < 70 else school_info[:70],
+        "N": primalac_name if len(primalac_name) < 70 else primalac_name[:70],
         "I": dug,
         "P": payment_data['uplatilac'],
         "SF": payment_data['sifra_placanja'],
@@ -295,8 +325,15 @@ def prepare_qr_data(payment_data, school_info):
     return qr_data
 
 
-def generate_qr_code(qr_data, student_id, project_folder, current_user):
-    """Generiše QR kod i vraća naziv fajla."""
+def generate_qr_code(qr_data, student_id, project_folder, current_user_id):
+    """Generiše QR kod i vraća naziv fajla.
+    
+    Args:
+        qr_data: Dictionary sa podacima za QR kod
+        student_id: ID učenika
+        project_folder: Putanja do korena projekta
+        current_user_id: ID trenutnog korisnika
+    """
     url = 'https://nbs.rs/QRcode/api/qr/v1/gen/250'
     headers = {'Content-Type': 'application/json'}
     
@@ -316,7 +353,7 @@ def generate_qr_code(qr_data, student_id, project_folder, current_user):
         
     if response.status_code == 200:
         qr_code_filename = f'qr_{student_id}.png'
-        folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+        folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user_id}')
         os.makedirs(folder_path, exist_ok=True)
         qr_code_filepath = os.path.join(folder_path, qr_code_filename)
         Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
@@ -344,7 +381,16 @@ def setup_pdf_page(pdf, counter):
 
 
 def add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_user):
-    """Dodaje sadržaj uplatnice na PDF."""
+    """Dodaje sadržaj uplatnice na PDF.
+    
+    Args:
+        pdf: PDF objekat na koji se dodaje sadržaj
+        uplatnica: Dictionary sa podacima za uplatnicu
+        y: Vertikalna pozicija
+        y_qr: Vertikalna pozicija QR koda
+        project_folder: Putanja do korena projekta
+        current_user: Objekat trenutnog korisnika
+    """
     # QR kod
     pdf.set_font('DejaVuSansCondensed', 'B', 16)
     pdf.set_y(y_qr)
@@ -468,9 +514,14 @@ def add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_us
 
 
 
-def cleanup_qr_codes(project_folder, current_user):
-    """Briše QR kodove nakon štampanja."""
-    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+def cleanup_qr_codes(project_folder, current_user_id):
+    """Briše QR kodove nakon štampanja.
+    
+    Args:
+        project_folder: Putanja do korena projekta
+        current_user_id: ID trenutnog korisnika
+    """
+    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user_id}')
     if os.path.isdir(folder_path):
         for filename in os.listdir(folder_path):
             file_path = os.path.join(folder_path, filename)
@@ -492,7 +543,6 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
     """Glavna funkcija za generisanje uplatnica."""
     data_list = []
     qr_code_images = []
-    # path = f'{project_folder}/static/payment_slips/user_{current_user.id}'
     
     # Kreiranje user-specifičnog foldera za PDF
     user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
@@ -505,9 +555,10 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             payment_data = prepare_payment_data(record, purpose_of_payment, school_info)
             data_list.append(payment_data)
             
-            qr_data = prepare_qr_data(payment_data, school_info)
+            # Koristi prilagođeni primalac iz payment_data
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
             qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], 
-                                                project_folder, current_user)
+                                                project_folder, current_user.id)
             if qr_code_filename:
                 qr_code_images.append(qr_code_filename)
     
@@ -532,7 +583,6 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
         
         if single:
             file_name = 'uplatnica.pdf'
-            # pdf.output(path + file_name)
             pdf.output(f'{user_folder}/{file_name}')
             if uplatnica['slanje_mejla_roditelju'] and send:
                 send_mail(uplatnica, user_folder, file_name)
@@ -557,12 +607,59 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             pdf.add_page()
             pdf.set_font('DejaVuSansCondensed', 'B', 16)
             pdf.multi_cell(0, 20, 'Nema zaduženih učenika ili je svim zaduženim učenicima aktivirana opcija slanja generisanih uplatnica putem e-maila...', align='C')
-        # pdf.output(path + file_name)
         pdf.output(f'{user_folder}/{file_name}')
-    # else:
-    #     file_name = 'uplatnica.pdf'
     
-    cleanup_qr_codes(project_folder, current_user)
+    cleanup_qr_codes(project_folder, current_user.id)
+    return file_name
+
+
+def uplatnice_gen_selected(records, purpose_of_payment, school_info, school, single, send):
+    """Generiše uplatnice samo za selektovane učenike."""
+    data_list = []
+    qr_code_images = []
+    
+    # Kreiranje user-specifičnog foldera za PDF
+    user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder)
+    
+    # Priprema podataka i generisanje QR kodova
+    for record in records:
+        if record.student_debt_total > 0:
+            payment_data = prepare_payment_data(record, purpose_of_payment, school_info)
+            data_list.append(payment_data)
+            
+            # Koristi prilagođeni primalac iz payment_data
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], 
+                                                project_folder, current_user.id)
+            if qr_code_filename:
+                qr_code_images.append(qr_code_filename)
+    
+    # Kreiranje PDF-a
+    pdf = PDF()
+    add_fonts(pdf)
+    counter = 1
+    
+    if not data_list:
+        # Ako nema uplatnica za štampanje, kreiraj prazan PDF sa objašnjenjem
+        pdf.add_page()
+        pdf.set_font('DejaVuSansCondensed', 'B', 16)
+        pdf.multi_cell(0, 20, 'Nema selektovanih učenika sa važećim uplatnicama.', align='C')
+        file_name = 'selektovane_uplatnice.pdf'
+        pdf.output(f'{user_folder}/{file_name}')
+    else:
+        # Generisanje uplatnica
+        for uplatnica in data_list:
+            y, y_qr = setup_pdf_page(pdf, counter)
+            add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_user)
+            counter += 1
+        
+        file_name = 'selektovane_uplatnice.pdf'
+        pdf.output(f'{user_folder}/{file_name}')
+    
+    # Čišćenje privremenih QR kodova
+    cleanup_qr_codes(project_folder, current_user.id)
     return file_name
 
 

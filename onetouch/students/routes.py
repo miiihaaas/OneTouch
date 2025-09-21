@@ -2,12 +2,15 @@ import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from flask import Blueprint
-from flask import  render_template, url_for, flash, redirect, request, abort
+from flask import render_template, url_for, flash, redirect, request, abort, make_response
 from onetouch import db, bcrypt
 from onetouch.models import Student, User, StudentDebt, School, TransactionRecord
 from onetouch.students.forms import EditStudentModalForm, RegisterStudentModalForm
 from flask_login import login_required, current_user
 from flask import jsonify
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from io import BytesIO
 
 from onetouch.students.functons import check_if_plus_one, get_school_year_for_change
 from onetouch.suppliers.functions import convert_to_latin
@@ -325,4 +328,156 @@ def delete_student(student_id):
     except Exception as e:
         logger.error(f"Neočekivana greška u delete_student: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')
+        return redirect(url_for('students.student_list'))
+
+
+@students.route('/export_students_excel', methods=['GET'])
+@login_required
+def export_students_excel():
+    try:
+        # Dohvatanje parametara filtera iz URL-a
+        student_class = request.args.get('razred', '')
+        student_section = request.args.get('odeljenje', '')
+        
+        # Kreiranje početnog upita
+        students_query = Student.query.filter(Student.student_class < 9)
+        
+        # Primena filtera
+        if student_class:
+            students_query = students_query.filter(Student.student_class == student_class)
+        if student_section:
+            students_query = students_query.filter(Student.student_section == student_section)
+        
+        # Sortiranje rezultata
+        students_query = students_query.order_by(
+            Student.student_class, 
+            Student.student_section, 
+            Student.student_surname, 
+            Student.student_name
+        )
+        
+        # Kreiranje novog Excel fajla
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Učenici"
+        
+        # Definisanje stilova
+        header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        title_font = Font(name='Arial', size=12, bold=True)
+        
+        # Definisanje ivica
+        thin_border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # Dodavanje informacija o filterima na vrh
+        current_row = 1
+        
+        # Naslov izveštaja
+        cell = ws.cell(row=current_row, column=1)
+        cell.value = "Spisak učenika"
+        cell.font = Font(name='Arial', size=14, bold=True)
+        ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=6)
+        cell.alignment = Alignment(horizontal='center')
+        current_row += 2  # Preskačemo jedan red
+        
+        # Informacije o filterima
+        if student_class or student_section:
+            filter_text = "Primenjeni filteri: "
+            if student_class:
+                filter_text += f"Razred: {student_class}"
+            if student_class and student_section:
+                filter_text += ", "
+            if student_section:
+                filter_text += f"Odeljenje: {student_section}"
+                
+            cell = ws.cell(row=current_row, column=1)
+            cell.value = filter_text
+            cell.font = title_font
+            ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=6)
+            current_row += 2  # Preskačemo jedan red za razmak
+        
+        # Dodavanje zaglavlja
+        headers = ['ID učenika', 'Ime', 'Prezime', 'Razred', 'Odeljenje', 'Mejl roditelja']
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=current_row, column=col_num)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+        
+        # Podešavanje širine kolona
+        column_widths = [15, 20, 20, 10, 15, 30]
+        for i, width in enumerate(column_widths, 1):
+            ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
+            
+        # Pamtimo red zaglavlja za kasnije dodavanje podataka
+        header_row = current_row
+        
+        # Dodavanje podataka (počinjemo sa sledećim redom nakon zaglavlja)
+        for row_num, student in enumerate(students_query, 1):
+            data_row = header_row + row_num
+            
+            # ID učenika
+            cell = ws.cell(row=data_row, column=1)
+            cell.value = str(student.id).zfill(4)
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border
+            
+            # Ime
+            cell = ws.cell(row=data_row, column=2)
+            cell.value = student.student_name
+            cell.border = thin_border
+            
+            # Prezime
+            cell = ws.cell(row=data_row, column=3)
+            cell.value = student.student_surname
+            cell.border = thin_border
+            
+            # Razred
+            cell = ws.cell(row=data_row, column=4)
+            cell.value = student.student_class
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border
+            
+            # Odeljenje
+            cell = ws.cell(row=data_row, column=5)
+            cell.value = student.student_section
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border
+            
+            # Mejl roditelja
+            cell = ws.cell(row=data_row, column=6)
+            cell.value = student.parent_email if student.parent_email else ""
+            cell.border = thin_border
+        
+        # Generisanje naziva fajla
+        filename = "Spisak_ucenika"
+        if student_class:
+            filename += f"_razred_{student_class}"
+        if student_section:
+            filename += f"_odeljenje_{student_section}"
+        filename += f"_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+        
+        # Čuvanje fajla u memoriji i slanje kao odgovor
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        response = make_response(output.read())
+        response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+        response.headers["Content-type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        
+        logger.info(f"Generisan Excel spisak učenika. Filteri: razred={student_class}, odeljenje={student_section}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Neočekivana greška pri izvozu učenika u Excel: {str(e)}")
+        flash('Došlo je do greške pri generisanju Excel fajla.', 'danger')
         return redirect(url_for('students.student_list'))

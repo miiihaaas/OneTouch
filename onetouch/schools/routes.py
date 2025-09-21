@@ -31,13 +31,17 @@ def school_profile():
                 for bank_account_form in form.school_bank_accounts.entries:
                     account_number = bank_account_form.bank_account_number.data.strip()
                     reference_number = bank_account_form.reference_number_spiri.data.strip()
+                    recipient_name = bank_account_form.recipient_name.data.strip() if bank_account_form.recipient_name.data else ""
+                    recipient_address = bank_account_form.recipient_address.data.strip() if bank_account_form.recipient_address.data else ""
                     
                     # if account_number and reference_number:
                     if account_number:
                         try:
                             school.school_bank_accounts["bank_accounts"].append({
                                 "bank_account_number": account_number,
-                                "reference_number_spiri": reference_number
+                                "reference_number_spiri": reference_number,
+                                "recipient_name": recipient_name,
+                                "recipient_address": recipient_address if recipient_name else ""
                             })
                         except SQLAlchemyError as e:
                             db.session.rollback()
@@ -80,11 +84,15 @@ def school_profile():
                 for bank_account_data in bank_accounts_json:
                     form.school_bank_accounts[-1].bank_account_number.data = bank_account_data.get('bank_account_number', '')
                     form.school_bank_accounts[-1].reference_number_spiri.data = bank_account_data.get('reference_number_spiri', '')
+                    form.school_bank_accounts[-1].recipient_name.data = bank_account_data.get('recipient_name', '')
+                    form.school_bank_accounts[-1].recipient_address.data = bank_account_data.get('recipient_address', '')
                     form.school_bank_accounts.append_entry()
                 
                 # Add empty entry for new account
                 form.school_bank_accounts[-1].bank_account_number.data = ''
                 form.school_bank_accounts[-1].reference_number_spiri.data = ''
+                form.school_bank_accounts[-1].recipient_name.data = ''
+                form.school_bank_accounts[-1].recipient_address.data = ''
                 
             except Exception as e:
                 logger.error(f"Error populating school form: {str(e)}")

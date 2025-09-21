@@ -7,6 +7,8 @@ from onetouch.models import School
 class BankAccountForm(FlaskForm):
     bank_account_number = StringField('Broj bankovnog računa', validators=[])
     reference_number_spiri = StringField('Poziv na broj', validators=[])
+    recipient_name = StringField('Naziv primaoca', validators=[])
+    recipient_address = StringField('Adresa primaoca', validators=[])
 
 
 class EditSchoolForm(FlaskForm):

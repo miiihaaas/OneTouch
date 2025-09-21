@@ -37,7 +37,7 @@ def about():
 def instructions():
     try:
         route_name = request.endpoint
-        return render_template('instructions.html', title='Upustva', route_name=route_name)
+        return render_template('instructions.html', title='Upustva', legend='Upustva', route_name=route_name)
     except Exception as e:
         logging.error(f'Error in instructions route: {str(e)}')
         flash('Došlo je do greške prilikom učitavanja upustava.', 'danger')
@@ -62,3 +62,14 @@ def check_licenses():
         flash('Došlo je do greške prilikom provere licence.', 'danger')
         print('Došlo je do greške prilikom provere licence.')
         return redirect(url_for('main.home'))
+
+
+@main.route("/news", methods=['GET'])
+def news():
+    try:
+        route_name = request.endpoint
+        return render_template('news.html', title='Novosti', legend='Novosti', route_name=route_name)
+    except Exception as e:
+        logging.error(f'Error in news route: {str(e)}')
+        flash('Došlo je do greške prilikom učitavanja stranice.', 'danger')
+        return render_template('errors/500.html'), 500

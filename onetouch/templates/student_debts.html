@@ -133,13 +133,23 @@
         {% endfor %}
     </tbody>
 </table>
-<div class="form-group">
-    <label for="purpose_of_payment" class="form-control-label" title="max 35 karaktera">Svrha uplate</label>
-    <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
-    <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+<div class="row">
+    <div class="col-md-9">
+        <div class="form-group">
+            <label for="purpose_of_payment" class="form-control-label" title="max 35 karaktera">Svrha uplate</label>
+            <input type="text" id="purpose_of_payment" name="purpose_of_payment" class="form-control form-control-lg" disabled>
+            <p id="errorMessage" style="display: none;">U polje možete uneti maksimalno 35 karaktera.</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="form-group">
+            <label for="student_count" class="form-control-label">Broj zaduženih učenika</label>
+            <input type="text" id="student_count" name="student_count" class="form-control form-control-lg" readonly value="0">
+        </div>
+    </div>
 </div>
 <div class="form-group">
-    <button class="btn btn-primary loading disable-button" id="save_button" disabled>Sačuvajte</button>
+    <button class="btn btn-primary loading disable-button loading" id="save_button" disabled>Sačuvajte</button>
 </div>
 {% endblock content %}
 
@@ -156,6 +166,23 @@
             document.getElementById('preloader').style.display = 'none';
             console.log('Preloader sakriven');
         }, 300);
+    }
+    
+    // Funkcija za brojanje zaduženih učenika (količina > 0)
+    function countChargedStudents() {
+        var count = 0;
+        var kolicinaInputs = document.querySelectorAll('[id^="kolicina_"]');
+        
+        kolicinaInputs.forEach(function(input) {
+            var kolicina = parseFloat(input.value || 0);
+            if (kolicina > 0) {
+                count++;
+            }
+        });
+        
+        // Ažuriranje polja za prikaz broja zaduženih učenika
+        document.getElementById('student_count').value = count;
+        return count;
     }
     
     // Funkcija za izračunavanje iznosa zaduženja
@@ -180,6 +207,9 @@
         document.getElementById("iznos_zaduženja_" + studentId).value = iznosZaduzenja.toFixed(2);
         document.getElementById("kolicina_" + studentId).value = kolicina.toFixed(0);
         document.getElementById("olaksice_" + studentId).value = olaksice.toFixed(2);
+        
+        // Ažuriraj broj zaduženih učenika nakon svake promene
+        countChargedStudents();
     }
 
     // Dodaj event listenere za promene u input poljima 'Količina' i 'Olakšica' za svakog studenta
@@ -207,6 +237,8 @@ $(document).ready(function() {
         // Sakrij preloader nakon što se stranica u potpunosti učita (sa dodatnim vremenom za pozadinske proračune)
         setTimeout(function() {
             hidePreloader();
+            // Inicijalno prebroji zadužene učenike
+            countChargedStudents();
         }, 500);
         
         const selectFieldClasses = $('#classes');
@@ -331,6 +363,8 @@ $(document).ready(function() {
                     $(this).prop('readonly', true);
                     $(this).prop('value', 0);
                 });
+                // Ažuriraj broj zaduženih učenika nakon resetovanja količina
+                countChargedStudents();
                 buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
                 inputZaduziSveKolicina.prop('disabled', true);
@@ -567,7 +601,7 @@ $(document).ready(function() {
             var $tabela = $('#data');
 
             // Selektujte sve input elemente u sedmoj koloni "Količina" unutar tabele
-            var $kolicinaInputElements = $tabela.find('tbody tr td:nth-child(5) input');
+            var $kolicinaInputElements = $tabela.find('tbody tr td:nth-child(7) input');
 
             //čita vrednost iz input elementa koju treba da dodeli svim redovima
             var vrednost = inputZaduziSveKolicina.val();
@@ -580,6 +614,9 @@ $(document).ready(function() {
                 console.log('debug this.id: ',  id)
                 dataChanged(id);
             });
+            
+            // Ažuriraj broj zaduženih učenika nakon promene svih količina
+            countChargedStudents();
         });
 
         // Onemogućavanje polja

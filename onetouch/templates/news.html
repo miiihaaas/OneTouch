@@ -1,0 +1,336 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Plutajući bočni meni -->
+        <div class="col-md-3">
+            <div id="floating-sidebar" class="floating-menu">
+                <div class="card">
+                    <div class="card-header bg-implicit-deepblue text-white">
+                        <h4 class="mb-0">Sadržaj</h4>
+                    </div>
+                    <div class="card-body">
+                        <nav id="news-sidebar" class="nav flex-column">
+                            <a class="nav-link sidebar-link" href="#vest-008">Jednostavnije praćenje i upravljanje dugovanjima učenika</a>
+                            <a class="nav-link sidebar-link" href="#vest-007">Generisanje uplatnice za preostali dug po usluzi</a>
+                            <a class="nav-link sidebar-link" href="#vest-006">Izvoz spiska učenika u Excel sa primenjenim filterima</a>
+                            <a class="nav-link sidebar-link" href="#vest-005">Fleksibilno unošenje primaoca na evidencionim računima</a>
+                            <a class="nav-link sidebar-link" href="#vest-004">Brzo slanje kartice stanja roditelju putem mejla</a>
+                            <a class="nav-link sidebar-link" href="#vest-003">Prikaz ukupnog broja zaduženih učenika u odeljenju</a>
+                            <a class="nav-link sidebar-link" href="#vest-002">Pouzdanije prepoznavanje novih učenika u odeljenju</a>
+                            <a class="nav-link sidebar-link" href="#vest-001">Efikasnije štampanje uplatnica - selektuj i objedini po potrebi</a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Glavni sadržaj -->
+        <div class="col-md-9">
+            <!-- osma vest -->
+            <div id="vest-008" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Jednostavnije praćenje i upravljanje dugovanjima učenika</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>U okviru bloka Pregled sada je dostupna <a href="{{ url_for('overviews.overview_debts') }}">nova stranica za dugovanja</a> koja omogućava da brzo pronađete i pregledate učenike sa neizmirenim obavezama prema precizno odabranim kriterijumima. Možete uneti minimalnu vrednost duga i izabrati usluge koje želite da proverite, a aplikacija će prikazati samo relevantne rezultate.</p>
+                        <p>Na stranici su dostupne praktične opcije: pregled detalja svakog učenika, generisanje PDF-a sa karticom stanja i uplatnicama na jednom mestu, kao i direktno slanje mejla roditelju sa svim potrebnim informacijama. Ova funkcionalnost čini praćenje dugovanja preglednijim i bržim, uz manje administrativnog posla.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sedma vest -->
+            <div id="vest-007" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Generisanje uplatnice za preostali dug po usluzi</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>Na kartici dugovanja sada je omogućeno štampanje uplatnice vezane isključivo za saldo, a ne za celokupno dugovanje. Dodat je footer koji, ukoliko je saldo veći od nule, prikazuje ikonicu za generisanje uplatnice samo za preostali dug, nezavisno od rata. Ova funkcionalnost olakšava praćenje i naplatu stvarnih preostalih obaveza.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Šesta vest -->
+            <div id="vest-006" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Izvoz spiska učenika u Excel sa primenjenim filterima</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>Sada možete jednostavno izvesti spisak učenika u <strong>Excel formatu</strong> uz zadržavanje svih trenutno primenjenih filtera na stranici <a href="{{ url_for('students.student_list') }}">Učenici</a>. Ova funkcionalnost omogućava brzu pripremu i deljenje podataka u preglednom i lako dostupnom formatu.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Peta vest -->
+            <div id="vest-005" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Fleksibilno unošenje primaoca na evidencionim računima</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>U bloku <a href="{{ url_for('schools.school_profile') }}">Finansijske informacije</a> dodata su dva nova polja - <strong>Naziv primaoca</strong> i <strong>Adresa primaoca</strong>. Ako ih ostavite prazna, koristi se naziv i adresa škole. Ako unesete samo naziv, koristi se samo taj naziv bez adrese škole. Ako unesete samo adresu, preuzima se i naziv i adresa škole. Ovo vam daje veću kontrolu i preciznost prilikom kreiranja evidencionih računa sa posebnim potrebama.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Četvrta vest -->
+            <div id="vest-004" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Brzo slanje kartice stanja roditelju putem mejla</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>Dodali smo opciju da direktno pošaljete karticu stanja roditelju na osnovu filtriranih rezultata. Kod učenika koji imaju aktivan roditeljski mejl sada ćete videti novu ikonicu za slanje u gornjem desnom uglu, pored štampača. Klikom na nju automatski se generiše i šalje PDF, što olakšava i ubrzava komunikaciju sa roditeljima.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Treća vest -->
+            <div id="vest-003" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Prikaz ukupnog broja zaduženih učenika u odeljenju</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>Prilikom zaduživanja ili pregleda arhive sada se automatski prikazuje ukupan broj zaduženih učenika u odeljenju. Ovo vam omogućava da odmah proverite da li su svi učenici obuhvaćeni bez ručnog prebrojavanja, čime štedite vreme i smanjujete mogućnost greške.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Druga vest -->
+            <div id="vest-002" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Pouzdanije prepoznavanje novih učenika u odeljenju</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>Ispravili smo problem zbog kog aplikacija ponekad nije prepoznavala novog učenika u odeljenju kod već zaduženih odeljenja određenom uslugom. Sada je prepoznavanje potpuno pouzdano, a opcija „Dodaj novog učenika“ radi bez zastoja, omogućavajući vam da brzo i bez grešaka zadužite nove učenike.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prva vest -->
+            <div id="vest-001" class="card mb-5">
+                <div class="card-header bg-implicit-skyblue text-white">
+                    <h3>Efikasnije štampanje uplatnica - selektuj i objedini po potrebi</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">20.09.2025.</span>
+                        </div>
+                        <p>Sada možete odabrati više uplatnica za štampu odjednom, bez štampanja svake pojedinačno. Umesto da trošite po jedan A4 papir za svaku uplatnicu, selektujte učenike kojima je potrebna naknadna štampa i dobićete objedinjeni dokument sa svim izabranim uplatnicama raspoređenim optimalno na stranama. Ovo značajno štedi papir i vreme.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button onclick="scrollToTop()" id="backToTopBtn" title="Povratak na vrh">↑</button>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+    .floating-menu {
+        position: fixed;
+        top: 80px;
+        width: 22%;
+        z-index: 100;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        padding-right: 5px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+    }
+
+    .sidebar-link {
+        color: #104e97;
+        font-weight: 500;
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+        padding: 8px 15px;
+        margin-bottom: 5px;
+    }
+    
+    .sidebar-link:hover,
+    .sidebar-link.active {
+        background-color: rgba(16, 78, 151, 0.1);
+        border-left: 3px solid #104e97;
+        color: #104e97;
+        font-weight: bold;
+    }
+    
+    .news-item {
+        margin-bottom: 15px;
+    }
+    
+    .badge {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+    
+    #backToTopBtn {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 99;
+        background-color: #104e97;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 18px;
+    }
+    
+    #backToTopBtn:hover {
+        background-color: #0c3c72;
+    }
+</style>
+
+<script>
+    // Funkcija za scroll to top dugme
+    window.onscroll = function() {
+        scrollFunction();
+        updateActiveNavItem();
+        updateSidebarPosition();
+    };
+
+    function scrollFunction() {
+        var btn = document.getElementById("backToTopBtn");
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+    }
+
+    function scrollToTop() {
+        document.body.scrollTop = 0; // Za Safari
+        document.documentElement.scrollTop = 0; // Za Chrome, Firefox, IE i Operu
+    }
+    
+    // Funkcija za ažuriranje aktivnog linka
+    function updateActiveNavItem() {
+        // Dobijamo sve vesti i sve linkove u meniju
+        const newsItems = document.querySelectorAll('div[id^="vest-"]');
+        const navLinks = document.querySelectorAll('.sidebar-link');
+        
+        // Podaci za izračunavanje pozicije
+        const scrollPosition = window.scrollY + 150;
+        let activeItemFound = false;
+        
+        // Prolazimo kroz sve vesti od gore ka dole
+        for (let i = 0; i < newsItems.length; i++) {
+            const currentItem = newsItems[i];
+            const nextItem = newsItems[i + 1] || null;
+            
+            // Prva vidljiva vest je ona koja je trenutno u fokusu
+            const itemTop = currentItem.offsetTop;
+            const itemBottom = nextItem ? nextItem.offsetTop : document.body.scrollHeight;
+            
+            // Pronalazimo odgovarajući link za trenutnu vest
+            const currentItemId = currentItem.getAttribute('id');
+            const correspondingLink = document.querySelector(`.sidebar-link[href="#${currentItemId}"]`);            
+            
+            // Proveravamo da li je trenutna pozicija unutar granica vesti
+            if (scrollPosition >= itemTop && (scrollPosition < itemBottom || !nextItem)) {
+                // Uklanjamo aktivnu klasu sa svih linkova
+                navLinks.forEach(link => link.classList.remove('active'));
+                
+                // Ako postoji odgovarajući link, označavamo ga kao aktivan
+                if (correspondingLink) {
+                    correspondingLink.classList.add('active');
+                    activeItemFound = true;
+                    break;
+                }
+            }
+        }
+        
+        // Ako ništa nije aktivno (npr. na vrhu stranice), aktiviramo prvi link
+        if (!activeItemFound && navLinks.length > 0 && scrollPosition < newsItems[0].offsetTop) {
+            navLinks.forEach(link => link.classList.remove('active'));
+            navLinks[0].classList.add('active');
+        }
+    }
+    
+    // Funkcija za ažuriranje pozicije i širine sidebar-a
+    function updateSidebarPosition() {
+        const sidebar = document.getElementById('floating-sidebar');
+        const container = document.querySelector('.col-md-3');
+        if (sidebar && container) {
+            const containerRect = container.getBoundingClientRect();
+            sidebar.style.width = containerRect.width + 'px';
+            sidebar.style.left = containerRect.left + 'px';
+        }
+    }
+
+    // Inicijalizacija
+    document.addEventListener("DOMContentLoaded", function() {
+        // Inicijalno postavljanje aktivnog linka
+        updateActiveNavItem();
+        // Inicijalno postavljanje pozicije sidebar-a
+        updateSidebarPosition();
+        
+        // Ažuriranje pozicije pri promeni veličine prozora
+        window.addEventListener('resize', updateSidebarPosition);
+        
+        // Glatko skrolovanje za sidrene linkove
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    // Označavamo kliknuti link kao aktivan pre skrolovanja
+                    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -6,31 +6,31 @@
         <div class="home-icon-row">
             <div class="icon-row">
                 <div class="home-icon-box">
-                    <a href="{{url_for('transactions.student_debts')}}"><img src="{{ url_for('static', filename='img/icon-zaduzivanje-ucenika.png') }}"></a>
+                    <a class="loading" href="{{url_for('transactions.student_debts')}}"><img src="{{ url_for('static', filename='img/icon-zaduzivanje-ucenika.png') }}"></a>
                     <p>Zaduživanje učenika</p>
                 </div>
                 <div class="home-icon-box">
-                    <a href="{{ url_for('transactions.posting_payment') }}"><img src="{{ url_for('static', filename='img/icon-knjizenje-uplata.png') }}"></a>
+                    <a class="loading" href="{{ url_for('transactions.posting_payment') }}"><img src="{{ url_for('static', filename='img/icon-knjizenje-uplata.png') }}"></a>
                     <p>Knjiženje uplata</p>
                 </div>
             </div>
             <div class="icon-row">
                 <div class="home-icon-box">
-                    <a href="{{ url_for('overviews.overview_students') }}"><img src="{{ url_for('static', filename='img/icon-pregled-po-uceniku.png') }}"></a>
+                    <a class="loading" href="{{ url_for('overviews.overview_students') }}"><img src="{{ url_for('static', filename='img/icon-pregled-po-uceniku.png') }}"></a>
                     <p>Pregled po učeniku</p>
                 </div>
                 <div class="home-icon-box">
-                    <a id="school" name="school" href="{{ url_for('overviews.overview_sections') }}"><img src="{{ url_for('static', filename='img/icon-pregled-skole.png') }}"></a>
+                    <a class="loading" id="school" name="school" href="{{ url_for('overviews.overview_sections') }}"><img src="{{ url_for('static', filename='img/icon-pregled-skole.png') }}"></a>
                     <p>Pregled škole</p>
                 </div>
             </div>
             <div class="icon-row">
                 <div class="home-icon-box">
-                    <a href="{{ url_for('transactions.debts_archive_list') }}"><img src="{{ url_for('static', filename='img/icon-arhiva-naloga.png') }}"></a>
+                    <a class="loading" href="{{ url_for('transactions.debts_archive_list') }}"><img src="{{ url_for('static', filename='img/icon-arhiva-naloga.png') }}"></a>
                     <p>Arhiva naloga</p>
                 </div>
                 <div class="home-icon-box">
-                    <a href="{{ url_for('transactions.payments_archive_list') }}"><img src="{{ url_for('static', filename='img/icon-arhiva-izvoda.png') }}"></a>
+                    <a class="loading" href="{{ url_for('transactions.payments_archive_list') }}"><img src="{{ url_for('static', filename='img/icon-arhiva-izvoda.png') }}"></a>
                     <p>Arhiva izvoda</p>
                 </div>
             </div>
