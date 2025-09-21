@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, url_for, flash, redirect, request,
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord, School
 from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list, send_mail, add_fonts
+from onetouch.overviews.functions import get_filtered_transactions_data, add_filter_info_to_pdf
 from flask_mail import Message
 from onetouch import mail, app
 from sqlalchemy.exc import SQLAlchemyError
@@ -731,9 +732,6 @@ def generate_pdf_reports(student_id):
     2. Uplatnice za usluge sa pozitivnim saldom
     """
     try:
-        # Dobavljanje podataka o učeniku
-        student = Student.query.get_or_404(student_id)
-        
         # Kreiranje PDF-a sa listom usluga
         project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
         user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
@@ -747,53 +745,9 @@ def generate_pdf_reports(student_id):
         selected_services_param = request.args.get('selected_services', '')
         selected_services = selected_services_param.split(',') if selected_services_param else []
         
-        # Filter za transakcije - osnovna pretraga po učeniku
-        query = TransactionRecord.query.filter_by(student_id=student_id)
-        
-        # Dodatni filter po izabranim uslugama
-        if selected_services and selected_services[0]: # Provera da nije prazan string u prvom elementu
-            service_ids = [int(s) for s in selected_services if s.strip()]
-            if service_ids:  # Ako postoje validni ID-evi
-                query = query.filter(TransactionRecord.service_item_id.in_(service_ids))
-        
-        # Izvršavanje upita
-        transaction_records = query.all()
-        
-        # Prikupljanje naziva izabranih usluga za prikaz u PDF-u
-        selected_service_names = []
-        if selected_services and selected_services[0]:
-            service_items = ServiceItem.query.filter(ServiceItem.id.in_([int(s) for s in selected_services if s.strip()])).all()
-            selected_service_names = [f"{item.service_item_service.service_name} - {item.service_item_name}" for item in service_items]
-        
-        # Grupisanje transakcija po uslugama
-        services_data = {}
-        for record in transaction_records:
-            service_id = record.service_item_id
-            if service_id not in services_data:
-                services_data[service_id] = {
-                    'service_item': record.transaction_record_service_item,
-                    'debt_amount': 0,
-                    'payment_amount': 0,
-                    'saldo': 0
-                }
-            
-            if record.student_debt_id:
-                services_data[service_id]['debt_amount'] += record.student_debt_total
-            elif record.student_payment_id:
-                services_data[service_id]['payment_amount'] += record.student_debt_total
-        
-        # Računanje salda za svaku uslugu
-        services_with_positive_saldo = []
-        for service_id, data in services_data.items():
-            data['saldo'] = data['debt_amount'] - data['payment_amount']
-            if data['saldo'] > 0:
-                services_with_positive_saldo.append({
-                    'service_id': service_id,
-                    'service_item': data['service_item'],
-                    'debt_amount': data['debt_amount'],
-                    'payment_amount': data['payment_amount'],
-                    'saldo': data['saldo']
-                })
+        # Dobavljanje filtriranih podataka o transakcijama korišćenjem pomoćne funkcije
+        services_with_positive_saldo, selected_service_names, student = get_filtered_transactions_data(
+            student_id, selected_services, min_debt_amount)
         
         if not services_with_positive_saldo:
             flash('Učenik nema dugovanja ni za jednu uslugu.', 'info')
@@ -802,36 +756,13 @@ def generate_pdf_reports(student_id):
         # Generisanje PDF-a sa listom usluga koje imaju pozitivan saldo
         from fpdf import FPDF
         from onetouch.transactions.functions import add_fonts
-        from datetime import datetime
         
         pdf = FPDF()
         add_fonts(pdf)
         pdf.add_page()
         
-        # Naslov
-        pdf.set_font('DejaVuSansCondensed', 'B', 16)
-        pdf.cell(0, 10, f"Lista dugovanja - {student.student_name} {student.student_surname}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Informacije o učeniku i kriterijumima
-        pdf.set_font('DejaVuSansCondensed', '', 12)
-        pdf.cell(0, 10, f"Razred/odeljenje: {student.student_class}/{student.student_section}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Datum generisanja
-        current_date = datetime.now().strftime('%d.%m.%Y.')
-        pdf.cell(0, 10, f"Datum generisanja: {current_date}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Kriterijumi filtriranja
-        pdf.cell(0, 10, f"Minimalni iznos dugovanja: {min_debt_amount:.2f}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Informacija o filtriranim uslugama
-        if selected_service_names:
-            pdf.cell(0, 10, "Filtrirano po sledećim uslugama:", new_x="LMARGIN", new_y="NEXT")
-            for i, service_name in enumerate(selected_service_names):
-                pdf.cell(0, 8, f"  {i+1}. {service_name}", new_x="LMARGIN", new_y="NEXT")
-        else:
-            pdf.cell(0, 10, "Prikazane sve usluge.", new_x="LMARGIN", new_y="NEXT")
-            
-        pdf.ln(5)
+        # Dodavanje informacija o filtriranju korišćenjem pomoćne funkcije
+        add_filter_info_to_pdf(pdf, student, min_debt_amount, selected_service_names)
         
         # Tabela usluga
         pdf.set_fill_color(200, 220, 255)
@@ -961,11 +892,11 @@ def generate_pdf_reports(student_id):
         pdf_links = [
             {
                 'name': 'Lista dugovanja',
-                'url': f'/static/reports/user_{current_user.id}/services_list_{student_id}.pdf'
+                'url': url_for('static', filename=f'reports/user_{current_user.id}/services_list_{student_id}.pdf')
             },
             {
                 'name': 'Uplatnice',
-                'url': f'/static/reports/user_{current_user.id}/payment_slips_{student_id}.pdf'
+                'url': url_for('static', filename=f'reports/user_{current_user.id}/payment_slips_{student_id}.pdf')
             }
         ]
         
@@ -989,14 +920,6 @@ def send_debt_emails(student_id):
     Šalje e-mail sa izveštajem o dugovanjima za sve usluge sa pozitivnim saldom.
     """
     try:
-        # Dobavljanje podataka o učeniku
-        student = Student.query.get_or_404(student_id)
-        
-        # Provera da li učenik ima definisan mejl roditelja
-        if not student.parent_email:
-            flash('Učenik nema definisan mejl roditelja.', 'danger')
-            return redirect(url_for('overviews.overview_debts'))
-            
         # Dobavljanje parametara iz URL-a
         min_debt_amount_str = request.args.get('min_debt_amount', '0')
         min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0
@@ -1004,53 +927,14 @@ def send_debt_emails(student_id):
         selected_services_param = request.args.get('selected_services', '')
         selected_services = selected_services_param.split(',') if selected_services_param else []
         
-        # Filter za transakcije - osnovna pretraga po učeniku
-        query = TransactionRecord.query.filter_by(student_id=student_id)
-        
-        # Dodatni filter po izabranim uslugama
-        if selected_services and selected_services[0]: # Provera da nije prazan string u prvom elementu
-            service_ids = [int(s) for s in selected_services if s.strip()]
-            if service_ids:  # Ako postoje validni ID-evi
-                query = query.filter(TransactionRecord.service_item_id.in_(service_ids))
-        
-        # Izvršavanje upita
-        transaction_records = query.all()
-        
-        # Prikupljanje naziva izabranih usluga za prikaz u PDF-u
-        selected_service_names = []
-        if selected_services and selected_services[0]:
-            service_items = ServiceItem.query.filter(ServiceItem.id.in_([int(s) for s in selected_services if s.strip()])).all()
-            selected_service_names = [f"{item.service_item_service.service_name} - {item.service_item_name}" for item in service_items]
-        
-        # Grupisanje transakcija po uslugama
-        services_data = {}
-        for record in transaction_records:
-            service_id = record.service_item_id
-            if service_id not in services_data:
-                services_data[service_id] = {
-                    'service_item': record.transaction_record_service_item,
-                    'debt_amount': 0,
-                    'payment_amount': 0,
-                    'saldo': 0
-                }
+        # Dobavljanje filtriranih podataka o transakcijama korišćenjem pomoćne funkcije
+        services_with_positive_saldo, selected_service_names, student = get_filtered_transactions_data(
+            student_id, selected_services, min_debt_amount)
             
-            if record.student_debt_id:
-                services_data[service_id]['debt_amount'] += record.student_debt_total
-            elif record.student_payment_id:
-                services_data[service_id]['payment_amount'] += record.student_debt_total
-        
-        # Računanje salda za svaku uslugu
-        services_with_positive_saldo = []
-        for service_id, data in services_data.items():
-            data['saldo'] = data['debt_amount'] - data['payment_amount']
-            if data['saldo'] > 0:
-                services_with_positive_saldo.append({
-                    'service_id': service_id,
-                    'service_item': data['service_item'],
-                    'debt_amount': data['debt_amount'],
-                    'payment_amount': data['payment_amount'],
-                    'saldo': data['saldo']
-                })
+        # Provera da li učenik ima definisan mejl roditelja
+        if not student.parent_email:
+            flash('Učenik nema definisan mejl roditelja.', 'danger')
+            return redirect(url_for('overviews.overview_debts'))
         
         if not services_with_positive_saldo:
             flash('Učenik nema dugovanja ni za jednu uslugu.', 'info')
@@ -1090,30 +974,8 @@ def send_debt_emails(student_id):
         add_fonts(pdf)
         pdf.add_page()
         
-        # Naslov
-        pdf.set_font('DejaVuSansCondensed', 'B', 16)
-        pdf.cell(0, 10, f"Lista dugovanja - {student.student_name} {student.student_surname}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Informacije o učeniku i kriterijumima
-        pdf.set_font('DejaVuSansCondensed', '', 12)
-        pdf.cell(0, 10, f"Razred/odeljenje: {student.student_class}/{student.student_section}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Datum generisanja
-        current_date = datetime.now().strftime('%d.%m.%Y.')
-        pdf.cell(0, 10, f"Datum generisanja: {current_date}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Kriterijumi filtriranja
-        pdf.cell(0, 10, f"Minimalni iznos dugovanja: {min_debt_amount:.2f}", new_x="LMARGIN", new_y="NEXT")
-        
-        # Informacija o filtriranim uslugama
-        if selected_service_names:
-            pdf.cell(0, 10, "Filtrirano po sledećim uslugama:", new_x="LMARGIN", new_y="NEXT")
-            for i, service_name in enumerate(selected_service_names):
-                pdf.cell(0, 8, f"  {i+1}. {service_name}", new_x="LMARGIN", new_y="NEXT")
-        else:
-            pdf.cell(0, 10, "Prikazane sve usluge.", new_x="LMARGIN", new_y="NEXT")
-            
-        pdf.ln(5)
+        # Dodavanje informacija o filtriranju korišćenjem pomoćne funkcije
+        add_filter_info_to_pdf(pdf, student, min_debt_amount, selected_service_names)
         
         # Tabela usluga
         pdf.set_fill_color(200, 220, 255)
@@ -1261,11 +1123,11 @@ def send_debt_emails(student_id):
         pdf_links = [
             {
                 'name': 'Lista dugovanja',
-                'url': f'/static/reports/user_{current_user.id}/services_list_{student_id}.pdf'
+                'url': url_for('static', filename=f'reports/user_{current_user.id}/services_list_{student_id}.pdf')
             },
             {
                 'name': 'Uplatnice',
-                'url': f'/static/reports/user_{current_user.id}/payment_slips_{student_id}.pdf'
+                'url': url_for('static', filename=f'reports/user_{current_user.id}/payment_slips_{student_id}.pdf')
             }
         ]
         
