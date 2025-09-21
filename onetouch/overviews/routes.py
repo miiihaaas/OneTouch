@@ -3,10 +3,10 @@ import json
 import logging
 import os
 from datetime import datetime, date
-from flask import Blueprint, render_template, url_for, flash, redirect, request, abort
+from flask import Blueprint, render_template, url_for, flash, redirect, request, abort, current_app
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord, School
-from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list, send_mail
+from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list, send_mail, add_fonts
 from flask_mail import Message
 from onetouch import mail, app
 from sqlalchemy.exc import SQLAlchemyError
@@ -413,7 +413,6 @@ def overview_sections():
                 'value': record.service_item_id,
                 'label': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name
             })
-    logging.debug(f'{options=}')
     
     data = []
     for section in unique_sections:
@@ -454,6 +453,132 @@ def overview_sections():
                             razred=razred,
                             odeljenje=odeljenje,
                             route_name=route_name,)
+
+
+@overviews.route("/overview_debts", methods=['GET', 'POST'])
+def overview_debts():
+    try:
+        route_name = request.endpoint
+        # Dobavljanje liste svih usluga za multiselect
+        services = []
+        try:
+            service_items = ServiceItem.query.order_by(ServiceItem.service_item_date.desc()).all()
+            
+            for item in service_items:
+                service = {
+                    'id': item.id,
+                    'name': f"{item.service_item_service.service_name} - {item.service_item_name}"
+                }
+                if service not in services:
+                    services.append(service)
+        except SQLAlchemyError as e:
+            logging.error(f'Greška pri dobavljanju usluga: {str(e)}')
+            flash('Došlo je do greške pri učitavanju usluga.', 'danger')
+            
+        # Podrazumevane vrednosti
+        min_debt_amount = 0
+        selected_services = []
+        export_data = []
+        
+        # Obrada POST zahteva
+        if request.method == 'POST':
+            # Bezbedno konvertovanje vrednosti iz forme u float, sa proverom za prazan string
+            min_debt_amount_str = request.form.get('minDebtAmount', '')
+            min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0
+            selected_services = request.form.getlist('selectedServices')
+            print(f'{min_debt_amount=}')
+            print(f'{selected_services=}')
+            
+            # Filtriranje transakcija po izabranim uslugama i minimalnom dugovanju
+            try:
+                records = TransactionRecord.query.join(Student).filter(Student.student_class < 9)
+                
+                # Filtriranje po izabranim uslugama ako su izabrane
+                if selected_services:
+                    records = records.filter(TransactionRecord.service_item_id.in_([int(s) for s in selected_services]))
+                
+                records = records.all()
+                
+                # Grupisanje po učeniku (sumiranje svih dugovanja po učeniku)
+                student_data = {}
+                services_by_student = {}  # Praćenje usluga po učeniku za detalje PDF-a
+                
+                for record in records:
+                    student_id = record.student_id
+                    
+                    # Inicijalizacija podataka za učenika ako ne postoje
+                    if student_id not in student_data:
+                        student_data[student_id] = {
+                            'student_id': student_id,
+                            'student_name': record.transaction_record_student.student_name,
+                            'student_surname': record.transaction_record_student.student_surname,
+                            'student_class': record.transaction_record_student.student_class,
+                            'student_section': record.transaction_record_student.student_section,
+                            'student_debt': 0,
+                            'student_payment': 0,
+                            'saldo': 0
+                        }
+                        services_by_student[student_id] = {}
+                    
+                    # Inicijalizacija podataka po usluzi za detalje
+                    service_id = record.service_item_id
+                    if service_id not in services_by_student[student_id]:
+                        services_by_student[student_id][service_id] = {
+                            'service_item_id': service_id,
+                            'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
+                            'student_debt': 0,
+                            'student_payment': 0,
+                            'saldo': 0
+                        }
+                    
+                    # Sabiranje zaduženja i uplata
+                    if record.student_debt_id:
+                        student_data[student_id]['student_debt'] += record.student_debt_total
+                        services_by_student[student_id][service_id]['student_debt'] += record.student_debt_total
+                    elif record.student_payment_id:
+                        student_data[student_id]['student_payment'] += record.student_debt_total
+                        services_by_student[student_id][service_id]['student_payment'] += record.student_debt_total
+                    
+                    # Ažuriranje salda po učeniku
+                    student_data[student_id]['saldo'] = student_data[student_id]['student_debt'] - student_data[student_id]['student_payment']
+                    
+                    # Ažuriranje salda po usluzi
+                    services_by_student[student_id][service_id]['saldo'] = services_by_student[student_id][service_id]['student_debt'] - services_by_student[student_id][service_id]['student_payment']
+                
+                # Filtriranje po minimalnom dugovanju i pretvaranje u listu
+                for student_id, data in student_data.items():
+                    if data['saldo'] > min_debt_amount:
+                        # Dodaj listu usluga za PDF izveštaj
+                        data['services'] = list(services_by_student[student_id].values())
+                        export_data.append(data)
+                
+                # Sortiranje po saldu (dugovanje) od najvećeg ka najmanjem
+                export_data.sort(key=lambda x: x['saldo'], reverse=True)
+                
+                if not export_data:
+                    flash('Nema učenika koji odgovaraju zadatim kriterijumima.', 'info')
+                    
+            except SQLAlchemyError as e:
+                logging.error(f'Greška pri filtriranju dugovanja: {str(e)}')
+                flash('Došlo je do greške pri filtriranju podataka.', 'danger')
+        
+        # Konvertujemo selected_services iz stringova u cele brojeve za pravilno poređenje u šablonu
+        selected_services_int = [int(s) for s in selected_services] if selected_services else []
+        
+        return render_template('overview_debts.html',
+                        title='Pregled dugovanja učenika',
+                        legend='Pregled dugovanja učenika',
+                        route_name=route_name,
+                        services=services,
+                        min_debt_amount=min_debt_amount,
+                        selected_services=selected_services_int,
+                        export_data=export_data)
+    
+    except Exception as e:
+        logging.error(f'Greška pri pregledu dugovanja učenika: {str(e)}')
+        flash('Greška pri pregledu dugovanja učenika.', 'danger')
+        return redirect(url_for('main.home'))
+
 
 
 @overviews.route("/send_student_report_email/<int:student_id>")
@@ -595,3 +720,562 @@ def send_student_report_email(student_id):
         flash(f'Došlo je do neočekivane greške: {str(e)}', 'danger')
         logging.error(f'Neočekivana greška u send_student_report_email: {str(e)}')
         return redirect(url_for('overviews.overview_student', student_id=student_id))
+
+
+@overviews.route("/generate_pdf_reports/<int:student_id>")
+@login_required
+def generate_pdf_reports(student_id):
+    """
+    Generiše dva PDF izveštaja za učenika:
+    1. Listu usluga sa pozitivnim saldom
+    2. Uplatnice za usluge sa pozitivnim saldom
+    """
+    try:
+        # Dobavljanje podataka o učeniku
+        student = Student.query.get_or_404(student_id)
+        
+        # Kreiranje PDF-a sa listom usluga
+        project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
+        user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+            
+        # Dobavljanje parametara iz URL-a
+        min_debt_amount_str = request.args.get('min_debt_amount', '0')
+        min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0
+        
+        selected_services_param = request.args.get('selected_services', '')
+        selected_services = selected_services_param.split(',') if selected_services_param else []
+        
+        # Filter za transakcije - osnovna pretraga po učeniku
+        query = TransactionRecord.query.filter_by(student_id=student_id)
+        
+        # Dodatni filter po izabranim uslugama
+        if selected_services and selected_services[0]: # Provera da nije prazan string u prvom elementu
+            service_ids = [int(s) for s in selected_services if s.strip()]
+            if service_ids:  # Ako postoje validni ID-evi
+                query = query.filter(TransactionRecord.service_item_id.in_(service_ids))
+        
+        # Izvršavanje upita
+        transaction_records = query.all()
+        
+        # Prikupljanje naziva izabranih usluga za prikaz u PDF-u
+        selected_service_names = []
+        if selected_services and selected_services[0]:
+            service_items = ServiceItem.query.filter(ServiceItem.id.in_([int(s) for s in selected_services if s.strip()])).all()
+            selected_service_names = [f"{item.service_item_service.service_name} - {item.service_item_name}" for item in service_items]
+        
+        # Grupisanje transakcija po uslugama
+        services_data = {}
+        for record in transaction_records:
+            service_id = record.service_item_id
+            if service_id not in services_data:
+                services_data[service_id] = {
+                    'service_item': record.transaction_record_service_item,
+                    'debt_amount': 0,
+                    'payment_amount': 0,
+                    'saldo': 0
+                }
+            
+            if record.student_debt_id:
+                services_data[service_id]['debt_amount'] += record.student_debt_total
+            elif record.student_payment_id:
+                services_data[service_id]['payment_amount'] += record.student_debt_total
+        
+        # Računanje salda za svaku uslugu
+        services_with_positive_saldo = []
+        for service_id, data in services_data.items():
+            data['saldo'] = data['debt_amount'] - data['payment_amount']
+            if data['saldo'] > 0:
+                services_with_positive_saldo.append({
+                    'service_id': service_id,
+                    'service_item': data['service_item'],
+                    'debt_amount': data['debt_amount'],
+                    'payment_amount': data['payment_amount'],
+                    'saldo': data['saldo']
+                })
+        
+        if not services_with_positive_saldo:
+            flash('Učenik nema dugovanja ni za jednu uslugu.', 'info')
+            return redirect(url_for('overviews.overview_debts'))
+        
+        # Generisanje PDF-a sa listom usluga koje imaju pozitivan saldo
+        from fpdf import FPDF
+        from onetouch.transactions.functions import add_fonts
+        from datetime import datetime
+        
+        pdf = FPDF()
+        add_fonts(pdf)
+        pdf.add_page()
+        
+        # Naslov
+        pdf.set_font('DejaVuSansCondensed', 'B', 16)
+        pdf.cell(0, 10, f"Lista dugovanja - {student.student_name} {student.student_surname}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Informacije o učeniku i kriterijumima
+        pdf.set_font('DejaVuSansCondensed', '', 12)
+        pdf.cell(0, 10, f"Razred/odeljenje: {student.student_class}/{student.student_section}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Datum generisanja
+        current_date = datetime.now().strftime('%d.%m.%Y.')
+        pdf.cell(0, 10, f"Datum generisanja: {current_date}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Kriterijumi filtriranja
+        pdf.cell(0, 10, f"Minimalni iznos dugovanja: {min_debt_amount:.2f}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Informacija o filtriranim uslugama
+        if selected_service_names:
+            pdf.cell(0, 10, "Filtrirano po sledećim uslugama:", new_x="LMARGIN", new_y="NEXT")
+            for i, service_name in enumerate(selected_service_names):
+                pdf.cell(0, 8, f"  {i+1}. {service_name}", new_x="LMARGIN", new_y="NEXT")
+        else:
+            pdf.cell(0, 10, "Prikazane sve usluge.", new_x="LMARGIN", new_y="NEXT")
+            
+        pdf.ln(5)
+        
+        # Tabela usluga
+        pdf.set_fill_color(200, 220, 255)
+        pdf.set_font('DejaVuSansCondensed', 'B', 11)
+        pdf.cell(80, 10, "Usluga", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
+        pdf.cell(30, 10, "Zaduženje", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
+        pdf.cell(30, 10, "Uplate", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
+        pdf.cell(30, 10, "Saldo", 1, new_x="LMARGIN", new_y="NEXT", align="C", fill=True)
+        
+        # Podaci u tabeli
+        pdf.set_font('DejaVuSansCondensed', '', 10)
+        
+        # Ukupni iznosi
+        total_debt = 0
+        total_payment = 0
+        total_saldo = 0
+        
+        for service_data in services_with_positive_saldo:
+            service_item = service_data['service_item']
+            service_name = f"{service_item.service_item_service.service_name} - {service_item.service_item_name}"
+            debt = service_data['debt_amount']
+            payment = service_data['payment_amount']
+            saldo = service_data['saldo']
+            
+            # Dodavanje u ukupni iznos
+            total_debt += debt
+            total_payment += payment
+            total_saldo += saldo
+            
+            # Prikaz u tabeli
+            pdf.cell(80, 8, service_name, 1, new_x="RIGHT", new_y="LAST")
+            pdf.cell(30, 8, f"{debt:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(30, 8, f"{payment:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(30, 8, f"{saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        
+        # Ukupno
+        pdf.set_font('DejaVuSansCondensed', 'B', 10)
+        pdf.cell(80, 10, "UKUPNO:", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(30, 10, f"{total_debt:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(30, 10, f"{total_payment:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(30, 10, f"{total_saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        
+        # Čuvanje prvog PDF-a (lista usluga)
+        services_list_path = os.path.join(user_folder, f'services_list_{student_id}.pdf')
+        pdf.output(services_list_path)
+        
+        # Drugi PDF - uplatnice za sve usluge sa pozitivnim saldom
+        from onetouch.transactions.functions import prepare_qr_data, generate_qr_code, add_payment_slip_content, PDF, cleanup_qr_codes, setup_pdf_page
+        
+        # Generisanje podataka o školi
+        school = School.query.first()
+        
+        # Kreiranje PDF-a za uplatnice
+        payment_slips_pdf = PDF()
+        add_fonts(payment_slips_pdf)
+        
+        # Generisanje uplatnica za svaku uslugu sa pozitivnim saldom - po 3 na stranici
+        payment_slips_count = 0
+        for service_data in services_with_positive_saldo:
+            service_item = service_data['service_item']
+            saldo = service_data['saldo']
+            
+            if saldo <= 0:
+                continue  # Preskačemo usluge bez dugovanja
+                
+            # Koristimo postojeću funkciju za pozicioniranje uplatnica (3 po stranici)
+            counter = payment_slips_count + 1  # Brojanje od 1
+            y, y_qr = setup_pdf_page(payment_slips_pdf, counter)
+            
+            payment_slips_count += 1
+            
+            # Priprema svrhe plaćanja
+            purpose_of_payment = f"{service_item.service_item_service.service_name} - {service_item.service_item_name}"
+            
+            # Određivanje primaoca
+            bank_account_number = service_item.bank_account
+            recipient_name = ""
+            recipient_address = ""
+            
+            for account in school.school_bank_accounts.get('bank_accounts', []):
+                if account.get('bank_account_number') == bank_account_number:
+                    recipient_name = account.get('recipient_name', "")
+                    recipient_address = account.get('recipient_address', "")
+                    break
+            
+            # Određivanje primaoca
+            if not recipient_name and not recipient_address:
+                primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+            elif recipient_name and not recipient_address:
+                primalac = recipient_name
+            elif not recipient_name and recipient_address:
+                primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+            else:
+                primalac = f"{recipient_name}\r\n{recipient_address}"
+            
+            # Podaci za uplatnicu
+            payment_data = {
+                'student_id': student_id,
+                'uplatilac': student.student_name + ' ' + student.student_surname,
+                'svrha_uplate': f"{student_id:04d}-{service_data['service_id']:03d} {purpose_of_payment}",
+                'primalac': primalac,
+                'sifra_placanja': 253 if service_item.reference_number_spiri else 221,
+                'valuta': 'RSD',
+                'iznos': saldo,
+                'racun_primaoca': bank_account_number,
+                'model': '97' if service_item.reference_number_spiri else '',
+                'poziv_na_broj': service_item.reference_number_spiri if service_item.reference_number_spiri else '',
+            }
+            
+            # Koordinate su već postavljene kroz setup_pdf_page funkciju
+            
+            # Generisanje QR koda
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user.id)
+            
+            # Dodavanje sadržaja uplatnice
+            add_payment_slip_content(payment_slips_pdf, payment_data, y, y_qr, project_folder, current_user)
+        
+        # Čišćenje privremenih QR kodova
+        cleanup_qr_codes(project_folder, current_user.id)
+        
+        # Čuvanje drugog PDF-a (uplatnice)
+        payment_slips_path = os.path.join(user_folder, f'payment_slips_{student_id}.pdf')
+        payment_slips_pdf.output(payment_slips_path)
+        
+        # Priprema linkova za PDF fajlove za prikazivanje u HTML šablonu
+        pdf_links = [
+            {
+                'name': 'Lista dugovanja',
+                'url': f'/static/reports/user_{current_user.id}/services_list_{student_id}.pdf'
+            },
+            {
+                'name': 'Uplatnice',
+                'url': f'/static/reports/user_{current_user.id}/payment_slips_{student_id}.pdf'
+            }
+        ]
+        
+        # Prikazivanje HTML stranice sa porukom o uspešno generisanim PDF-ovima
+        return render_template('operation_success.html',
+                            title='PDF izveštaji su uspešno generisani',
+                            message='PDF izveštaji su uspešno generisani i otvoreni u novim tabovima.',
+                            pdf_links=pdf_links,
+                            auto_close=True)
+        
+    except Exception as e:
+        logging.error(f'Greška pri generisanju PDF izveštaja: {str(e)}')
+        flash(f'Došlo je do greške pri generisanju PDF-a: {str(e)}', 'danger')
+        return redirect(url_for('overviews.overview_debts'))
+
+
+@overviews.route("/send_debt_emails/<int:student_id>")
+@login_required
+def send_debt_emails(student_id):
+    """
+    Šalje e-mail sa izveštajem o dugovanjima za sve usluge sa pozitivnim saldom.
+    """
+    try:
+        # Dobavljanje podataka o učeniku
+        student = Student.query.get_or_404(student_id)
+        
+        # Provera da li učenik ima definisan mejl roditelja
+        if not student.parent_email:
+            flash('Učenik nema definisan mejl roditelja.', 'danger')
+            return redirect(url_for('overviews.overview_debts'))
+            
+        # Dobavljanje parametara iz URL-a
+        min_debt_amount_str = request.args.get('min_debt_amount', '0')
+        min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0
+        
+        selected_services_param = request.args.get('selected_services', '')
+        selected_services = selected_services_param.split(',') if selected_services_param else []
+        
+        # Filter za transakcije - osnovna pretraga po učeniku
+        query = TransactionRecord.query.filter_by(student_id=student_id)
+        
+        # Dodatni filter po izabranim uslugama
+        if selected_services and selected_services[0]: # Provera da nije prazan string u prvom elementu
+            service_ids = [int(s) for s in selected_services if s.strip()]
+            if service_ids:  # Ako postoje validni ID-evi
+                query = query.filter(TransactionRecord.service_item_id.in_(service_ids))
+        
+        # Izvršavanje upita
+        transaction_records = query.all()
+        
+        # Prikupljanje naziva izabranih usluga za prikaz u PDF-u
+        selected_service_names = []
+        if selected_services and selected_services[0]:
+            service_items = ServiceItem.query.filter(ServiceItem.id.in_([int(s) for s in selected_services if s.strip()])).all()
+            selected_service_names = [f"{item.service_item_service.service_name} - {item.service_item_name}" for item in service_items]
+        
+        # Grupisanje transakcija po uslugama
+        services_data = {}
+        for record in transaction_records:
+            service_id = record.service_item_id
+            if service_id not in services_data:
+                services_data[service_id] = {
+                    'service_item': record.transaction_record_service_item,
+                    'debt_amount': 0,
+                    'payment_amount': 0,
+                    'saldo': 0
+                }
+            
+            if record.student_debt_id:
+                services_data[service_id]['debt_amount'] += record.student_debt_total
+            elif record.student_payment_id:
+                services_data[service_id]['payment_amount'] += record.student_debt_total
+        
+        # Računanje salda za svaku uslugu
+        services_with_positive_saldo = []
+        for service_id, data in services_data.items():
+            data['saldo'] = data['debt_amount'] - data['payment_amount']
+            if data['saldo'] > 0:
+                services_with_positive_saldo.append({
+                    'service_id': service_id,
+                    'service_item': data['service_item'],
+                    'debt_amount': data['debt_amount'],
+                    'payment_amount': data['payment_amount'],
+                    'saldo': data['saldo']
+                })
+        
+        if not services_with_positive_saldo:
+            flash('Učenik nema dugovanja ni za jednu uslugu.', 'info')
+            return redirect(url_for('overviews.overview_debts'))
+        
+        # Generisanje HTML sadržaja e-maila
+        template_data = {
+            'student': student,
+            'services': services_with_positive_saldo,
+            'total_debt': sum(service['debt_amount'] for service in services_with_positive_saldo),
+            'total_payment': sum(service['payment_amount'] for service in services_with_positive_saldo),
+            'total_saldo': sum(service['saldo'] for service in services_with_positive_saldo),
+            'school': School.query.first(),
+            'now': datetime.now(),
+            'min_debt_amount': min_debt_amount,
+            'selected_services': selected_services,
+            'selected_service_names': selected_service_names
+        }
+        
+        html_content = render_template('message_html_debt_report.html', **template_data)
+        
+        # Podaci škole
+        school = School.query.first()
+        
+        # Generisanje PDF-a sa listom usluga koje imaju pozitivan saldo
+        from fpdf import FPDF
+        from onetouch.transactions.functions import add_fonts
+        
+        # Kreiranje PDF-a sa listom usluga
+        project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
+        user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+            
+        # --- Generisanje prvog PDF-a - lista usluga ---
+        pdf = FPDF()
+        add_fonts(pdf)
+        pdf.add_page()
+        
+        # Naslov
+        pdf.set_font('DejaVuSansCondensed', 'B', 16)
+        pdf.cell(0, 10, f"Lista dugovanja - {student.student_name} {student.student_surname}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Informacije o učeniku i kriterijumima
+        pdf.set_font('DejaVuSansCondensed', '', 12)
+        pdf.cell(0, 10, f"Razred/odeljenje: {student.student_class}/{student.student_section}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Datum generisanja
+        current_date = datetime.now().strftime('%d.%m.%Y.')
+        pdf.cell(0, 10, f"Datum generisanja: {current_date}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Kriterijumi filtriranja
+        pdf.cell(0, 10, f"Minimalni iznos dugovanja: {min_debt_amount:.2f}", new_x="LMARGIN", new_y="NEXT")
+        
+        # Informacija o filtriranim uslugama
+        if selected_service_names:
+            pdf.cell(0, 10, "Filtrirano po sledećim uslugama:", new_x="LMARGIN", new_y="NEXT")
+            for i, service_name in enumerate(selected_service_names):
+                pdf.cell(0, 8, f"  {i+1}. {service_name}", new_x="LMARGIN", new_y="NEXT")
+        else:
+            pdf.cell(0, 10, "Prikazane sve usluge.", new_x="LMARGIN", new_y="NEXT")
+            
+        pdf.ln(5)
+        
+        # Tabela usluga
+        pdf.set_fill_color(200, 220, 255)
+        pdf.set_font('DejaVuSansCondensed', 'B', 11)
+        pdf.cell(80, 10, "Usluga", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
+        pdf.cell(30, 10, "Zaduženje", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
+        pdf.cell(30, 10, "Uplate", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
+        pdf.cell(30, 10, "Saldo", 1, new_x="LMARGIN", new_y="NEXT", align="C", fill=True)
+        
+        # Podaci u tabeli
+        pdf.set_font('DejaVuSansCondensed', '', 10)
+        
+        # Ukupni iznosi
+        total_debt = 0
+        total_payment = 0
+        total_saldo = 0
+        
+        for service_data in services_with_positive_saldo:
+            service_item = service_data['service_item']
+            service_name = f"{service_item.service_item_service.service_name} - {service_item.service_item_name}"
+            debt = service_data['debt_amount']
+            payment = service_data['payment_amount']
+            saldo = service_data['saldo']
+            
+            # Dodavanje u ukupni iznos
+            total_debt += debt
+            total_payment += payment
+            total_saldo += saldo
+            
+            # Prikaz u tabeli
+            pdf.cell(80, 8, service_name, 1, new_x="RIGHT", new_y="LAST")
+            pdf.cell(30, 8, f"{debt:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(30, 8, f"{payment:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+            pdf.cell(30, 8, f"{saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        
+        # Ukupno
+        pdf.set_font('DejaVuSansCondensed', 'B', 10)
+        pdf.cell(80, 10, "UKUPNO:", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(30, 10, f"{total_debt:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(30, 10, f"{total_payment:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
+        pdf.cell(30, 10, f"{total_saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
+        
+        # Čuvanje prvog PDF-a (lista usluga)
+        services_list_path = os.path.join(user_folder, f'services_list_{student_id}.pdf')
+        pdf.output(services_list_path)
+        
+        # --- Generisanje drugog PDF-a - uplatnice ---
+        from onetouch.transactions.functions import prepare_qr_data, generate_qr_code, add_payment_slip_content, PDF, cleanup_qr_codes, setup_pdf_page
+        
+        # Kreiranje PDF-a za uplatnice
+        payment_slips_pdf = PDF()
+        add_fonts(payment_slips_pdf)
+        
+        # Generisanje uplatnica za svaku uslugu sa pozitivnim saldom - po 3 na stranici
+        payment_slips_count = 0
+        for service_data in services_with_positive_saldo:
+            service_item = service_data['service_item']
+            saldo = service_data['saldo']
+            
+            if saldo <= 0:
+                continue  # Preskačemo usluge bez dugovanja
+                
+            # Koristimo postojeću funkciju za pozicioniranje uplatnica (3 po stranici)
+            counter = payment_slips_count + 1  # Brojanje od 1
+            y, y_qr = setup_pdf_page(payment_slips_pdf, counter)
+            
+            payment_slips_count += 1
+            
+            # Priprema svrhe plaćanja
+            purpose_of_payment = f"{service_item.service_item_service.service_name} - {service_item.service_item_name}"
+            
+            # Određivanje primaoca
+            bank_account_number = service_item.bank_account
+            recipient_name = ""
+            recipient_address = ""
+            
+            for account in school.school_bank_accounts.get('bank_accounts', []):
+                if account.get('bank_account_number') == bank_account_number:
+                    recipient_name = account.get('recipient_name', "")
+                    recipient_address = account.get('recipient_address', "")
+                    break
+            
+            # Određivanje primaoca
+            if not recipient_name and not recipient_address:
+                primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+            elif recipient_name and not recipient_address:
+                primalac = recipient_name
+            elif not recipient_name and recipient_address:
+                primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
+            else:
+                primalac = f"{recipient_name}\r\n{recipient_address}"
+            
+            # Podaci za uplatnicu
+            payment_data = {
+                'student_id': student_id,
+                'uplatilac': student.student_name + ' ' + student.student_surname,
+                'svrha_uplate': f"{student_id:04d}-{service_data['service_id']:03d} {purpose_of_payment}",
+                'primalac': primalac,
+                'sifra_placanja': 253 if service_item.reference_number_spiri else 221,
+                'valuta': 'RSD',
+                'iznos': saldo,
+                'racun_primaoca': bank_account_number,
+                'model': '97' if service_item.reference_number_spiri else '',
+                'poziv_na_broj': service_item.reference_number_spiri if service_item.reference_number_spiri else '',
+            }
+            
+            # Koordinate su već postavljene kroz setup_pdf_page funkciju
+            
+            # Generisanje QR koda
+            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user.id)
+            
+            # Dodavanje sadržaja uplatnice
+            add_payment_slip_content(payment_slips_pdf, payment_data, y, y_qr, project_folder, current_user)
+        
+        # Čišćenje privremenih QR kodova
+        cleanup_qr_codes(project_folder, current_user.id)
+        
+        # Čuvanje drugog PDF-a (uplatnice)
+        payment_slips_path = os.path.join(user_folder, f'payment_slips_{student_id}.pdf')
+        payment_slips_pdf.output(payment_slips_path)
+        
+        # Slanje mejla sa prilozima
+        subject = f'Izveštaj o dugovanjima za učenika {student.student_name} {student.student_surname}'
+        sender = (f'{school.school_name}', f'{current_app.config["MAIL_USERNAME"]}')
+        recipients = [student.parent_email]
+        
+        msg = Message(subject=subject, sender=sender, recipients=recipients)
+        msg.html = html_content
+        
+        # Dodavanje PDF priloga
+        with app.open_resource(services_list_path) as attachment:
+            msg.attach('lista_dugovanja.pdf', 'application/pdf', attachment.read())
+            
+        with app.open_resource(payment_slips_path) as attachment:
+            msg.attach('uplatnice.pdf', 'application/pdf', attachment.read())
+        
+        # Slanje mejla
+        mail.send(msg)
+        
+        # Evidencija slanja mejla
+        flash(f'Uspešno poslat e-mail na adresu {student.parent_email}.', 'success')
+        
+        # Prikazivanje HTML stranice sa porukom o uspešno poslatom e-mailu
+        pdf_links = [
+            {
+                'name': 'Lista dugovanja',
+                'url': f'/static/reports/user_{current_user.id}/services_list_{student_id}.pdf'
+            },
+            {
+                'name': 'Uplatnice',
+                'url': f'/static/reports/user_{current_user.id}/payment_slips_{student_id}.pdf'
+            }
+        ]
+        
+        return render_template('operation_success.html',
+                            title='E-mail uspešno poslat',
+                            message=f'E-mail je uspešno poslat na adresu {student.parent_email}.',
+                            pdf_links=pdf_links,
+                            auto_close=False)
+        
+    except Exception as e:
+        logging.error(f'Greška pri slanju e-maila: {str(e)}')
+        flash(f'Došlo je do greške pri slanju e-maila: {str(e)}', 'danger')
+        return redirect(url_for('overviews.overview_debts'))

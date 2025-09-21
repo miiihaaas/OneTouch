@@ -325,8 +325,15 @@ def prepare_qr_data(payment_data, school_info):
     return qr_data
 
 
-def generate_qr_code(qr_data, student_id, project_folder, current_user):
-    """Generiše QR kod i vraća naziv fajla."""
+def generate_qr_code(qr_data, student_id, project_folder, current_user_id):
+    """Generiše QR kod i vraća naziv fajla.
+    
+    Args:
+        qr_data: Dictionary sa podacima za QR kod
+        student_id: ID učenika
+        project_folder: Putanja do korena projekta
+        current_user_id: ID trenutnog korisnika
+    """
     url = 'https://nbs.rs/QRcode/api/qr/v1/gen/250'
     headers = {'Content-Type': 'application/json'}
     
@@ -346,7 +353,7 @@ def generate_qr_code(qr_data, student_id, project_folder, current_user):
         
     if response.status_code == 200:
         qr_code_filename = f'qr_{student_id}.png'
-        folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+        folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user_id}')
         os.makedirs(folder_path, exist_ok=True)
         qr_code_filepath = os.path.join(folder_path, qr_code_filename)
         Image.open(io.BytesIO(response.content)).save(qr_code_filepath)
@@ -374,7 +381,16 @@ def setup_pdf_page(pdf, counter):
 
 
 def add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_user):
-    """Dodaje sadržaj uplatnice na PDF."""
+    """Dodaje sadržaj uplatnice na PDF.
+    
+    Args:
+        pdf: PDF objekat na koji se dodaje sadržaj
+        uplatnica: Dictionary sa podacima za uplatnicu
+        y: Vertikalna pozicija
+        y_qr: Vertikalna pozicija QR koda
+        project_folder: Putanja do korena projekta
+        current_user: Objekat trenutnog korisnika
+    """
     # QR kod
     pdf.set_font('DejaVuSansCondensed', 'B', 16)
     pdf.set_y(y_qr)
@@ -498,9 +514,14 @@ def add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_us
 
 
 
-def cleanup_qr_codes(project_folder, current_user):
-    """Briše QR kodove nakon štampanja."""
-    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user.id}')
+def cleanup_qr_codes(project_folder, current_user_id):
+    """Briše QR kodove nakon štampanja.
+    
+    Args:
+        project_folder: Putanja do korena projekta
+        current_user_id: ID trenutnog korisnika
+    """
+    folder_path = os.path.join(project_folder, 'static', 'payment_slips', f'qr_code_{current_user_id}')
     if os.path.isdir(folder_path):
         for filename in os.listdir(folder_path):
             file_path = os.path.join(folder_path, filename)
@@ -537,7 +558,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             # Koristi prilagođeni primalac iz payment_data
             qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
             qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], 
-                                                project_folder, current_user)
+                                                project_folder, current_user.id)
             if qr_code_filename:
                 qr_code_images.append(qr_code_filename)
     
@@ -588,7 +609,7 @@ def uplatnice_gen(records, purpose_of_payment, school_info, school, single, send
             pdf.multi_cell(0, 20, 'Nema zaduženih učenika ili je svim zaduženim učenicima aktivirana opcija slanja generisanih uplatnica putem e-maila...', align='C')
         pdf.output(f'{user_folder}/{file_name}')
     
-    cleanup_qr_codes(project_folder, current_user)
+    cleanup_qr_codes(project_folder, current_user.id)
     return file_name
 
 
@@ -611,7 +632,7 @@ def uplatnice_gen_selected(records, purpose_of_payment, school_info, school, sin
             # Koristi prilagođeni primalac iz payment_data
             qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
             qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], 
-                                                project_folder, current_user)
+                                                project_folder, current_user.id)
             if qr_code_filename:
                 qr_code_images.append(qr_code_filename)
     
@@ -638,7 +659,7 @@ def uplatnice_gen_selected(records, purpose_of_payment, school_info, school, sin
         pdf.output(f'{user_folder}/{file_name}')
     
     # Čišćenje privremenih QR kodova
-    cleanup_qr_codes(project_folder, current_user)
+    cleanup_qr_codes(project_folder, current_user.id)
     return file_name
 
 

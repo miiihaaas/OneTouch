@@ -1,0 +1,186 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID učenika"; }
+        .mobtable td:nth-of-type(2):before { content: "Učenik"; }
+        .mobtable td:nth-of-type(3):before { content: "Razred"; }
+        .mobtable td:nth-of-type(4):before { content: "Odeljenje"; }
+        .mobtable td:nth-of-type(5):before { content: "Zaduženje"; }
+        .mobtable td:nth-of-type(6):before { content: "Uplate"; }
+        .mobtable td:nth-of-type(7):before { content: "Saldo"; }
+        .mobtable td:nth-of-type(8):before { content: "Akcije"; }
+    }
+</style>
+
+<!-- Forma za pretragu -->
+<div class="container-fluid">
+    <form method="POST" id="searchForm" class="row g-2 align-items-end">
+        <!-- 4/12 -->
+        <div class="col-12 col-md-3">
+            <div class="form-group mb-0">
+            <label for="minDebtAmount" class="form-label">Vrednost dugovanja veća od:</label>
+            <input type="number"
+                    class="form-control"
+                    id="minDebtAmount"
+                    name="minDebtAmount"
+                    step="100.00"
+                    min="0"
+                    value="{{ min_debt_amount if min_debt_amount else 0 }}">
+            </div>
+        </div>
+    
+        <!-- 5/12 -->
+        <div class="col-12 col-md-6">
+            <div class="form-group mb-0">
+            <label for="serviceSelect" class="form-label">Usluge:</label>
+            <!-- za multi-select bolje je koristiti name="selectedServices[]" -->
+            <select class="form-select" id="serviceSelect" name="selectedServices" multiple>
+                {% if services %}
+                {% for service in services %}
+                    <option value="{{ service.id }}" {% if service.id in selected_services %}selected{% endif %}>
+                    {{ service.name }}
+                    </option>
+                {% endfor %}
+                {% endif %}
+            </select>
+            </div>
+        </div>
+    
+        <!-- 3/12 -->
+        <div class="col-12 col-md-3 d-flex justify-content-md-end">
+            <div class="w-100" style="max-width:220px;">
+            <button type="submit" class="btn btn-primary w-100 loading">Pretraži</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<!-- Tabela sa rezultatima -->
+{% if export_data %}
+<hr>
+<div class="table-responsive">
+    <table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid" aria-describedby="data_info">
+        <thead>
+            <tr role="row">
+                <th>ID učenika</th>
+                <th>Učenik</th>
+                <th style="width: 80px;">Razred</th>
+                <th style="width: 80px;">Odeljenje</th>
+                <th style="width: 80px;">Zaduženje</th>
+                <th style="width: 80px;">Uplate</th>
+                <th style="width: 80px;">Saldo</th>
+                <th style="width: 120px;">Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in export_data %}
+            <tr>
+                <td>{{ "{:04d}".format(student['student_id']) }}</td>
+                <td>{{ student['student_name'] }} {{ student['student_surname'] }}</td>
+                <td style="text-align: center;">{{ student['student_class'] }}</td>
+                <td style="text-align: center;">{{ student['student_section'] }}</td>
+                <td style="text-align: right;">{{ "{:.2f}".format(student['student_debt']) }}</td>
+                <td style="text-align: right;">{{ "{:.2f}".format(student['student_payment']) }}</td>
+                <td style="text-align: right;">{{ "{:.2f}".format(student['saldo']) }}</td>
+                <td style="text-align: center;">
+                    <a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x loading" title="Pregled kartice stanja">
+                        <i class="fa fa-magnifying-glass awesomeedit"></i>
+                    </a>
+                    <a href="{{url_for('overviews.generate_pdf_reports', student_id=student['student_id'])}}?min_debt_amount={{ min_debt_amount }}&selected_services={{ selected_services|join(',') }}" class="btn-x btn-primary-x generate-pdf-reports" data-student-id="{{ student['student_id'] }}" title="Generiši PDF izveštaje" target="_blank">
+                        <i class="fa fa-file-pdf awesomeedit"></i>
+                    </a>
+                    <a href="{{url_for('overviews.send_debt_emails', student_id=student['student_id'])}}?min_debt_amount={{ min_debt_amount }}&selected_services={{ selected_services|join(',') }}" class="btn-x btn-primary-x send-email" data-student-id="{{ student['student_id'] }}" title="Pošalji e-mail" target="_blank">
+                        <i class="fa fa-envelope awesomeedit"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Tabela sa sumama -->
+<hr>
+<div class="table-responsive">
+    <table class="table table-striped no-footer invoices mobtable" aria-describedby="sums_info">
+        <thead>
+            <tr role="row">
+                <th>Zaduženje:</th>
+                <th>Uplate:</th>
+                <th>Saldo:</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span id="zaduzenjeSum"></span></td>
+                <td><span id="uplateSum"></span></td>
+                <td><span id="saldoSum"></span></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock content%}
+
+{% block scripts %}
+{% if export_data %}
+<script type="text/javascript">
+    var exportData = {{ export_data | tojson | safe }};
+</script>
+{% endif %}
+
+<script>
+    // Inicijalizacija Select2 za multiselect
+    $(document).ready(function() {
+        // Select2 inicijalizacija
+        $('#serviceSelect').select2({
+            placeholder: 'Izaberite usluge',
+            allowClear: true,
+            width: '100%'
+        });
+        
+        // DataTables inicijalizacija
+        var table = $('#data').DataTable({
+            "stateSave": true,
+            "stateDuration": 900, // 15 minuta
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+
+        // Izračunavanje suma ako postoje podaci
+        if (typeof exportData !== 'undefined') {
+            var zaduzenjeSum = 0;
+            var uplateSum = 0;
+            var saldoSum = 0;
+
+            for (var i = 0; i < exportData.length; i++) {
+                zaduzenjeSum += exportData[i].student_debt;
+                uplateSum += exportData[i].student_payment;
+                saldoSum += exportData[i].saldo;
+            }
+
+            // Prikazivanje suma u HTML-u sa 2 decimale
+            document.getElementById('zaduzenjeSum').textContent = zaduzenjeSum.toFixed(2);
+            document.getElementById('uplateSum').textContent = uplateSum.toFixed(2);
+            document.getElementById('saldoSum').textContent = saldoSum.toFixed(2);
+        }
+        
+        // // Event handler za generisanje PDF izveštaja
+        // $('.generate-pdf-reports').on('click', function(e) {
+        //     e.preventDefault();
+        //     var studentId = $(this).data('student-id');
+        //     window.open('/generate_pdf_reports/' + studentId, '_blank');
+        // });
+        
+        // // Event handler za slanje e-maila
+        // $('.send-email').on('click', function(e) {
+        //     e.preventDefault();
+        //     var studentId = $(this).data('student-id');
+        //     window.open('/send_debt_emails/' + studentId, '_blank');
+        // });
+    });
+</script>
+{% endblock %}

@@ -334,3 +334,11 @@ body.main\.instructions nav#sidebar { display: none !important; }
 	padding: 0.75rem 2rem;
 	font-size: 1.1rem;
 }
+
+.btn-x {
+	text-decoration: none !important;
+}
+
+.btn-x:hover, .btn-x:focus, .btn-x:active {
+	text-decoration: none !important;
+}

@@ -731,7 +731,7 @@ def service_total_payment_slip(service_id, student_id):
             
             # Generisanje QR koda ako je potrebno
             qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
-            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user)
+            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user.id)
             
             # Dodavanje sadržaja uplatnice
             add_payment_slip_content(pdf, payment_data, y, y_qr, project_folder, current_user)
@@ -740,7 +740,7 @@ def service_total_payment_slip(service_id, student_id):
             pdf.output(file_path)
             
             # Čišćenje privremenih QR kodova
-            cleanup_qr_codes(project_folder, current_user)
+            cleanup_qr_codes(project_folder, current_user.id)
             
             # Slanje fajla korisniku
             return send_file(file_path, as_attachment=False)

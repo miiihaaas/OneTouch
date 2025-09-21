@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #3b5998;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .amount {
+            font-weight: bold;
+            color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ school.school_name }}</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Obaveštenje o dugovanju</h2>
+        
+        <p>Poštovani,</p>
+        {% if services|length == 1 %}
+        <p>Obaveštavamo Vas da prema evidenciji škole Vaše dete ima neizmireno dugovanje za sledeću uslugu:</p>
+        {% else %}
+        <p>Obaveštavamo Vas da prema evidenciji škole Vaše dete ima neizmirena dugovanja za sledeće usluge:</p>
+        {% endif %}
+        
+        <table>
+            <tr>
+                <th>Usluga</th>
+                <th>Zaduženje</th>
+                <th>Uplate</th>
+                <th>Saldo</th>
+            </tr>
+            {% for service in services %}
+            <tr>
+                <td>{{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }}</td>
+                <td style="text-align: right;">{{ "%.2f"|format(service.debt_amount) }}</td>
+                <td style="text-align: right;">{{ "%.2f"|format(service.payment_amount) }}</td>
+                <td class="amount" style="text-align: right;">{{ "%.2f"|format(service.saldo) }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <th>UKUPNO</th>
+                <td style="text-align: right; font-weight: bold;">{{ "%.2f"|format(total_debt) }}</td>
+                <td style="text-align: right; font-weight: bold;">{{ "%.2f"|format(total_payment) }}</td>
+                <td class="amount" style="text-align: right; font-weight: bold;">{{ "%.2f"|format(total_saldo) }}</td>
+            </tr>
+        </table>
+        
+        <p>Molimo Vas da izmirite dugovanje što pre. U prilogu ovog mejla možete naći:</p>
+        <ul>
+            <li>Detaljan izveštaj kartice stanja</li>
+            <li>Popunjenu uplatnicu za izvršenje uplate</li>
+        </ul>
+        
+        {% if school.school_phone or school.school_email %}
+        <p>Za sve dodatne informacije možete nas kontaktirati na:</p>
+        {% if school.school_phone %}
+        <p>Telefon: {{ school.school_phone }}</p>
+        {% endif %}
+        {% if school.school_email %}
+        <p>E-mail: {{ school.school_email }}</p>
+        {% endif %}
+        {% endif %}
+        
+        <p>Hvala na razumevanju.</p>
+        
+        <p>S poštovanjem,<br>
+        {{ school.school_name }}</p>
+    </div>
+    
+    <div class="footer">
+        <p>Ovo je automatski generisana poruka, molimo da ne odgovarate na nju.<br>
+        © {{ school.school_name }} {{ now.year }}</p>
+    </div>
+</body>
+</html>
