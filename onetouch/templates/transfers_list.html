@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Datum"; }
+        .mobtable td:nth-of-type(2):before { content: "Đak"; }
+        .mobtable td:nth-of-type(3):before { content: "Sa usluge"; }
+        .mobtable td:nth-of-type(4):before { content: "Na uslugu"; }
+        .mobtable td:nth-of-type(5):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(6):before { content: "Napomena"; }
+        .mobtable td:nth-of-type(7):before { content: "Akcije"; }
+    }
+</style>
+<h2>Lista preknjižavanja</h2>
+<div class="row align-items-end">
+    <div class="col">
+        <label for="start-date" class="form-label">Početni datum:</label>
+        <input class="form-control" type="date" id="start-date" name="start-date" value="{{ start_date }}">
+    </div>
+    <div class="col">
+        <label for="end-date" class="form-label">Krajnji datum:</label>
+        <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}">
+    </div>
+    <div class="col">
+        <a class="btn btn-danger" href="{{ url_for('transactions.transfers_list') }}">Reset filtera</a>
+    </div>
+</div>
+<hr>
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
+    <thead>
+        <tr>
+            <th>Datum</th>
+            <th>Datum_python</th>
+            <th>Đak</th>
+            <th>Sa usluge</th>
+            <th>Na uslugu</th>
+            <th>Iznos</th>
+            <th>Napomena</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transfer in transfers %}
+        <tr>
+            <td>{{ transfer.transfer_date.strftime('%d.%m.%Y.') }}</td>
+            <td>{{ transfer.transfer_date }}</td>
+            <td>{{ transfer.student.student_name }} {{ transfer.student.student_surname }}</td>
+            <td>{{ transfer.source_service.service_item_service.service_name }} - {{ transfer.source_service.service_item_name }}</td>
+            <td>{{ transfer.target_service.service_item_service.service_name }} - {{ transfer.target_service.service_item_name }}</td>
+            <td>{{ transfer.amount|round(2) }}</td>
+            <td>{{ transfer.note }}</td>
+            <td>
+                <a href="{{ url_for('transactions.view_transfer', transfer_id=transfer.id) }}" class="btn-x btn-primary-x loading" title="Pregledaj"><i class="fa fa-eye awesomeedit loading" aria-hidden="true"></i></a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        table = $('#data').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            },
+            "order": [[1, 'desc']],
+            "stateSave": true,
+            "stateDuration": 900,
+            "columnDefs": [
+                { "targets": [1], "visible": false }
+            ]
+        });
+
+        // Funkcija koja se poziva pri promeni datuma
+        function handleDateChange() {
+            var startDate = document.getElementById("start-date").value;
+            var endDate = document.getElementById("end-date").value;
+            var url = "{{ url_for('transactions.transfers_list') }}?start_date=" + startDate + "&end_date=" + endDate;
+            window.location.href = url;
+        }
+
+        // Dodavanje osluškivača događaja za promenu datuma
+        document.getElementById("start-date").addEventListener("change", handleDateChange);
+        document.getElementById("end-date").addEventListener("change", handleDateChange);
+    });
+</script>
+{% endblock %}

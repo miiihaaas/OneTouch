@@ -7,8 +7,9 @@ from flask import  render_template, url_for, flash, redirect, request, send_file
 from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
-from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User
+from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer
 from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected
+from onetouch.overviews.functions import get_filtered_transactions_data
 from sqlalchemy.exc import SQLAlchemyError
 
 transactions = Blueprint('transactions', __name__)
@@ -1399,3 +1400,228 @@ def posting_payment():
         db.session.rollback()
         flash(f'Došlo je do neočekivane greške: {str(e)}', 'danger')
         return render_template('posting_payment.html', legend="Knjiženje uplata", title="Knjiženje uplata", route_name=route_name)
+
+
+@transactions.route('/transfer_funds', methods=['GET'])
+@transactions.route('/transfer_funds/<int:student_id>', methods=['GET'])
+@login_required
+def transfer_funds(student_id=None):
+    """Prikaz stranice za preknjižavanje sredstava"""
+    # Provera licence
+    school = School.query.first()
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            flash('Licenca je istekla. Molimo obnovite licencu da biste nastavili sa korišćenjem aplikacije.', 'danger')
+            return redirect(url_for('main.license_info'))
+
+    students = Student.query.order_by(Student.student_surname, Student.student_name).all()
+    
+    selected_student = None
+    services_data = []
+    services_with_surplus = []
+    services_with_debt = []
+    
+    if student_id:
+        # Dobavljanje direktnih podataka o transakcijama za izabranog đaka
+        student = Student.query.get_or_404(student_id)
+        
+        # Dobavljamo sve transakcije za đaka
+        transaction_records = TransactionRecord.query.filter_by(student_id=student_id).all()
+        
+        # Grupisanje transakcija po uslugama
+        services_data = {}
+        for record in transaction_records:
+            service_id = record.service_item_id
+            if service_id not in services_data:
+                services_data[service_id] = {
+                    'service_id': service_id,
+                    'service_item': record.transaction_record_service_item,
+                    'debt_amount': 0,
+                    'payment_amount': 0,
+                    'saldo': 0
+                }
+            
+            if record.student_debt_id:
+                services_data[service_id]['debt_amount'] += record.student_debt_total
+            elif record.student_payment_id or record.fund_transfer_id:
+                services_data[service_id]['payment_amount'] += record.student_debt_total
+        
+        # Konverzija u listu i računanje salda
+        services_list = []
+        services_with_surplus = []
+        services_with_debt = []
+        
+        for service_id, data in services_data.items():
+            # Računanje salda
+            data['saldo'] = data['debt_amount'] - data['payment_amount']
+            
+            # Preskakanje usluga sa nultim saldom
+            if data['saldo'] == 0:
+                continue
+                
+            services_list.append(data)
+            
+            # Identifikujemo usluge koje imaju višak sredstava (negativan saldo)
+            if data['saldo'] < 0:
+                services_with_surplus.append(data)
+            # Identifikujemo usluge koje su u dugovanju (pozitivan saldo)
+            elif data['saldo'] > 0:
+                services_with_debt.append(data)
+        
+        selected_student = student
+        services_data = services_list
+    
+    return render_template('transfer_funds.html',
+                          students=students,
+                          selected_student_id=student_id,
+                          selected_student=selected_student,
+                          services_data=services_data,
+                          services_with_surplus=services_with_surplus,
+                          services_with_debt=services_with_debt,
+                          legend="Preknjižavanje sredstava", 
+                          title="Preknjižavanje sredstava",
+                          route_name="transfer_funds")
+
+
+@transactions.route('/transfer_funds', methods=['POST'])
+@login_required
+def process_transfer_funds():
+    """Obrada zahteva za preknjižavanje sredstava"""
+    # Provera licence
+    school = School.query.first()
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            flash('Licenca je istekla. Molimo obnovite licencu da biste nastavili sa korišćenjem aplikacije.', 'danger')
+            return redirect(url_for('main.license_info'))
+
+    student_id = request.form.get('student_id', type=int)
+    source_service_id = request.form.get('source_service', type=int)
+    target_service_id = request.form.get('target_service', type=int)
+    amount = request.form.get('amount', type=float)
+    transfer_note = request.form.get('transfer_note', '')
+    
+    if not all([student_id, source_service_id, target_service_id, amount]) or source_service_id == target_service_id:
+        flash('Greška: Nedostaju potrebni podaci ili je izabrana ista usluga za izvor i cilj.', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    # Provera da li je iznos validan i da li izvorna usluga ima dovoljno sredstava
+    # Dobavljamo transakcije direktno za tačniji obračun
+    transaction_records = TransactionRecord.query.filter_by(student_id=student_id, service_item_id=source_service_id).all()
+    
+    debt_amount = sum(record.student_debt_total for record in transaction_records if record.student_debt_id)
+    payment_amount = sum(record.student_debt_total for record in transaction_records if record.student_payment_id or record.fund_transfer_id)
+    
+    saldo = debt_amount - payment_amount
+    
+    # Proveravamo da li usluga ima višak sredstava (negativan saldo)
+    if saldo >= 0:
+        flash('Greška: Izabrana izvorna usluga nema višak sredstava.', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    if amount > abs(saldo):
+        flash(f'Greška: Iznos za preknjižavanje ne može biti veći od viška na izvornoj usluzi ({abs(saldo):.2f}).', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    try:
+        # Kreiranje zapisa o preknjižavanju
+        fund_transfer = FundTransfer(
+            student_id=student_id,
+            source_service_id=source_service_id,
+            target_service_id=target_service_id,
+            amount=amount,
+            note=transfer_note
+        )
+        db.session.add(fund_transfer)
+        db.session.flush()  # Da bismo dobili ID pre commit-a
+        
+        # Kreiranje transakcije za smanjenje viška na izvornoj usluzi
+        source_transaction = TransactionRecord(
+            student_id=student_id,
+            service_item_id=source_service_id,
+            student_debt_total=-amount,  # Negativan iznos koji predstavlja "trošak" tj. smanjenje viška
+            purpose_of_payment=f"Preknjižavanje na uslugu ID: {target_service_id}",
+            fund_transfer_id=fund_transfer.id
+        )
+        db.session.add(source_transaction)
+        
+        # Kreiranje transakcije za umanjenje dugovanja na ciljnoj usluzi
+        target_transaction = TransactionRecord(
+            student_id=student_id,
+            service_item_id=target_service_id,
+            student_debt_total=amount,  # Pozitivan iznos koji predstavlja "uplatu" tj. umanjenje dugovanja
+            purpose_of_payment=f"Preknjižavanje sa usluge ID: {source_service_id}",
+            fund_transfer_id=fund_transfer.id
+        )
+        db.session.add(target_transaction)
+        
+        db.session.commit()
+        flash('Preknjižavanje uspešno izvršeno.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Greška prilikom preknjižavanja: {str(e)}', 'danger')
+    
+    return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+
+
+@transactions.route('/transfers_list', methods=['GET'])
+@login_required
+def transfers_list():
+    """Prikaz liste svih preknjižavanja"""
+    # Provera licence
+    school = School.query.first()
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            flash('Licenca je istekla. Molimo obnovite licencu da biste nastavili sa korišćenjem aplikacije.', 'danger')
+            return redirect(url_for('main.license_info'))
+
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    
+    # Osnovna pretraga
+    query = FundTransfer.query
+    
+    # Filtriranje po datumu ako je definisano
+    if start_date and end_date:
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
+        end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
+        query = query.filter(FundTransfer.transfer_date.between(start_date_obj, end_date_obj))
+    
+    transfers = query.order_by(FundTransfer.transfer_date.desc()).all()
+    
+    return render_template('transfers_list.html',
+                         transfers=transfers,
+                         start_date=start_date,
+                         end_date=end_date,
+                         legend="Lista preknjižavanja", 
+                         title="Lista preknjižavanja",
+                         route_name="transfers_list")
+
+
+@transactions.route('/view_transfer/<int:transfer_id>', methods=['GET'])
+@login_required
+def view_transfer(transfer_id):
+    """Prikaz detalja preknjižavanja"""
+    # Provera licence
+    school = School.query.first()
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            flash('Licenca je istekla. Molimo obnovite licencu da biste nastavili sa korišćenjem aplikacije.', 'danger')
+            return redirect(url_for('main.license_info'))
+
+    transfer = FundTransfer.query.get_or_404(transfer_id)
+    
+    # Dobavljanje povezanih transakcija
+    transactions = TransactionRecord.query.filter_by(fund_transfer_id=transfer_id).all()
+    
+    return render_template('view_transfer.html',
+                          transfer=transfer,
+                          transactions=transactions,
+                          legend="Detalji preknjižavanja", 
+                          title="Detalji preknjižavanja",
+                          route_name="view_transfer")

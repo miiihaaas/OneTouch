@@ -260,16 +260,24 @@ def overview_student(student_id):
                     elif record.student_payment_id:
                         description = f'{record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
                         date_ = record.transaction_record_student_payment.payment_date
+                    elif record.fund_transfer_id:
+                        # Preknjižavanje
+                        if record.student_debt_total > 0:  # Pozitivan iznos (smanjenje viška)
+                            description = f'Preknjižavanje na ovu uslugu'
+                        else:  # Negativan iznos (povećanje sredstava)
+                            description = f'Preknjižavanje sa ove usluge'
+                        date_ = record.transfer_record.transfer_date
                         
                     if record.student_debt_total:
                         test_data = {
                             'id': record.id,
                             'service_item_id': record.service_item_id,
                             'student_payment_id': record.student_payment_id,
+                            'fund_transfer_id': record.fund_transfer_id,
                             'date': date_,
                             'description': description,
                             'debt_amount': record.student_debt_total if record.student_debt_id else 0,
-                            'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+                            'payment_amount': record.student_debt_total if (record.student_payment_id or record.fund_transfer_id) else 0,
                         }
                         
                         if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
