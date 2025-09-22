@@ -1,6 +1,7 @@
 from onetouch import app, db, login_manager
 from flask_login import UserMixin
 from itsdangerous.url_safe import URLSafeTimedSerializer
+from datetime import datetime
 
 
 @login_manager.user_loader
@@ -181,6 +182,24 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     reference_number = db.Column(db.String(100), nullable=True)
     payment_error = db.Column(db.Boolean, nullable=True, default=False)
     debt_sent = db.Column(db.Boolean, nullable=True, default=False)
+    fund_transfer_id = db.Column(db.Integer, db.ForeignKey('fund_transfer.id'), nullable=True)
+
+
+class FundTransfer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    transfer_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    source_service_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
+    target_service_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    note = db.Column(db.String(255), nullable=True)
+    
+    # Relacije
+    student = db.relationship('Student', backref='fund_transfers', lazy=True)
+    source_service = db.relationship('ServiceItem', foreign_keys=[source_service_id], backref='transfers_from', lazy=True)
+    target_service = db.relationship('ServiceItem', foreign_keys=[target_service_id], backref='transfers_to', lazy=True)
+    transaction_records = db.relationship('TransactionRecord', backref='transfer_record', lazy=True)
+
 
 with app.app_context():
     db.create_all()

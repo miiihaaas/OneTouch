@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .negative-balance {
+        color: green;
+    }
+    .positive-balance {
+        color: red;
+    }
+</style>
+
+<div class="form-group">
+    <label for="student_select">Izaberite đaka:</label>
+    <select id="student_select" class="form-select select2-searchable">
+        <option value="">Izaberite đaka</option>
+        {% for student in students %}
+        <option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>
+            {{ student.student_name }} {{ student.student_surname }} ({{ student.student_class }}/{{ student.student_section }})
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+{% if services_data %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h3>Stanje usluga za đaka: {{ selected_student.student_name }} {{ selected_student.student_surname }}</h3>
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usluga</th>
+                    <th>Ukupno zaduženje</th>
+                    <th>Ukupno uplaćeno</th>
+                    <th>Saldo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for service in services_data %}
+                <tr>
+                    <td>{{ "%03d"|format(service.service_id) }}</td>
+                    <td>{{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }}</td>
+                    <td>{{ service.debt_amount|round(2) }}</td>
+                    <td>{{ service.payment_amount|round(2) }}</td>
+                    <td {% if service.saldo > 0 %}class="positive-balance"{% elif service.saldo < 0 %}class="negative-balance"{% endif %}>
+                        {{ service.saldo|round(2) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="4" class="text-right">Ukupno:</th>
+                    <th {% if services_data|sum(attribute='saldo') > 0 %}class="positive-balance"{% elif services_data|sum(attribute='saldo') < 0 %}class="negative-balance"{% endif %}>
+                        {{ services_data|sum(attribute='saldo')|round(2) }}
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+
+        <form method="POST" action="{{ url_for('transactions.transfer_funds') }}">
+            <input type="hidden" name="student_id" value="{{ selected_student_id }}">
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="source_service">Sa usluge (izvor):</label>
+                    <select name="source_service" id="source_service" class="form-select" required>
+                        <option value="">Izaberite uslugu izvor (mora imati višak)</option>
+                        {% for service in services_with_surplus %}
+                        <option value="{{ service.service_id }}" data-max="{{ (-service.saldo)|round(2) }}">
+                            {{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }} 
+                            (višak: {{ (-service.saldo)|round(2) }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="target_service">Na uslugu (cilj):</label>
+                    <select name="target_service" id="target_service" class="form-select" required>
+                        <option value="">Izaberite ciljnu uslugu</option>
+                        {% for service in services_with_debt %}
+                        {% if service.service_id != source_service_id %}
+                        <option value="{{ service.service_id }}">
+                            {{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }}
+                            (dug: {{ service.saldo|round(2) }})
+                        </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="amount">Iznos za preknjižavanje:</label>
+                    <input type="number" name="amount" id="amount" class="form-control" step="0.01" min="0.01" required>
+                </div>
+                <div class="col-md-6">
+                    <label for="transfer_note">Napomena (opciono):</label>
+                    <input type="text" name="transfer_note" id="transfer_note" class="form-control" maxlength="255">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Izvrši preknjižavanje</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Inicijalizacija Select2 za polje izbora đaka
+        $('.select2-searchable').select2({
+            theme: "classic",
+            placeholder: "Izaberite đaka...",
+            allowClear: true,
+            width: '100%'
+        });
+        
+        // Promena đaka 
+        $('#student_select').on('change', function() {
+            if ($(this).val()) {
+                window.location.href = "{{ url_for('transactions.transfer_funds') }}/" + $(this).val();
+            }
+        });
+    });
+</script>
+{% endblock %}
