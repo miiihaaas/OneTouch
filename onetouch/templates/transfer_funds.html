@@ -10,9 +10,9 @@
 </style>
 
 <div class="form-group">
-    <label for="student_select">Izaberite đaka:</label>
+    <label for="student_select">Izaberite učenika:</label>
     <select id="student_select" class="form-select select2-searchable">
-        <option value="">Izaberite đaka</option>
+        <option value="">Izaberite učenika</option>
         {% for student in students %}
         <option value="{{ student.id }}" {% if selected_student_id == student.id %}selected{% endif %}>
             {{ student.student_name }} {{ student.student_surname }} ({{ student.student_class }}/{{ student.student_section }})
@@ -24,7 +24,7 @@
 {% if services_data %}
 <div class="card mt-4">
     <div class="card-header">
-        <h3>Stanje usluga za đaka: {{ selected_student.student_name }} {{ selected_student.student_surname }}</h3>
+        <h3>Stanje usluga za učenika: {{ selected_student.student_name }} {{ selected_student.student_surname }}</h3>
     </div>
     <div class="card-body">
         <table class="table table-striped">
@@ -67,7 +67,7 @@
                 <div class="col-md-6">
                     <label for="source_service">Sa usluge (izvor):</label>
                     <select name="source_service" id="source_service" class="form-select" required>
-                        <option value="">Izaberite uslugu izvor (mora imati višak)</option>
+                        <option value="">Izaberite uslugu sa koje se preknjižava (u preplati)</option>
                         {% for service in services_with_surplus %}
                         <option value="{{ service.service_id }}" data-max="{{ (-service.saldo)|round(2) }}">
                             {{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }} 
@@ -79,7 +79,7 @@
                 <div class="col-md-6">
                     <label for="target_service">Na uslugu (cilj):</label>
                     <select name="target_service" id="target_service" class="form-select" required>
-                        <option value="">Izaberite ciljnu uslugu</option>
+                        <option value="">Izaberite uslugu na koju se preknjižava</option>
                         {% for service in services_with_debt %}
                         {% if service.service_id != source_service_id %}
                         <option value="{{ service.service_id }}">
@@ -103,7 +103,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Izvrši preknjižavanje</button>
+            <button type="submit" class="btn btn-primary">Izvršite preknjižavanje</button>
         </form>
     </div>
 </div>
@@ -113,15 +113,15 @@
 {% block scripts %}
 <script>
     $(document).ready(function() {
-        // Inicijalizacija Select2 za polje izbora đaka
+        // Inicijalizacija Select2 za polje izbora učenika
         $('.select2-searchable').select2({
             theme: "classic",
-            placeholder: "Izaberite đaka...",
+            placeholder: "Izaberite učenika...",
             allowClear: true,
             width: '100%'
         });
         
-        // Promena đaka 
+        // Promena učenika
         $('#student_select').on('change', function() {
             if ($(this).val()) {
                 window.location.href = "{{ url_for('transactions.transfer_funds') }}/" + $(this).val();

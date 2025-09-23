@@ -52,6 +52,7 @@
 <body>
     <div class="header">
         <h1>{{ school.school_name }}</h1>
+        <p>{{ school.school_address }}, {{ school.school_zip_code }} {{ school.school_city }}</p>
     </div>
     
     <div class="content">
@@ -59,9 +60,9 @@
         
         <p>Poštovani,</p>
         {% if services|length == 1 %}
-        <p>Obaveštavamo Vas da prema evidenciji škole Vaše dete ima neizmireno dugovanje za sledeću uslugu:</p>
+        <p>Obaveštavamo Vas da prema evidenciji škole učenik {{ student.student_name }} {{ student.student_surname }} ima neizmireno dugovanje za sledeću uslugu:</p>
         {% else %}
-        <p>Obaveštavamo Vas da prema evidenciji škole Vaše dete ima neizmirena dugovanja za sledeće usluge:</p>
+        <p>Obaveštavamo Vas da prema evidenciji škole učenik {{ student.student_name }} {{ student.student_surname }} ima neizmirena dugovanja za sledeće usluge:</p>
         {% endif %}
         
         <table>
@@ -87,10 +88,14 @@
             </tr>
         </table>
         
-        <p>Molimo Vas da izmirite dugovanje što pre. U prilogu ovog mejla možete naći:</p>
+        <p>U prilogu ovog imejla možete naći:</p>
         <ul>
-            <li>Detaljan izveštaj kartice stanja</li>
-            <li>Popunjenu uplatnicu za izvršenje uplate</li>
+            <li>Pregled usluga po kojima su evidentirana dugovanja.</li>
+            {% if services|length > 1 %}
+            <li>Popunjene uplatnice za izvršenje uplata.</li>
+            {% else %}
+            <li>Popunjenu uplatnicu za izvršenje uplate.</li>
+            {% endif %}
         </ul>
         
         {% if school.school_phone or school.school_email %}
@@ -103,6 +108,8 @@
         {% endif %}
         {% endif %}
         
+        <p><strong>Napomena:</strong> Ovi podaci su informativnog karaktera i služe kao pregled uplata i zaduženja učenika. Molimo Vas da, u slučaju bilo kakvih odstupanja ili pitanja, kontaktirate računovodstvo škole.</p>
+
         <p>Hvala na razumevanju.</p>
         
         <p>S poštovanjem,<br>

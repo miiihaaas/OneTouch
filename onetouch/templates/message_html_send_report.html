@@ -49,15 +49,15 @@
         </div>
         
         <div class="content">
-            <p>Poštovani roditelji,</p>
+            <p>Poštovani,</p>
             
-            <p>U prilogu vam dostavljamo finansijski izveštaj za učenika <strong>{{ student.student_name }} {{ student.student_surname }}</strong> ({{ student.student_class }}/{{ student.student_section }}) za period od {{ start_date.strftime('%d.%m.%Y.') }} do {{ end_date.strftime('%d.%m.%Y.') }}.</p>
+            <p>U prilogu Vam dostavljamo finansijsku karticu za učenika <strong>{{ student.student_name }} {{ student.student_surname }}</strong> ({{ student.student_class }}/{{ student.student_section }}) za period od {{ start_date.strftime('%d.%m.%Y.') }} do {{ end_date.strftime('%d.%m.%Y.') }}</p>
             
-            <p>Izveštaj sadrži pregled svih zaduženja i uplata za navedeni period.</p>
+            <p>Kartica sadrži pregled svih zaduženja i uplata za navedeni period.</p>
             {% if school.school_email and school.school_phone_number %}
-            <p>Za sva dodatna pitanja možete nas kontaktirati putem mejla: {{ school.school_email }} ili telefona: {{ school.school_phone_number }}.</p>
+            <p>Za sva dodatna pitanja možete nas kontaktirati putem imejla: {{ school.school_email }} ili putem telefona: {{ school.school_phone_number }}.</p>
             {% elif school.school_email %}
-            <p>Za sva dodatna pitanja možete nas kontaktirati putem mejla: {{ school.school_email }}.</p>
+            <p>Za sva dodatna pitanja možete nas kontaktirati putem imejla: {{ school.school_email }}.</p>
             {% elif school.school_phone_number %}
             <p>Za sva dodatna pitanja možete nas kontaktirati putem telefona: {{ school.school_phone_number }}.</p>
             {% endif %}
@@ -67,7 +67,7 @@
         </div>
         
         <div class="footer">
-            <p>Ovaj mejl je automatski generisan iz sistema OneTouch. Molimo vas da ne odgovarate na ovu poruku.</p>
+            <p>Ovaj imejl je automatski generisan iz sistema OneTouch. Molimo Vas da ne odgovarate na ovu poruku.</p>
         </div>
     </div>
 </body>

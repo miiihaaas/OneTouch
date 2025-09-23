@@ -93,7 +93,7 @@ def add_filter_info_to_pdf(pdf, student, min_debt_amount, selected_service_names
     pdf.cell(0, 10, f"Datum generisanja: {current_date}", new_x="LMARGIN", new_y="NEXT")
     
     # Kriterijumi filtriranja
-    pdf.cell(0, 10, f"Minimalni iznos dugovanja: {min_debt_amount:.2f}", new_x="LMARGIN", new_y="NEXT")
+    # pdf.cell(0, 10, f"Minimalni iznos dugovanja: {min_debt_amount:.2f}", new_x="LMARGIN", new_y="NEXT")
     
     # Informacija o filtriranim uslugama
     if selected_service_names:
@@ -101,6 +101,6 @@ def add_filter_info_to_pdf(pdf, student, min_debt_amount, selected_service_names
         for i, service_name in enumerate(selected_service_names):
             pdf.cell(0, 8, f"  {i+1}. {service_name}", new_x="LMARGIN", new_y="NEXT")
     else:
-        pdf.cell(0, 10, "Prikazane sve usluge.", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 10, "Prikazane sve usluge sa dugovanjima.", new_x="LMARGIN", new_y="NEXT")
         
     pdf.ln(5)

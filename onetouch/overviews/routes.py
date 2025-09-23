@@ -263,9 +263,9 @@ def overview_student(student_id):
                     elif record.fund_transfer_id:
                         # Preknjižavanje
                         if record.student_debt_total > 0:  # Pozitivan iznos (smanjenje viška)
-                            description = f'Preknjižavanje na ovu uslugu'
+                            description = f'Preknjižavanje na: {record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
                         else:  # Negativan iznos (povećanje sredstava)
-                            description = f'Preknjižavanje sa ove usluge'
+                            description = f'Preknjižavanje sa: {record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
                         date_ = record.transfer_record.transfer_date
                         
                     if record.student_debt_total:
@@ -695,11 +695,11 @@ def send_student_report_email(student_id):
         parent_email = student.parent_email
         
         try:
-            sender_email = 'noreply@uplatnice.online'
-            subject = f"{school.school_name} / Izveštaj za učenika: {student_name} ({student.student_class}/{student.student_section})" 
+            sender = (f'{school.school_name}', f'{current_app.config["MAIL_USERNAME"]}')
+            subject = f"{school.school_name} | Izveštaj za učenika: {student_name} ({student.student_class}/{student.student_section})" 
             
             message = Message(subject, 
-                            sender=sender_email,
+                            sender=sender,
                             recipients=[parent_email])
             
             # Telo mejla
@@ -1107,7 +1107,7 @@ def send_debt_emails(student_id):
         payment_slips_pdf.output(payment_slips_path)
         
         # Slanje mejla sa prilozima
-        subject = f'Izveštaj o dugovanjima za učenika {student.student_name} {student.student_surname}'
+        subject = f'{school.school_name} | Izveštaj o dugovanju za učenika {student.student_name} {student.student_surname}'
         sender = (f'{school.school_name}', f'{current_app.config["MAIL_USERNAME"]}')
         recipients = [student.parent_email]
         
