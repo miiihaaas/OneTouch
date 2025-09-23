@@ -43,7 +43,7 @@ def student_debts():
                             route_name=route_name)
 
 
-@transactions.route('/add_new_student', methods=['POST']) #! dodaje novog studenta u postojeće zaduženje (npr došao novi đak tokom školse godine i treba da se zaduži za osiguranje...)
+@transactions.route('/add_new_student', methods=['POST']) #! dodaje novog studenta u postojeće zaduženje (npr došao novi učenik tokom školse godine i treba da se zaduži za osiguranje...)
 def add_new_student():
     try:
         student_debt_id = request.form.get('student_debt_id')
@@ -798,11 +798,11 @@ def debt_archive(debt_id):
         
         # Pronalaženje transakcija
         records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
-        logging.debug(f'provera broja đaka: {records=}, {len(records)=}')
+        logging.debug(f'provera broja učenika: {records=}, {len(records)=}')
         
         # Pronalaženje učenika
         students = Student.query.filter_by(student_class=debt.debt_class).filter_by(student_section=debt.debt_section).all()
-        logging.debug(f'provera broja đaka: {students=}, {len(students)=}')
+        logging.debug(f'provera broja učenika: {students=}, {len(students)=}')
         
         # Provera novih učenika
         record_ids = set([record.transaction_record_student.id for record in records])
@@ -1423,10 +1423,10 @@ def transfer_funds(student_id=None):
     services_with_debt = []
     
     if student_id:
-        # Dobavljanje direktnih podataka o transakcijama za izabranog đaka
+        # Dobavljanje direktnih podataka o transakcijama za izabranog učnika
         student = Student.query.get_or_404(student_id)
         
-        # Dobavljamo sve transakcije za đaka
+        # Dobavljamo sve transakcije za učnika
         transaction_records = TransactionRecord.query.filter_by(student_id=student_id).all()
         
         # Grupisanje transakcija po uslugama

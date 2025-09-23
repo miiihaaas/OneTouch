@@ -1,6 +1,5 @@
 {% extends "layout.html" %}
 {% block content %}
-<h2>Detalji preknjižavanja</h2>
 
 <div class="card">
     <div class="card-header">
@@ -10,7 +9,7 @@
         <div class="row">
             <div class="col-md-6">
                 <p><strong>Datum preknjižavanja:</strong> {{ transfer.transfer_date.strftime('%d.%m.%Y.') }}</p>
-                <p><strong>Đak:</strong> {{ transfer.student.student_name }} {{ transfer.student.student_surname }}</p>
+                <p><strong>Učenik:</strong> {{ transfer.student.student_name }} {{ transfer.student.student_surname }}</p>
                 <p><strong>Razred/odeljenje:</strong> {{ transfer.student.student_class }}/{{ transfer.student.student_section }}</p>
             </div>
             <div class="col-md-6">
@@ -55,5 +54,6 @@
 
 <div class="mt-4">
     <a href="{{ url_for('transactions.transfers_list') }}" class="btn btn-secondary">Nazad na listu preknjižavanja</a>
+    <a href="{{ url_for('overviews.overview_student', student_id=transfer.student_id) }}" class="btn btn-secondary">Pregled kartice učenika</a>
 </div>
 {% endblock %}
