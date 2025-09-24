@@ -308,6 +308,9 @@
 
 {% block scripts %}
 <script>
+    // Kreiranje base URL-a pomoću url_for na početku
+    const BASE_OVERVIEW_URL = "{{ url_for('overviews.overview_student', student_id=999999) }}".replace('999999', 'STUDENT_ID_PLACEHOLDER');
+
     function exportToExcel() {
         // Dohvatanje vrednosti filtera
         var razred = document.getElementById('searchRazred').value;
@@ -428,7 +431,7 @@
                         console.log('row.print_payment: ', row.print_payment)
                         // Generisanje HTML dugmadi za edit, delete i pregled kartice stanja
                         const studentId = parseInt(row.id, 10);
-                        const overviewUrl = `/overview_student/${studentId}`;
+                        const overviewUrl = BASE_OVERVIEW_URL.replace('STUDENT_ID_PLACEHOLDER', studentId);
                         return `<td>
                             <button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika"
                                 data-toggle="modal" data-target="#EditModal"
