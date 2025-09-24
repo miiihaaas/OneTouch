@@ -426,7 +426,9 @@
                         console.log('row.parent_email: ', row.parent_email)
                         console.log('row.send_mail: ', row.send_mail)
                         console.log('row.print_payment: ', row.print_payment)
-                        // Generisanje HTML dugmadi za edit i delete
+                        // Generisanje HTML dugmadi za edit, delete i pregled kartice stanja
+                        const studentId = parseInt(row.id, 10);
+                        const overviewUrl = `/overview_student/${studentId}`;
                         return `<td>
                             <button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil učenika"
                                 data-toggle="modal" data-target="#EditModal"
@@ -438,6 +440,10 @@
                             <a href="#" class="btn-x btn-danger-x" data-toggle="modal"
                                 data-target="#DeleteModal" onclick="deleteStudent('${row.id}', '${row.student_name} ${row.student_surname}')" title="Obrišite profil učenika">
                                 <i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i>
+                            </a>
+                            <a href="${overviewUrl}" class="btn-x btn-info-x"
+                                title="Pregled kartice stanja">
+                                <i class="fa fa-magnifying-glass awesomeedit" aria-hidden="true"></i>
                             </a>
                         </td>`;
                     },
