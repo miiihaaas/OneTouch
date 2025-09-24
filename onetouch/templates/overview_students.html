@@ -28,6 +28,14 @@
         {% endif %}
         <label class="form-check-label" for="overpayments">Preplate</label>
     </div>
+    <div class="form-check form-switch">
+        {% if use_school_year %}
+        <input class="form-check-input" type="checkbox" role="switch" id="current-year" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" role="switch" id="current-year">
+        {% endif %}
+        <label class="form-check-label" for="current-year">Tekuća školska godina</label>
+    </div>
     <div class="col form-group">
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
@@ -223,9 +231,10 @@
             var serviceId = document.getElementById("searchUsluga").value;
             var debtsCheckbox = document.getElementById("debts").checked;
             var overpaymentsCheckbox = document.getElementById("overpayments").checked;
+            var currentYearChecked = document.getElementById("current-year").checked;
             console.log('id usluge: ', serviceId)
             var currentUrl = window.location.href.split('?')[0];
-            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje + "&debts=" + debtsCheckbox + "&overpayments=" + overpaymentsCheckbox;
+            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje + "&debts=" + debtsCheckbox + "&overpayments=" + overpaymentsCheckbox + "&current_year=" + currentYearChecked;
             window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
         }
 
@@ -237,6 +246,7 @@
         document.getElementById("searchOdeljenje").addEventListener("change", handleDateChange);
         document.getElementById("debts").addEventListener("change", handleDateChange);
         document.getElementById("overpayments").addEventListener("change", handleDateChange);
+        document.getElementById("current-year").addEventListener("change", handleDateChange);
     });
 </script>
 {% endblock %}

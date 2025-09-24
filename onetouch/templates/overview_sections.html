@@ -12,6 +12,14 @@
     }
 </style>
 <div class="row form-group align-flex-end">
+    <div class="form-check form-switch mb-3">
+        {% if use_school_year %}
+        <input class="form-check-input" type="checkbox" role="switch" id="current-year" name="current-year" checked>
+        {% else %}
+        <input class="form-check-input" type="checkbox" role="switch" id="current-year" name="current-year">
+        {% endif %}
+        <label class="form-check-label" for="current-year">Tekuća školska godina</label>
+    </div>
     <div class="col-md-3 form-group">
         <label for="">Pretraga po usluzi</label>
         <select name="searchUsluga" id="searchUsluga" class="form-select">
@@ -182,9 +190,10 @@
             var startDate = document.getElementById("start-date").value;
             var endDate = document.getElementById("end-date").value;
             var serviceId = document.getElementById("searchUsluga").value;
+            var currentYearChecked = document.getElementById("current-year").checked;
             console.log('id usluge: ', serviceId)
             var currentUrl = window.location.href.split('?')[0];
-            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje;
+            var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&service_id=" + serviceId + "&razred=" + razred + "&odeljenje=" + odeljenje + "&current_year=" + currentYearChecked;
             window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
         }
 
@@ -194,6 +203,7 @@
         document.getElementById("searchUsluga").addEventListener("change", handleDateChange);
         document.getElementById("searchRazred").addEventListener("change", handleDateChange);
         document.getElementById("searchOdeljenje").addEventListener("change", handleDateChange);
+        document.getElementById("current-year").addEventListener("change", handleDateChange);
     });
 </script>
 {% endblock %}
