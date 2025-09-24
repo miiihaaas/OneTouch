@@ -280,16 +280,20 @@ def overview_student(student_id):
                             'payment_amount': record.student_debt_total if (record.student_payment_id or record.fund_transfer_id) else 0,
                         }
                         
-                        if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
-                            # Izračunavanje ukupnog salda za ovu uslugu do sada
-                            previous_items = [item for item in data if item['service_item_id'] == test_data['service_item_id']]
-                            previous_saldo = previous_items[-1]['saldo'] if previous_items else 0
-                            
-                            # Ažuriranje salda sa trenutnom transakcijom
-                            test_data['saldo'] = previous_saldo + test_data['debt_amount'] - test_data['payment_amount']
-                        else:
-                            # Prvi red za ovu uslugu - zaduživanje je pozitivno, uplata je negativna za saldo
-                            test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
+                        # Izračunavanje salda na osnovu svih prethodnih transakcija iste usluge
+                        # plus trenutna transakcija
+                        previous_items = [item for item in data if item['service_item_id'] == test_data['service_item_id']]
+                        
+                        # Ukupne vrednosti za ovu uslugu (uključujući prethodne transakcije)
+                        total_debt = sum(item['debt_amount'] for item in previous_items)
+                        total_payment = sum(item['payment_amount'] for item in previous_items)
+                        
+                        # Dodajemo trenutnu transakciju
+                        total_debt += test_data['debt_amount']
+                        total_payment += test_data['payment_amount']
+                        
+                        # Izračunavanje finalnog salda za ovu transakciju
+                        test_data['saldo'] = total_debt - total_payment
                             
                         data.append(test_data)
                         
