@@ -196,9 +196,19 @@
     var uplateFilterSum = 0;
     var saldoFilterSum = 0;
 
+    // Debug ispis za proveru podataka
+    console.log('Podaci za obradu:', data);
+
     for (var i = 0; i < data.length; i++) {
         zaduzenjeSum += data[i].debt_amount;
         uplateSum += data[i].payment_amount;
+        
+        // Debug za svaku stavku
+        console.log('Stavka ' + i + ':', 
+                    'id=' + data[i].id,
+                    'debt=' + data[i].debt_amount,
+                    'payment=' + data[i].payment_amount,
+                    'saldo=' + data[i].saldo);
         
         var currentDate = new Date(data[i].date);
         currentDate.setHours(0, 0, 0, 0);

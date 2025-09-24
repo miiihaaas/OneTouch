@@ -335,8 +335,34 @@ def overview_student(student_id):
                     logging.error(f'Greška pri obradi transakcije (ID: {record.id}): {str(e)}')
                     continue
             
+            # Sortiranje podataka po usluzi i datumu
             data.sort(key=lambda x: (x['service_item_id'], x['date']))
-            # unique_services_list.sort(key=lambda x: x['service_item_date'])
+            
+            # Nakon sortiranja, izvrši ponovno izračunavanje salda za svaku uslugu
+            # kako bi osigurao pravilno prikazan saldo u svakom redu
+            service_saldo = {}
+            for i, item in enumerate(data):
+                service_id = item['service_item_id']
+                
+                # Inicijalizacija salda za novu uslugu
+                if service_id not in service_saldo:
+                    service_saldo[service_id] = 0
+                
+                # Izračunavanje salda nakon svake transakcije
+                old_saldo = service_saldo[service_id]
+                
+                # Zaduženje povećava saldo
+                service_saldo[service_id] += item['debt_amount']
+                # Uplata smanjuje saldo
+                service_saldo[service_id] -= item['payment_amount']
+                
+                logging.debug(f"Transakcija {item['id']}: {old_saldo:.2f} + {item['debt_amount']:.2f} - {item['payment_amount']:.2f} = {service_saldo[service_id]:.2f}")
+                
+                # Postavlja saldo za trenutni red
+                data[i]['saldo'] = service_saldo[service_id]
+                logging.debug(f"Finalni saldo za red {item['id']}: {data[i]['saldo']:.2f}")
+            
+            # Sortiranje liste usluga
             unique_services_list.sort(key=lambda x: x['id'], reverse=True)
             
             report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
