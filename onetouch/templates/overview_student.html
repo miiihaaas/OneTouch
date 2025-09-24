@@ -199,9 +199,6 @@
     for (var i = 0; i < data.length; i++) {
         zaduzenjeSum += data[i].debt_amount;
         uplateSum += data[i].payment_amount;
-        console.log('datum: ', data[i].date)
-        console.log('početni datum: ', pocetniDatum)
-        console.log('krajnji datum: ', krajnjiDatum)
         
         var currentDate = new Date(data[i].date);
         currentDate.setHours(0, 0, 0, 0);

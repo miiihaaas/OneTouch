@@ -281,9 +281,14 @@ def overview_student(student_id):
                         }
                         
                         if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
-                            saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == test_data['service_item_id']]
-                            test_data['saldo'] = saldo_sum[-1] + test_data['debt_amount'] - test_data['payment_amount']
+                            # Izračunavanje ukupnog salda za ovu uslugu do sada
+                            previous_items = [item for item in data if item['service_item_id'] == test_data['service_item_id']]
+                            previous_saldo = previous_items[-1]['saldo'] if previous_items else 0
+                            
+                            # Ažuriranje salda sa trenutnom transakcijom
+                            test_data['saldo'] = previous_saldo + test_data['debt_amount'] - test_data['payment_amount']
                         else:
+                            # Prvi red za ovu uslugu - zaduživanje je pozitivno, uplata je negativna za saldo
                             test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
                             
                         data.append(test_data)
