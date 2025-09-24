@@ -37,6 +37,16 @@
         <label for="end-date" class="form-label">Krajnji datum:</label>
         <input class="form-control mb-2" type="date" id="end-date" name="end-date" value="{{ end_date }}">
     </div>
+    <div class="col">
+        <div class="form-check form-switch mt-4">
+            {% if use_school_year %}
+            <input class="form-check-input" type="checkbox" role="switch" id="current-year" name="current-year" checked>
+            {% else %}
+            <input class="form-check-input" type="checkbox" role="switch" id="current-year" name="current-year">
+            {% endif %}
+            <label class="form-check-label" for="current-year">Tekuća školska godina</label>
+        </div>
+    </div>
     <div class="col mtb-8px cstm-3">
         <!-- <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('static', filename='reports/report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
         <a class="btn btn-primary mt-4" id="print-report" name="print-report" title="Generiši izveštaj u PDF formatu" href="{{ url_for('transactions.get_report', filename='report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
@@ -237,17 +247,21 @@
     saldoFilterSumElement.textContent = formatNumber(saldoFilterSum);
 
 
-    // Funkcija koja se poziva pri promeni datuma
+    // Funkcija koja se poziva pri promeni datuma ili switcha
     function handleDateChange() {
         var startDate = document.getElementById("start-date").value;
         var endDate = document.getElementById("end-date").value;
+        var currentYearChecked = document.getElementById("current-year").checked;
         var currentUrl = window.location.href.split('?')[0];
-        var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate;
-        window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima datuma
+        var url = currentUrl + "?start_date=" + startDate + "&end_date=" + endDate + "&current_year=" + currentYearChecked;
+        window.location.href = url; // Ponovno učitavanje stranice sa novim vrednostima
     }
 
     // Dodavanje osluškivača događaja za promenu datuma
     document.getElementById("start-date").addEventListener("change", handleDateChange);
     document.getElementById("end-date").addEventListener("change", handleDateChange);
+    
+    // Dodavanje osluškivača događaja za školsku godinu
+    document.getElementById("current-year").addEventListener("change", handleDateChange);
 </script>
 {% endblock %}

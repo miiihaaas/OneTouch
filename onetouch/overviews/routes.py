@@ -45,12 +45,35 @@ def overview_students():
             logging.debug(f'{start_date=} {end_date=} {service_id=}')
             
             # Postavljanje datuma
-            if start_date is None or end_date is None:
-                start_date = danas.replace(month=9, day=1, year=2020)
-                if danas.month < 9:
-                    end_date = danas.replace(month=8, day=31)
+            current_year = request.args.get('current_year')
+            use_school_year = current_year == 'true'
+            
+            # Provera da li je current_year promenjen iz true u false (switch isključen)
+            current_year_changed = request.args.get('current_year') is not None
+            
+            if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
+                # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+                if use_school_year:
+                    if danas.month >= 9:  # Septembar ili kasnije
+                        start_date = danas.replace(month=9, day=1)
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                    else:  # Pre septembra
+                        start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                        end_date = danas.replace(month=8, day=31)
+                # Ako je switch isključen, vrati na podrazumevane vrednosti
+                elif current_year_changed and not use_school_year:
+                    start_date = danas.replace(month=9, day=1, year=2020)
+                    if danas.month < 9:
+                        end_date = danas.replace(month=8, day=31)
+                    else:
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                # Podrazumevane vrednosti ako nije ništa od gore navedenog
                 else:
-                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                    start_date = danas.replace(month=9, day=1, year=2020)
+                    if danas.month < 9:
+                        end_date = danas.replace(month=8, day=31)
+                    else:
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
             
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -176,7 +199,8 @@ def overview_students():
                                     odeljenje=odeljenje,
                                     dugovanje=dugovanje,
                                     preplata=preplata,
-                                    route_name=route_name,)
+                                    route_name=route_name,
+                                    use_school_year=use_school_year)
             
         except SQLAlchemyError as e:
             logging.error(f'Greška pri pristupu bazi podataka: {str(e)}')
@@ -208,18 +232,43 @@ def overview_student(student_id):
         try:
             start_date = request.args.get('start_date')
             end_date = request.args.get('end_date')
+            current_year = request.args.get('current_year')
             
-            if start_date is None or end_date is None:
-                start_date = danas.replace(month=9, day=1, year=2020)
-                if danas.month < 9:
-                    end_date = danas.replace(month=8, day=31)
+            # Provera da li je zahtevana tekuća školska godina
+            use_school_year = current_year == 'true'
+            
+            # Provera da li je current_year promenjen iz true u false (switch isključen)
+            current_year_changed = request.args.get('current_year') is not None
+            
+            if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
+                # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+                if use_school_year:
+                    if danas.month >= 9:  # Septembar ili kasnije
+                        start_date = danas.replace(month=9, day=1)
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                    else:  # Pre septembra
+                        start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                        end_date = danas.replace(month=8, day=31)
+                # Ako je switch isključen, vrati na podrazumevane vrednosti
+                elif current_year_changed and not use_school_year:
+                    start_date = danas.replace(month=9, day=1, year=2020)
+                    if danas.month < 9:
+                        end_date = danas.replace(month=8, day=31)
+                    else:
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                # Podrazumevane vrednosti ako nije ništa od gore navedenog
                 else:
-                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                    start_date = danas.replace(month=9, day=1, year=2020)
+                    if danas.month < 9:
+                        end_date = danas.replace(month=8, day=31)
+                    else:
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
                 end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
                 
-            logging.debug(f'Datumi: {start_date=} {end_date=}')
+            logging.debug(f'Datumi: {start_date=} {end_date=} {use_school_year=}')
             
         except ValueError as e:
             logging.error(f'Greška pri obradi datuma: {str(e)}')
@@ -375,7 +424,8 @@ def overview_student(student_id):
                                 unique_services_list=unique_services_list,
                                 start_date=start_date,
                                 end_date=end_date,
-                                route_name=route_name)
+                                route_name=route_name,
+                                use_school_year=use_school_year)
                                 
         except SQLAlchemyError as e:
             logging.error(f'Greška pri pristupu bazi podataka: {str(e)}')
@@ -406,13 +456,37 @@ def overview_sections():
         odeljenje = '' # ako nije definisana promenjiva na početku, dodeli joj '' što predstavlja sve odeljenja
     logging.debug(f'nakon prilagođavanja: {razred=} {odeljenje=}')
     logging.debug(f'{start_date=} {end_date=} {service_id=}')
-    if start_date is None or end_date is None:
-        start_date = danas.replace(month=9, day=1, year=2020)
-        if danas.month < 9:
-            end_date = danas.replace(month=8, day=31)
+    current_year = request.args.get('current_year')
+    use_school_year = current_year == 'true'
+    
+    # Provera da li je current_year promenjen iz true u false (switch isključen)
+    current_year_changed = request.args.get('current_year') is not None
+            
+    if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
+        # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+        if use_school_year:
+            if danas.month >= 9:  # Septembar ili kasnije
+                start_date = danas.replace(month=9, day=1)
+                end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            else:  # Pre septembra
+                start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                end_date = danas.replace(month=8, day=31)
+        # Ako je switch isključen, vrati na podrazumevane vrednosti
+        elif current_year_changed and not use_school_year:
+            start_date = danas.replace(month=9, day=1, year=2020)
+            if danas.month < 9:
+                end_date = danas.replace(month=8, day=31)
+            else:
+                end_date = danas.replace(month=8, day=31, year=danas.year+1)
+        # Podrazumevane vrednosti ako nije ništa od gore navedenog
         else:
-            end_date = danas.replace(month=8, day=31, year=danas.year+1)
-    logging.debug(f'posle if bloka: {start_date=} {end_date=}')
+            start_date = danas.replace(month=9, day=1, year=2020)
+            if danas.month < 9:
+                end_date = danas.replace(month=8, day=31)
+            else:
+                end_date = danas.replace(month=8, day=31, year=danas.year+1)
+    
+    logging.debug(f'posle if bloka: {start_date=} {end_date=} {use_school_year=}')
     if type(start_date) is str:
         # Konvertuj start_date i end_date u datetime.date objekte
         start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -530,7 +604,8 @@ def overview_sections():
                             options=options,
                             razred=razred,
                             odeljenje=odeljenje,
-                            route_name=route_name,)
+                            route_name=route_name,
+                            use_school_year=use_school_year)
 
 
 @overviews.route("/overview_debts", methods=['GET', 'POST'])
