@@ -262,6 +262,7 @@ def overview_student(student_id):
                         date_ = record.transaction_record_student_payment.payment_date
                     elif record.fund_transfer_id:
                         # Preknjižavanje
+                        logging.debug(f"Fund transfer record: {record.id}, amount: {record.student_debt_total}")
                         if record.student_debt_total > 0:  # Pozitivan iznos (smanjenje viška)
                             description = f'Preknjižavanje na: {record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
                         else:  # Negativan iznos (povećanje sredstava)
@@ -269,6 +270,30 @@ def overview_student(student_id):
                         date_ = record.transfer_record.transfer_date
                         
                     if record.student_debt_total:
+                        # Određivanje tipa transakcije i pravilno postavljanje debt_amount i payment_amount
+                        debt_amount = 0
+                        payment_amount = 0
+                        
+                        if record.student_debt_id:
+                            # Ovo je zaduženje, uvek pozitivno za dug
+                            debt_amount = abs(record.student_debt_total)
+                            logging.debug(f"ZADUŽENJE: {record.id}, {debt_amount}, {date_}, {description}")
+                        elif record.student_payment_id:
+                            # Ovo je uplata, uvek pozitivna za uplaćeni iznos
+                            payment_amount = abs(record.student_debt_total)
+                            logging.debug(f"UPLATA: {record.id}, {payment_amount}, {date_}, {description}")
+                        elif record.fund_transfer_id:
+                            # Preknjižavanje - posebna logika zavisno od smera
+                            if record.student_debt_total > 0:
+                                # Preknjižavanje NA ovu uslugu - povećava dug
+                                debt_amount = abs(record.student_debt_total)
+                                logging.debug(f"PREKNJIŽAVANJE KA USLUZI: {record.id}, {debt_amount}, {date_}, {description}")
+                            else:
+                                # Preknjižavanje SA ove usluge - smanjuje dug
+                                payment_amount = abs(record.student_debt_total)
+                                logging.debug(f"PREKNJIŽAVANJE SA USLUGE: {record.id}, {payment_amount}, {date_}, {description}")
+                        
+                        # Kreiramo objekt za transakciju sa precizno definisanim vrednostima
                         test_data = {
                             'id': record.id,
                             'service_item_id': record.service_item_id,
@@ -276,15 +301,33 @@ def overview_student(student_id):
                             'fund_transfer_id': record.fund_transfer_id,
                             'date': date_,
                             'description': description,
-                            'debt_amount': record.student_debt_total if record.student_debt_id else 0,
-                            'payment_amount': record.student_debt_total if (record.student_payment_id or record.fund_transfer_id) else 0,
+                            'debt_amount': debt_amount,
+                            'payment_amount': payment_amount,
                         }
                         
-                        if test_data['service_item_id'] in [item['service_item_id'] for item in data]:
-                            saldo_sum = [item['saldo'] for item in data if item['service_item_id'] == test_data['service_item_id']]
-                            test_data['saldo'] = saldo_sum[-1] + test_data['debt_amount'] - test_data['payment_amount']
+                        # Izračunavanje salda na osnovu svih prethodnih transakcija iste usluge
+                        previous_items = [item for item in data if item['service_item_id'] == test_data['service_item_id']]
+                        
+                        if previous_items:
+                            # Ako već postoje transakcije za ovu uslugu, uzimamo poslednji saldo
+                            previous_saldo = previous_items[-1]['saldo']
+                            # Novi saldo je prethodni saldo plus zaduženje minus uplata
+                            test_data['saldo'] = previous_saldo + debt_amount - payment_amount
+                            logging.debug(f"Saldo RAČUNANJE (postojeća usluga): {test_data['id']}, prev={previous_saldo}, debt={debt_amount}, payment={payment_amount}, new={test_data['saldo']}")
                         else:
-                            test_data['saldo'] = test_data['debt_amount'] - test_data['payment_amount']
+                            # Prva transakcija za ovu uslugu
+                            test_data['saldo'] = debt_amount - payment_amount
+                            logging.debug(f"Saldo RAČUNANJE (prva transakcija): {test_data['id']}, debt={debt_amount}, payment={payment_amount}, new={test_data['saldo']}")
+                        
+                        # Dodatna provera da li je saldo ispravno izračunat
+                        total_debt = sum(item['debt_amount'] for item in previous_items) + debt_amount
+                        total_payment = sum(item['payment_amount'] for item in previous_items) + payment_amount
+                        expected_saldo = total_debt - total_payment
+                        
+                        # Ako postoji razlika, koristimo očekivani saldo
+                        if abs(test_data['saldo'] - expected_saldo) > 0.001:  # Tolerancija za float razlike
+                            logging.warning(f"Korekcija salda: {test_data['saldo']} -> {expected_saldo}")
+                            test_data['saldo'] = expected_saldo
                             
                         data.append(test_data)
                         
@@ -292,8 +335,34 @@ def overview_student(student_id):
                     logging.error(f'Greška pri obradi transakcije (ID: {record.id}): {str(e)}')
                     continue
             
+            # Sortiranje podataka po usluzi i datumu
             data.sort(key=lambda x: (x['service_item_id'], x['date']))
-            # unique_services_list.sort(key=lambda x: x['service_item_date'])
+            
+            # Nakon sortiranja, izvrši ponovno izračunavanje salda za svaku uslugu
+            # kako bi osigurao pravilno prikazan saldo u svakom redu
+            service_saldo = {}
+            for i, item in enumerate(data):
+                service_id = item['service_item_id']
+                
+                # Inicijalizacija salda za novu uslugu
+                if service_id not in service_saldo:
+                    service_saldo[service_id] = 0
+                
+                # Izračunavanje salda nakon svake transakcije
+                old_saldo = service_saldo[service_id]
+                
+                # Zaduženje povećava saldo
+                service_saldo[service_id] += item['debt_amount']
+                # Uplata smanjuje saldo
+                service_saldo[service_id] -= item['payment_amount']
+                
+                logging.debug(f"Transakcija {item['id']}: {old_saldo:.2f} + {item['debt_amount']:.2f} - {item['payment_amount']:.2f} = {service_saldo[service_id]:.2f}")
+                
+                # Postavlja saldo za trenutni red
+                data[i]['saldo'] = service_saldo[service_id]
+                logging.debug(f"Finalni saldo za red {item['id']}: {data[i]['saldo']:.2f}")
+            
+            # Sortiranje liste usluga
             unique_services_list.sort(key=lambda x: x['id'], reverse=True)
             
             report_student = gen_report_student(data, unique_services_list, student, start_date, end_date)
