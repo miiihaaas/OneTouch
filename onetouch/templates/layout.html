@@ -68,6 +68,9 @@
                     <a class="dropdown-item loading" href="{{ url_for('students.student_list') }}">Učenici</a>
                     <a class="dropdown-item loading" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
                     <a class="dropdown-item loading" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
+                    {% if current_user.user_role == 'admin' %}
+                    <a class="dropdown-item loading" href="{{ url_for('main.users') }}">Korisnici</a>
+                    {% endif %}
                     <a class="dropdown-item loading" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
                     <a class="dropdown-item loading" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
                     <a class="dropdown-item loading" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
@@ -127,6 +130,9 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('students.student_list') }}" id="student_list">Učenici</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('teachers.teacher_list') }}" id="teacher_list">Odeljenske starešine</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('schools.school_profile') }}" id="school">Podaci škole</a>
+                  {% if current_user.user_role == 'admin' %}
+                  <a class="nav-item nav-link loading" href="{{ url_for('main.users') }}" id="users">Korisnici</a>
+                  {% endif %}
                   <a class="nav-item nav-link loading" href="{{ url_for('suppliers.supplier_list') }}" id="supplier_list">Dobavljači</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('suppliers.service_list') }}" id="service_list">Tip usluge</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('suppliers.service_profile_list') }}" id="service_profile_list">Detalji usluge</a>
@@ -315,6 +321,7 @@
 				"student_list": { section: '#collapseOne', link: '#student_list' },
 				"teacher_list": { section: '#collapseOne', link: '#teacher_list' },
         "school": { section: '#collapseOne', link: '#school' },
+        "users": { section: '#collapseOne', link: '#users' },
         "supplier_list": { section: '#collapseOne', link: '#supplier_list' },
         "service_list": { section: '#collapseOne', link: '#service_list' },
         "service_profile_list": { section: '#collapseOne', link: '#service_profile_list' },

@@ -15,6 +15,7 @@ class User(db.Model, UserMixin): #! ovo je samo administrator škole
     user_surname = db.Column(db.String(255), nullable=False)
     user_mail = db.Column(db.String(255), nullable=False)
     user_password = db.Column(db.String(255), nullable=False)
+    user_role = db.Column(db.String(255), nullable=False, default='user')
     school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)
     
     # def get_reset_token(self, expires_sec=1800):
