@@ -1,0 +1,208 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID"; }
+        .mobtable td:nth-of-type(2):before { content: "Ime"; }
+        .mobtable td:nth-of-type(3):before { content: "Prezime"; }
+        .mobtable td:nth-of-type(4):before { content: "Mejl"; }
+        .mobtable td:nth-of-type(5):before { content: "Uloga"; }
+        .mobtable td:nth-of-type(6):before { content: "Akcije"; }
+    }
+</style>
+
+<div class="row form-group align-items-end">
+    <div class="col form-group">
+        <a href="#" class="btn btn-primary" data-toggle="modal" data-target="#RegisterModal">Registracija novog korisnika</a>
+    </div>
+</div>
+<hr>
+
+<!-- Modal Edit -->
+<div class="modal fade" id="EditModal" tabindex="-1" role="dialog" aria-labelledby="EditModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EditModalLabel">Detalji korisnika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="#" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="user_id" id="user_id">
+                    <div class="row">
+                        <div class="col form-group">
+                            <label class="form-control-label" for="user_name">Ime</label>
+                            <input type="text" class="form-control form-control-lg" id="user_name" name="user_name" required>
+                        </div>
+                        <div class="col form-group">
+                            <label class="form-control-label" for="user_surname">Prezime</label>
+                            <input type="text" class="form-control form-control-lg" id="user_surname" name="user_surname" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="user_mail">Email</label>
+                        <input type="email" class="form-control form-control-lg" id="user_mail" name="user_mail" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="user_role">Uloga</label>
+                        <select class="form-select form-select-lg" id="user_role" name="user_role" required>
+                            <option value="user">Korisnik</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                        <button type="submit" name="submit_edit" class="btn btn-primary loading">Sačuvajte izmene</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Register Modal -->
+<div class="modal fade" id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="RegisterModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="RegisterModalLabel">Registracija novog korisnika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('main.register_user') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <div class="row">
+                        <div class="col form-group">
+                            <label class="form-control-label" for="new_user_name">Ime</label>
+                            <input type="text" class="form-control form-control-lg" id="new_user_name" name="user_name" required>
+                        </div>
+                        <div class="col form-group">
+                            <label class="form-control-label" for="new_user_surname">Prezime</label>
+                            <input type="text" class="form-control form-control-lg" id="new_user_surname" name="user_surname" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="new_user_mail">Email</label>
+                        <input type="email" class="form-control form-control-lg" id="new_user_mail" name="user_mail" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-control-label" for="new_user_role">Uloga</label>
+                        <select class="form-select form-select-lg" id="new_user_role" name="user_role" required>
+                            <option value="user">Korisnik</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                        <button type="submit" name="submit_register" class="btn btn-primary loading">Registrujte korisnika</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Delete -->
+<div class="modal fade" id="DeleteModal" tabindex="-1" role="dialog" aria-labelledby="DeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="DeleteModalLabel">Potvrda brisanja korisnika</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="delete_confirmation_message">Da biste obrisali profil korisnika potrebno je potvrditi svojom lozinkom:</p>
+                <form action="" method="post" id="deleteForm">
+                    <input class="form-control" type="password" id="input_password" name="input_password" placeholder="Unesite lozinku">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                <button class="btn btn-danger loading" form="deleteForm" type="submit">Obrišite korisnika</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table id="data" class="table table-striped dataTable no-footer mobtable" role="grid" aria-describedby="data_info">
+    <thead>
+        <tr role="row">
+            <th>ID</th>
+            <th>Ime</th>
+            <th>Prezime</th>
+            <th>Mejl</th>
+            <th>Uloga</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.user_name }}</td>
+                <td>{{ user.user_surname }}</td>
+                <td>{{ user.user_mail }}</td>
+                <td>{{ user.user_role }}</td>
+                <td>
+                    <button type="button" class="btn-x btn-info-x i-btn" title="Izmenite profil korisnika"
+                        data-toggle="modal" data-target="#EditModal" 
+                        onclick="editUser({{ user.id }}, '{{ user.user_name }}', '{{ user.user_surname }}', '{{ user.user_mail }}', '{{ user.user_role }}')">
+                        <i class="fa fa-edit awesomeedit" aria-hidden="true"></i>
+                    </button>
+                    <a href="#" class="btn-x btn-danger-x" data-toggle="modal"
+                        data-target="#DeleteModal" onclick="deleteUser({{ user.id }}, '{{ user.user_name }}', '{{ user.user_surname }}')" title="Obrišite profil korisnika">
+                        <i class="fa-regular fa-trash-can awesomedelete" aria-hidden="true"></i>
+                    </a>
+                    <form action="{{ url_for('main.send_create_password_mail', user_id=user.id) }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="btn-x btn-info-x i-btn" title="Pošalji email za kreiranje lozinke">
+                            <i class="fa fa-envelope awesomeedit" aria-hidden="true"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    function deleteUser(userId, userName, userSurname) {
+        var form = document.getElementById('deleteForm');
+        form.action = "/delete_user/" + parseInt(userId);
+        var labelElement = document.getElementById('delete_confirmation_message');
+        labelElement.innerHTML = 'Da biste obrisali profil korisnika ' + userName + ' ' + userSurname + ' potrebno je potvrditi svojom lozinkom:';
+    }
+
+    function editUser(userId, userName, userSurname, userMail, userRole) {
+        document.getElementById("user_id").value = parseInt(userId);
+        document.getElementById("user_name").value = userName;
+        document.getElementById("user_surname").value = userSurname;
+        document.getElementById("user_mail").value = userMail;
+        document.getElementById("user_role").value = userRole;
+        
+        // Ažuriranje action URL-a sa ID-em korisnika
+        var editForm = document.querySelector("#EditModal form");
+        var url = "/edit_user/" + parseInt(userId);
+        editForm.action = url;
+    }
+
+    $(document).ready(function () {
+        var table = $('#data').DataTable({
+            order: [[2, 'asc'], [1, 'asc']],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+    });
+</script>
+{% endblock scripts %}
