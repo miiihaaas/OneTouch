@@ -88,12 +88,23 @@
                     <a href="{{url_for('overviews.overview_student', student_id=student['student_id'])}}" class="btn-x btn-primary-x loading" title="Pregled kartice stanja">
                         <i class="fa fa-magnifying-glass awesomeedit"></i>
                     </a>
+                    
+                    {% if student.has_debts and not student.has_overpayments %}
+                    <!-- Standardne opcije za učenike koji imaju dugovanja, ali nemaju preplate -->
                     <a href="{{url_for('overviews.generate_pdf_reports', student_id=student['student_id'])}}?min_debt_amount={{ min_debt_amount }}&selected_services={{ selected_services|join(',') }}" class="btn-x btn-primary-x generate-pdf-reports" data-student-id="{{ student['student_id'] }}" title="Generiši PDF izveštaje" target="_blank">
                         <i class="fa fa-file-pdf awesomeedit"></i>
                     </a>
                     <a href="{{url_for('overviews.send_debt_emails', student_id=student['student_id'])}}?min_debt_amount={{ min_debt_amount }}&selected_services={{ selected_services|join(',') }}" class="btn-x btn-primary-x send-email" data-student-id="{{ student['student_id'] }}" title="Pošalji e-mail" target="_blank">
                         <i class="fa fa-envelope awesomeedit"></i>
                     </a>
+                    {% endif %}
+                    
+                    {% if student.has_debts and student.has_overpayments %}
+                    <!-- Opcija za preknjižavanje za učenike koji imaju i dugovanja i preplate -->
+                    <a href="{{url_for('transactions.transfer_funds', student_id=student['student_id'])}}" class="btn-x btn-warning-x loading" title="Preknjižavanje sredstava">
+                        <i class="fa-solid fa-exchange-alt awesomeedit"></i>
+                    </a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

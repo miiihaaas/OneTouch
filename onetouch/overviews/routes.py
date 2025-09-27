@@ -701,8 +701,24 @@ def overview_debts():
                 # Filtriranje po minimalnom dugovanju i pretvaranje u listu
                 for student_id, data in student_data.items():
                     if data['saldo'] > min_debt_amount:
+                        # Provera da li učenik ima i dugovanja i preplate po uslugama
+                        has_debts = False
+                        has_overpayments = False
+                        
                         # Dodaj listu usluga za PDF izveštaj
                         data['services'] = list(services_by_student[student_id].values())
+                        
+                        # Proveri da li ima bar jednu uslugu sa preplatom i bar jednu sa dugovanjem
+                        for service in data['services']:
+                            if service['saldo'] > 0:  # Dugovanje
+                                has_debts = True
+                            elif service['saldo'] < 0:  # Preplata
+                                has_overpayments = True
+                        
+                        # Dodaj indikatore o stanju za kasnije korišćenje u šablonu
+                        data['has_debts'] = has_debts
+                        data['has_overpayments'] = has_overpayments
+                        
                         export_data.append(data)
                 
                 # Sortiranje po saldu (dugovanje) od najvećeg ka najmanjem
