@@ -30,7 +30,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="#" method="POST">
+                <form action="{{ url_for('main.edit_user', user_id=0) }}" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="user_id" id="user_id">
                     <div class="row">
@@ -192,7 +192,7 @@
         
         // Ažuriranje action URL-a sa ID-em korisnika
         var editForm = document.querySelector("#EditModal form");
-        var url = "/edit_user/" + parseInt(userId);
+        var url = editForm.action.replace("0", userId);
         editForm.action = url;
     }
 
