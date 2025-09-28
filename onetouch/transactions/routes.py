@@ -1523,6 +1523,7 @@ def process_transfer_funds():
     
     if amount > abs(saldo):
         flash(f'Greška: Iznos za preknjižavanje ne može biti veći od viška na izvornoj usluzi ({abs(saldo):.2f}).', 'danger')
+        flash(f'debug: {amount=} | {abs(saldo)=}', 'danger')
         return redirect(url_for('transactions.transfer_funds', student_id=student_id))
     
     try:
