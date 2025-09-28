@@ -633,7 +633,7 @@ def overview_debts():
         if request.method == 'POST':
             # Bezbedno konvertovanje vrednosti iz forme u float, sa proverom za prazan string
             min_debt_amount_str = request.form.get('minDebtAmount', '')
-            min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0
+            min_debt_amount = round(float(min_debt_amount_str) if min_debt_amount_str.strip() else 0, 2)
             selected_services = request.form.getlist('selectedServices')
             print(f'{min_debt_amount=}')
             print(f'{selected_services=}')
@@ -689,14 +689,14 @@ def overview_debts():
                         services_by_student[student_id][service_id]['student_payment'] += record.student_debt_total
                     
                     # Ažuriranje salda po učeniku
-                    student_data[student_id]['saldo'] = student_data[student_id]['student_debt'] - student_data[student_id]['student_payment']
+                    student_data[student_id]['saldo'] = round(student_data[student_id]['student_debt'] - student_data[student_id]['student_payment'], 2)
                     
                     # Ažuriranje salda po usluzi
-                    services_by_student[student_id][service_id]['saldo'] = services_by_student[student_id][service_id]['student_debt'] - services_by_student[student_id][service_id]['student_payment']
+                    services_by_student[student_id][service_id]['saldo'] = round(services_by_student[student_id][service_id]['student_debt'] - services_by_student[student_id][service_id]['student_payment'], 2)
                 
                 # Filtriranje po minimalnom dugovanju i pretvaranje u listu
                 for student_id, data in student_data.items():
-                    if data['saldo'] > min_debt_amount:
+                    if round(data['saldo'], 2) > min_debt_amount:
                         # Provera da li učenik ima i dugovanja i preplate po uslugama
                         has_debts = False
                         has_overpayments = False
@@ -706,9 +706,10 @@ def overview_debts():
                         
                         # Proveri da li ima bar jednu uslugu sa preplatom i bar jednu sa dugovanjem
                         for service in data['services']:
-                            if service['saldo'] > 0:  # Dugovanje
+                            rounded_saldo = round(service['saldo'], 2)
+                            if rounded_saldo > 0:  # Dugovanje
                                 has_debts = True
-                            elif service['saldo'] < 0:  # Preplata
+                            elif rounded_saldo < 0:  # Preplata
                                 has_overpayments = True
                         
                         # Dodaj indikatore o stanju za kasnije korišćenje u šablonu
