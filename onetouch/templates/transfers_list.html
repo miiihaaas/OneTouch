@@ -44,7 +44,7 @@
         <tr>
             <td>{{ transfer.transfer_date.strftime('%d.%m.%Y.') }}</td>
             <td>{{ transfer.transfer_date }}</td>
-            <td>{{ transfer.student.student_name }} {{ transfer.student.student_surname }}</td>
+            <td>{{ transfer.student.student_name }} {{ transfer.student.student_surname }} ({{ transfer.student.student_class }}/{{ transfer.student.student_section }})</td>
             <td>{{ transfer.source_service.service_item_service.service_name }} - {{ transfer.source_service.service_item_name }}</td>
             <td>{{ transfer.target_service.service_item_service.service_name }} - {{ transfer.target_service.service_item_name }}</td>
             <td>{{ transfer.amount|round(2) }}</td>

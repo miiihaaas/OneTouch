@@ -76,7 +76,7 @@
                         {% for service in services_with_surplus %}
                         <option value="{{ service.service_id }}" data-max="{{ (-service.saldo)|round(2) }}">
                             {{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }} 
-                            (višak: {{ (-service.saldo)|round(2) }})
+                            (u preplati: {{ (-service.saldo)|round(2) }})
                         </option>
                         {% endfor %}
                     </select>
