@@ -1500,6 +1500,7 @@ def process_transfer_funds():
     source_service_id = request.form.get('source_service', type=int)
     target_service_id = request.form.get('target_service', type=int)
     amount = request.form.get('amount', type=float)
+    amount = round(amount, 2)  # Zaokružite na 2 decimale
     transfer_note = request.form.get('transfer_note', '')
     
     if not all([student_id, source_service_id, target_service_id, amount]) or source_service_id == target_service_id:
@@ -1520,8 +1521,9 @@ def process_transfer_funds():
         flash('Greška: Izabrana izvorna usluga nema višak sredstava.', 'danger')
         return redirect(url_for('transactions.transfer_funds', student_id=student_id))
     
-    if amount > abs(saldo):
+    if amount > round(abs(saldo), 2):
         flash(f'Greška: Iznos za preknjižavanje ne može biti veći od viška na izvornoj usluzi ({abs(saldo):.2f}).', 'danger')
+        flash(f'debug: {amount=} | {abs(saldo)=}', 'danger')
         return redirect(url_for('transactions.transfer_funds', student_id=student_id))
     
     try:
