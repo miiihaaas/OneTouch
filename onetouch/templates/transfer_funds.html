@@ -24,7 +24,12 @@
 {% if services_data %}
 <div class="card mt-4">
     <div class="card-header">
-        <h3>Stanje usluga za učenika: {{ selected_student.student_name }} {{ selected_student.student_surname }}</h3>
+        <h3>
+            Stanje usluga za učenika: {{ selected_student.student_name }} {{ selected_student.student_surname }} 
+            <a href="{{url_for('overviews.overview_student', student_id=selected_student_id)}}" title="Pregled kartice stanja" style="float: right;">
+                <i class="fa fa-magnifying-glass awesomeedit"></i>
+            </a>
+        </h3>
     </div>
     <div class="card-body">
         <table class="table table-striped">

@@ -99,89 +99,127 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                <div class="modal-body">
-                <form action="" method="POST">
-                    {{ edit_form.hidden_tag() }}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                {{ edit_form.teacher_name.label(class="form-control-label") }}
-                                {% if edit_form.teacher_name.errors %}
-                                    {{ edit_form.teacher_name(class="form-control form-control-lg is-invalid") }}
-                                    <div class="invalid-feedback">
-                                        {% for error in edit_form.teacher_name.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
+                    <div class="modal-body pb-0">
+                        <form action="" method="POST">
+                            {{ edit_form.hidden_tag() }}
+                            
+                            <!-- Napomena informativni blok -->
+                            <div class="mb-3 p-2 rounded bg-light border">
+                                <div class="small text-muted">
+                                    <i class="fa fa-info-circle me-1"></i> <strong>Napomena:</strong>
+                                    <ul class="ps-3 mb-0 mt-1">
+                                        <li>Ime i prezime menjati isključivo u slučaju tipografske greške ili ako dođe do promene prezimena (npr. udaja nastavnice/učiteljice).</li>
+                                        <li>Na početku nove školske godine ažurira se samo razred/odeljenje.</li>
+                                        <li>Isti nastavnik uvek zadržava isti ID.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <!-- Lični podaci -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="m-0">Lični podaci</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                {{ edit_form.teacher_name.label(class="form-control-label") }}
+                                                {% if edit_form.teacher_name.errors %}
+                                                    {{ edit_form.teacher_name(class="form-control form-control-lg is-invalid") }}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in edit_form.teacher_name.errors %}
+                                                            <span>{{ error }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    {{ edit_form.teacher_name(class="form-control", value=teacher.teacher_name) }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                {{ edit_form.teacher_surname.label(class="form-control-label") }}
+                                                {% if edit_form.teacher_surname.errors %}
+                                                    {{ edit_form.teacher_surname(class="form-control form-control-lg is-invalid") }}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in edit_form.teacher_surname.errors %}
+                                                            <span>{{ error }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    {{ edit_form.teacher_surname(class="form-control", value=teacher.teacher_surname) }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
                                     </div>
-                                {% else %}
-                                    {{ edit_form.teacher_name(class="form-control form-control-lg", value=teacher.teacher_name) }}
-                                {% endif %}
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                {{ edit_form.teacher_surname.label(class="form-control-label") }}
-                                {% if edit_form.teacher_surname.errors %}
-                                    {{ edit_form.teacher_surname(class="form-control form-control-lg is-invalid") }}
-                                    <div class="invalid-feedback">
-                                        {% for error in edit_form.teacher_surname.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
+                            
+                            <!-- Podaci o odeljenju -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="m-0">Podaci o odeljenju</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                {{ edit_form.teacher_class.label(class="form-control-label") }}
+                                                {% if edit_form.teacher_class.errors %}
+                                                    {{ edit_form.teacher_class(class="form-control form-control-lg is-invalid") }}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in edit_form.teacher_class.errors %}
+                                                            <span>{{ error }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    {% set z = edit_form.teacher_class.process_data(teacher.teacher_class) %}
+                                                    {{ edit_form.teacher_class(class="form-select", value=teacher.teacher_class) }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                {{ edit_form.teacher_section.label(class="form-control-label") }}
+                                                {% if edit_form.teacher_section.errors %}
+                                                {{ edit_form.teacher_section(class="form-control form-control-lg is-invalid") }}
+                                                <div class="invalid-feedback">
+                                                        {% for error in edit_form.teacher_section.errors %}
+                                                            <span>{{ error }}</span>
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    {% set z = edit_form.teacher_section.process_data(teacher.teacher_section) %}
+                                                    {{ edit_form.teacher_section(class="form-select", selected=teacher.teacher_section) }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
                                     </div>
-                                {% else %}
-                                    {{ edit_form.teacher_surname(class="form-control form-control-lg", value=teacher.teacher_surname) }}
-                                {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                {{ edit_form.teacher_class.label(class="form-control-label") }}
-                                {% if edit_form.teacher_class.errors %}
-                                    {{ edit_form.teacher_class(class="form-control form-control-lg is-invalid") }}
-                                    <div class="invalid-feedback">
-                                        {% for error in edit_form.teacher_class.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
+                            
+                            <!-- ID starešine -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="m-0">Sistemski podaci</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group mb-0">
+                                        <label for="teacher_id" class="form-control-label">ID odeljenskog starešine</label>
+                                        <input id="teacher_id" name="teacher_id" type="text" class="form-control" value="{{teacher.id}}" readonly>
+                                        <small class="text-muted">ID se ne može promeniti i koristi se za povezivanje sa drugim podacima u sistemu.</small>
                                     </div>
-                                {% else %}
-                                    {% set z = edit_form.teacher_class.process_data(teacher.teacher_class) %}
-                                    {{ edit_form.teacher_class(class="form-select form-select-lg", value=teacher.teacher_class) }}
-                                {% endif %}
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                {{ edit_form.teacher_section.label(class="form-control-label") }}
-                                {% if edit_form.teacher_section.errors %}
-                                {{ edit_form.teacher_section(class="form-control form-control-lg is-invalid") }}
-                                <div class="invalid-feedback">
-                                        {% for error in edit_form.teacher_section.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    {% set z = edit_form.teacher_section.process_data(teacher.teacher_section) %}
-                                    {{ edit_form.teacher_section(class="form-select form-select-lg", selected=teacher.teacher_section) }}
-                                {% endif %}
+                            
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                                {{ edit_form.submit_edit(class="btn btn-primary loading") }}
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="teacher_id" class="form-control-label">ID odeljenskog starešine</label>
-                                <input id="teacher_id" name="teacher_id" type="text" class="form-control" value="{{teacher.id}}" readonly>
-                            </div>
-                        </div>
+                        </form>
                     </div>
-                    
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                            {{ edit_form.submit_edit(class="btn btn-primary loading") }}
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -199,71 +237,107 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-        <div class="modal-body">
-        <label for="input_password">Popunite podatke profila odeljenskog starešine</label>
-        <form action="" method="POST">
-            {{ register_form.hidden_tag() }}
-            <div class="form-group">
-                {{ register_form.teacher_name.label(class="form-control-label") }}
-                {% if register_form.teacher_name.errors %}
-                    {{ register_form.teacher_name(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.teacher_name.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
+            <div class="modal-body pb-0">
+                <form action="" method="POST">
+                    {{ register_form.hidden_tag() }}
+                    
+                    <!-- Informativni blok -->
+                    <div class="mb-3 p-3 rounded bg-light border">
+                        <div class="small text-muted">
+                            <i class="fa fa-info-circle me-1"></i> <strong>Napomena:</strong>
+                            <p class="mb-0 mt-1">Popunite osnovne podatke o novom odeljenskom starešini. Sistem će automatski dodeliti jedinstveni ID.</p>
+                        </div>
                     </div>
-                {% else %}
-                    {{ register_form.teacher_name(class="form-control form-control-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.teacher_surname.label(class="form-control-label") }}
-                {% if register_form.teacher_surname.errors %}
-                    {{ register_form.teacher_surname(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.teacher_surname.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
+                    
+                    <!-- Lični podaci -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light py-2">
+                            <h6 class="m-0">Lični podaci</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ register_form.teacher_name.label(class="form-control-label") }}
+                                        {% if register_form.teacher_name.errors %}
+                                            {{ register_form.teacher_name(class="form-control is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in register_form.teacher_name.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ register_form.teacher_name(class="form-control") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ register_form.teacher_surname.label(class="form-control-label") }}
+                                        {% if register_form.teacher_surname.errors %}
+                                            {{ register_form.teacher_surname(class="form-control is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in register_form.teacher_surname.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ register_form.teacher_surname(class="form-control") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                {% else %}
-                    {{ register_form.teacher_surname(class="form-control form-control-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.teacher_class.label(class="form-control-label") }}
-                {% if register_form.teacher_class.errors %}
-                    {{ register_form.teacher_class(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.teacher_class.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
+                    
+                    <!-- Podaci o odeljenju -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light py-2">
+                            <h6 class="m-0">Podaci o odeljenju</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ register_form.teacher_class.label(class="form-control-label") }}
+                                        {% if register_form.teacher_class.errors %}
+                                            {{ register_form.teacher_class(class="form-select is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in register_form.teacher_class.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ register_form.teacher_class(class="form-select") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        {{ register_form.teacher_section.label(class="form-control-label") }}
+                                        {% if register_form.teacher_section.errors %}
+                                            {{ register_form.teacher_section(class="form-select is-invalid") }}
+                                            <div class="invalid-feedback">
+                                                {% for error in register_form.teacher_section.errors %}
+                                                    <span>{{ error }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ register_form.teacher_section(class="form-select") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                {% else %}
-                    {{ register_form.teacher_class(class="form-select form-select-lg") }}
-                {% endif %}
-            </div>
-            <div class="form-group">
-                {{ register_form.teacher_section.label(class="form-control-label") }}
-                {% if register_form.teacher_section.errors %}
-                    {{ register_form.teacher_section(class="form-control form-control-lg is-invalid") }}
-                    <div class="invalid-feedback">
-                        {% for error in register_form.teacher_section.errors %}
-                            <span>{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    {{ register_form.teacher_section(class="form-select form-select-lg") }}
-                {% endif %}
-            </div>
-            </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
-                    <div class="form-group"></div>
+                    
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
                         {{ register_form.submit_register(class="btn btn-primary loading") }}
                     </div>
-                </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
