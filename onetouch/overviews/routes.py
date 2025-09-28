@@ -707,10 +707,13 @@ def overview_debts():
                         # Proveri da li ima bar jednu uslugu sa preplatom i bar jednu sa dugovanjem
                         for service in data['services']:
                             rounded_saldo = round(service['saldo'], 2)
-                            if rounded_saldo > 0:  # Dugovanje
-                                has_debts = True
-                            elif rounded_saldo < 0:  # Preplata
-                                has_overpayments = True
+                            if abs(rounded_saldo) < 0.01:
+                                continue
+                            else:
+                                if rounded_saldo > 0:  # Dugovanje
+                                    has_debts = True
+                                elif rounded_saldo < 0:  # Preplata
+                                    has_overpayments = True
                         
                         # Dodaj indikatore o stanju za kasnije korišćenje u šablonu
                         data['has_debts'] = has_debts
