@@ -333,14 +333,10 @@ def overview_student(student_id):
                             logging.debug(f"UPLATA: {record.id}, {payment_amount}, {date_}, {description}")
                         elif record.fund_transfer_id:
                             # Preknjižavanje - posebna logika zavisno od smera
-                            if record.student_debt_total > 0:
+                            if record.student_debt_total != None:
                                 # Preknjižavanje NA ovu uslugu - povećava dug
-                                debt_amount = abs(record.student_debt_total)
-                                logging.debug(f"PREKNJIŽAVANJE KA USLUZI: {record.id}, {debt_amount}, {date_}, {description}")
-                            else:
-                                # Preknjižavanje SA ove usluge - smanjuje dug
-                                payment_amount = abs(record.student_debt_total)
-                                logging.debug(f"PREKNJIŽAVANJE SA USLUGE: {record.id}, {payment_amount}, {date_}, {description}")
+                                debt_amount = 0
+                                payment_amount = record.student_debt_total
                         
                         # Kreiramo objekt za transakciju sa precizno definisanim vrednostima
                         test_data = {
