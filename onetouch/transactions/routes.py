@@ -1521,7 +1521,7 @@ def process_transfer_funds():
         flash('Greška: Izabrana izvorna usluga nema višak sredstava.', 'danger')
         return redirect(url_for('transactions.transfer_funds', student_id=student_id))
     
-    if amount > abs(saldo):
+    if amount > round(abs(saldo), 2):
         flash(f'Greška: Iznos za preknjižavanje ne može biti veći od viška na izvornoj usluzi ({abs(saldo):.2f}).', 'danger')
         flash(f'debug: {amount=} | {abs(saldo)=}', 'danger')
         return redirect(url_for('transactions.transfer_funds', student_id=student_id))
