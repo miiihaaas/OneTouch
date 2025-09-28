@@ -1500,6 +1500,7 @@ def process_transfer_funds():
     source_service_id = request.form.get('source_service', type=int)
     target_service_id = request.form.get('target_service', type=int)
     amount = request.form.get('amount', type=float)
+    amount = round(amount, 2)  # Zaokružite na 2 decimale
     transfer_note = request.form.get('transfer_note', '')
     
     if not all([student_id, source_service_id, target_service_id, amount]) or source_service_id == target_service_id:
