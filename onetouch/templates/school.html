@@ -226,22 +226,165 @@
 
 {% block scripts %}
 <script>
+    function formatBankAccountDisplay(input) {
+        // Uzmi samo cifre
+        let digits = input.replace(/\D/g, '');
+        
+        // Ograniči na 18 cifara
+        if (digits.length > 18) {
+            digits = digits.substring(0, 18);
+        }
+        
+        // Jednostavno formatiranje - dodaj crtice na pravim mestima
+        let formatted = '';
+        
+        for (let i = 0; i < digits.length; i++) {
+            // Dodaj crticu nakon 3. cifre
+            if (i === 3) {
+                formatted += '-';
+            }
+            // Dodaj crticu nakon 16. cifre
+            if (i === 16) {
+                formatted += '-';
+            }
+            formatted += digits[i];
+        }
+        
+        return formatted;
+    }
+    
+    function formatBankAccountFinal(input) {
+        // Uzmi samo cifre
+        let digits = input.replace(/\D/g, '');
+        
+        if (digits.length === 0) {
+            return '';
+        }
+        
+        // Mora imati bar 5 cifara (3 početne + 2 krajnje)
+        if (digits.length < 5) {
+            return formatBankAccountDisplay(digits);
+        }
+        
+        // Uzmi prve 3
+        let first = digits.substring(0, 3);
+        
+        // Uzmi poslednje 2
+        let last = digits.substring(digits.length - 2);
+        
+        // Sredina (sve između prve 3 i poslednje 2)
+        let middle = digits.substring(3, digits.length - 2);
+        
+        // Dopuni sredinu vodećim nulama do 13 cifara
+        middle = middle.padStart(13, '0');
+        
+        return `${first}-${middle}-${last}`;
+    }
+    
+    function unformatBankAccount(input) {
+        // Vraća cifre BEZ vodećih nula (osim ako je 0 značajna cifra)
+        let formatted = input.replace(/\D/g, ''); // Sve cifre
+        
+        if (formatted.length === 0) {
+            return '';
+        }
+        
+        if (formatted.length < 5) {
+            return formatted;
+        }
+        
+        // Uzmi prve 3
+        let first = formatted.substring(0, 3);
+        
+        // Uzmi poslednje 2
+        let last = formatted.substring(formatted.length - 2);
+        
+        // Sredina - ukloni vodeće nule
+        let middle = formatted.substring(3, formatted.length - 2);
+        middle = middle.replace(/^0+/, ''); // Ukloni vodeće nule
+        
+        // Ako je middle prazan (samo nule), ostavi jednu nulu
+        if (middle === '') {
+            middle = '0';
+        }
+        
+        return first + middle + last;
+    }
+    
+    function setCursorPosition(input, position) {
+        setTimeout(() => {
+            input.setSelectionRange(position, position);
+        }, 0);
+    }
+    
+    function handleBankAccountFocus(event) {
+        let input = event.target;
+        
+        // Sačuvaj formatiran value
+        input.dataset.formattedValue = input.value;
+        
+        // Pretvori u neformatirane cifre (bez vodećih nula)
+        let unformatted = unformatBankAccount(input.value);
+        input.value = unformatted;
+        
+        // Postavi kursor na kraj
+        setTimeout(() => {
+            input.setSelectionRange(unformatted.length, unformatted.length);
+        }, 0);
+    }
+    
+    function handleBankAccountInput(event) {
+        let input = event.target;
+        
+        // Dozvoli samo cifre
+        let digits = input.value.replace(/\D/g, '');
+        
+        // Ograniči na 18 cifara
+        if (digits.length > 18) {
+            digits = digits.substring(0, 18);
+        }
+        
+        input.value = digits;
+    }
+    
+    function handleBankAccountBlur(event) {
+        let input = event.target;
+        
+        // Formatiraj finalno
+        input.value = formatBankAccountFinal(input.value);
+    }
+
     function handleRecipientNameChange(nameInput) {
-        // Pronađi odgovarajući element adrese (sledeći input sa klasom recipient-address u istom redu)
         const addressInput = nameInput.closest('.card-body').querySelector('.recipient-address');
         
         if (nameInput.value.trim() === '') {
-            // Ako je naziv primaoca prazan, obriši vrednost adrese i onemogući polje
             addressInput.value = '';
             addressInput.disabled = true;
         } else {
-            // Ako naziv primaoca ima vrednost, omogući polje adrese
             addressInput.disabled = false;
         }
     }
     
-    // Inicijalizacija za sve postojeće elemente
+    // Inicijalizacija
     document.addEventListener('DOMContentLoaded', function() {
+        // Formatiranje bankovnih računa
+        document.querySelectorAll('input[name*="bank_account_number"]').forEach(function(input) {
+            // Formatiran pri učitavanju
+            input.value = formatBankAccountFinal(input.value);
+            
+            // Event listeneri
+            input.addEventListener('focus', handleBankAccountFocus);
+            input.addEventListener('input', handleBankAccountInput);
+            input.addEventListener('blur', handleBankAccountBlur);
+            
+            // Dozvoli samo cifre pri kucanju
+            input.addEventListener('keypress', function(e) {
+                if (!/\d/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+                    e.preventDefault();
+                }
+            });
+        });
+        
         document.querySelectorAll('.recipient-name').forEach(function(nameInput) {
             handleRecipientNameChange(nameInput);
         });
@@ -286,6 +429,7 @@
     .card-header h4 {
         font-weight: 600;
     }
+    
     /* Responzivnost za mobilne uređaje */
     @media (max-width: 768px) {
         .col-md-6 {
