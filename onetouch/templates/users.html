@@ -30,7 +30,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <form action="{{ url_for('main.edit_user', user_id=0) }}" method="POST">
+                <form action="" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                     <input type="hidden" name="user_id" id="user_id">
                     <div class="row">
@@ -46,13 +46,6 @@
                     <div class="form-group">
                         <label class="form-control-label" for="user_mail">Email</label>
                         <input type="email" class="form-control form-control-lg" id="user_mail" name="user_mail" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label" for="user_role">Uloga</label>
-                        <select class="form-select form-select-lg" id="user_role" name="user_role" required>
-                            <option value="user">Korisnik</option>
-                            <option value="admin">Administrator</option>
-                        </select>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
@@ -90,13 +83,6 @@
                     <div class="form-group">
                         <label class="form-control-label" for="new_user_mail">Email</label>
                         <input type="email" class="form-control form-control-lg" id="new_user_mail" name="user_mail" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-control-label" for="new_user_role">Uloga</label>
-                        <select class="form-select form-select-lg" id="new_user_role" name="user_role" required>
-                            <option value="user">Korisnik</option>
-                            <option value="admin">Administrator</option>
-                        </select>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
@@ -178,22 +164,20 @@
 <script>
     function deleteUser(userId, userName, userSurname) {
         var form = document.getElementById('deleteForm');
-        form.action = "/delete_user/" + parseInt(userId);
+        form.action = "{{ url_for('main.delete_user', user_id=0) }}".replace('0', userId);
         var labelElement = document.getElementById('delete_confirmation_message');
         labelElement.innerHTML = 'Da biste obrisali profil korisnika ' + userName + ' ' + userSurname + ' potrebno je potvrditi svojom lozinkom:';
     }
 
-    function editUser(userId, userName, userSurname, userMail, userRole) {
+    function editUser(userId, userName, userSurname, userMail) {
         document.getElementById("user_id").value = parseInt(userId);
         document.getElementById("user_name").value = userName;
         document.getElementById("user_surname").value = userSurname;
         document.getElementById("user_mail").value = userMail;
-        document.getElementById("user_role").value = userRole;
         
         // Ažuriranje action URL-a sa ID-em korisnika
         var editForm = document.querySelector("#EditModal form");
-        var url = editForm.action.replace("0", userId);
-        editForm.action = url;
+        editForm.action = "{{ url_for('main.edit_user', user_id=0) }}".replace('0', userId);
     }
 
     $(document).ready(function () {
