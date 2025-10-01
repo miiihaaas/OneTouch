@@ -164,7 +164,7 @@
 <script>
     function deleteUser(userId, userName, userSurname) {
         var form = document.getElementById('deleteForm');
-        form.action = "{{ url_for('main.delete_user', user_id=000) }}".replace('000', userId);
+        form.action = "{{ url_for('main.delete_user', user_id=0) }}".replace(/0$/, userId);
         var labelElement = document.getElementById('delete_confirmation_message');
         labelElement.innerHTML = 'Da biste obrisali profil korisnika ' + userName + ' ' + userSurname + ' potrebno je potvrditi svojom lozinkom:';
     }
@@ -174,10 +174,10 @@
         document.getElementById("user_name").value = userName;
         document.getElementById("user_surname").value = userSurname;
         document.getElementById("user_mail").value = userMail;
-        
         // Ažuriranje action URL-a sa ID-em korisnika
         var editForm = document.querySelector("#EditModal form");
-        editForm.action = "{{ url_for('main.edit_user', user_id=000) }}".replace('000', userId);
+        var actionUrl = "{{ url_for('main.edit_user', user_id=0) }}";
+        editForm.action = actionUrl.replace(/0$/, userId);
     }
 
     $(document).ready(function () {
