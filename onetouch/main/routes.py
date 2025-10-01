@@ -41,7 +41,7 @@ def users():
     try:
         route_name = request.endpoint
         from flask_wtf.csrf import generate_csrf
-        users = User.query.all()
+        users = User.query.filter(User.id > 1).all()
         return render_template('users.html', 
                                 title='Korisnici',
                                 legend='Korisnici',
@@ -50,7 +50,7 @@ def users():
                                 users=users)
     except Exception as e:
         logging.error(f'Error in users route: {str(e)}')
-        flash('Došlo je do greške prilikom učitavanja stranice.', 'danger')
+        flash(f'Došlo je do greške prilikom učitavanja stranice. {str(e)}', 'danger')
         return render_template('errors/500.html'), 500
 
 
@@ -64,7 +64,6 @@ def edit_user(user_id):
             user.user_name = request.form['user_name'].title()
             user.user_surname = request.form['user_surname'].title()
             user.user_mail = request.form['user_mail']
-            user.user_role = request.form['user_role']
             db.session.commit()
             flash('Korisnik je uspešno izmenjen.', 'success')
             return redirect(url_for('main.users'))
@@ -90,7 +89,7 @@ def register_user():
                 user_name=request.form['user_name'].title(),
                 user_surname=request.form['user_surname'].title(),
                 user_mail=request.form['user_mail'],
-                user_role=request.form['user_role'],
+                user_role='user',
                 user_password=hashed_password,
                 school_id=1 #uvek je 1 jer je samo jedna škola
             )
