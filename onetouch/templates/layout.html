@@ -301,6 +301,11 @@
         $(window).on("load", function () {
           $(".loading-overlay").removeClass("active");
         });
+
+        // NOVO: Ukloni spinner i kada se vrati iz keša
+        window.addEventListener('pageshow', function(event) {
+          $(".loading-overlay").removeClass("active");
+  });
     });
   </script>
   <script>
