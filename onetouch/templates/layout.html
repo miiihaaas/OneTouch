@@ -54,8 +54,8 @@
           {% if current_user.is_authenticated %}
           <div class="col">
             <a class="navbar-brand mr-4" href="{{url_for('main.home')}}">{{ current_user.user_school.school_name }} | {{ current_user.user_name }}</a>
-            <a class="navbar-brand mr-4" href="{{url_for('main.news')}}"><i class="fa-solid fa-newspaper"></i></a>
-            <a class="navbar-brand mr-4" href="{{url_for('main.instructions')}}"><i class="fa-solid fa-book"></i></a>
+            <a class="navbar-brand mr-4" href="{{url_for('main.news')}}" title="Novosti"><i class="fa-solid fa-newspaper"></i></a>
+            <!-- <a class="navbar-brand mr-4" href="{{url_for('main.instructions')}}" title="Upustva"><i class="fa-solid fa-book"></i></a> -->
           </div>
           {% endif %}
           <div class="collapse navbar-collapse" id="navbarToggle">
@@ -301,6 +301,11 @@
         $(window).on("load", function () {
           $(".loading-overlay").removeClass("active");
         });
+
+        // NOVO: Ukloni spinner i kada se vrati iz keša
+        window.addEventListener('pageshow', function(event) {
+          $(".loading-overlay").removeClass("active");
+  });
     });
   </script>
   <script>
