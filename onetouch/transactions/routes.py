@@ -638,7 +638,7 @@ def service_total_payment_slip(service_id, student_id):
                         'date': date_,
                         'description': description,
                         'debt_amount': record.student_debt_total if record.student_debt_id else 0,
-                        'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+                        'payment_amount': record.student_debt_total if record.student_payment_id or record.fund_transfer_id else 0,
                     }
                     
                     if record_data['service_item_id'] in [item['service_item_id'] for item in data]:
@@ -657,6 +657,9 @@ def service_total_payment_slip(service_id, student_id):
         
         # Uzimamo saldo iz poslednje transakcije
         remaining_balance = data[-1]['saldo'] if data else 0
+        
+        print(f'{data=}')
+        print(f'{remaining_balance=}')
         
         logging.debug(f"preostali saldo={remaining_balance}")
         
