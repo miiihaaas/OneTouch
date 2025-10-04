@@ -12,6 +12,7 @@
                     </div>
                     <div class="card-body">
                         <nav id="news-sidebar" class="nav flex-column">
+                            <a class="nav-link sidebar-link" href="#vest-011">Rasknjižavanje dugovanja sa praćenjem transakcija</a>
                             <a class="nav-link sidebar-link" href="#vest-010">Filter - Tekuća školska godina</a>
                             <a class="nav-link sidebar-link" href="#vest-009">Preknjižavanje sredstava između različitih usluga na kartici učenika</a>
                             <a class="nav-link sidebar-link" href="#vest-008">Dugovanja učenika - generisanje kartice učenika i uplatnica po saldu</a>
@@ -30,6 +31,22 @@
         
         <!-- Glavni sadržaj -->
         <div class="col-md-9">
+            <!-- Jedanaesta vest -->
+            <div id="vest-011" class="card mb-5">
+                <div class="card-header bg-implicit-deepblue text-white">
+                    <h3>Rasknjižavanje dugovanja sa praćenjem transakcija</h3>
+                </div>
+                <div class="card-body">
+                    <div class="news-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h4>Detalji unapređenja</h4>
+                            <span class="badge bg-secondary">24.09.2025.</span>
+                        </div>
+                        <p>Uvedena je nova mogućnost rasknjižavanja sredstava sa usluge na kartici učenika. Funkcionalnost je postavljena na strani <a href="{{ url_for('transactions.transfers_list') }}">Preknjižavanje</a>, u bloku KNJIŽENJE. Na kartici učenika svako rasknjižavanje beleži se u tabeli pojedinačne usluge sa koje je izvršeno rasknjižavanje. Pored toga, u bloku ARHIVA, na strani <a href="{{ url_for('transactions.transfers_list') }}">Arhiva preknjižavanja</a> zapisane su sve transakcije vezane za rasknjižavanje sredstava.</p>
+                    </div>
+                </div>
+            </div>
+            
             <!-- deseta vest -->
             <div id="vest-010" class="card mb-5">
                 <div class="card-header bg-implicit-deepblue text-white">
