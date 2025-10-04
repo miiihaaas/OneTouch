@@ -147,7 +147,7 @@ def overview_students():
                     if record.student_id in [student['student_id'] for student in export_data]:
                         existing_record = next((item for item in export_data if item["student_id"] == record.student_id), None)
                         existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
-                        existing_record['student_payment'] += record.student_debt_total if record.student_payment_id else 0
+                        existing_record['student_payment'] += record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0
                         existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
 
                     else:
@@ -159,7 +159,7 @@ def overview_students():
                             'student_class': record.transaction_record_student.student_class,
                             'student_section': record.transaction_record_student.student_section,
                             'student_debt': record.student_debt_total if record.student_debt_id else 0,
-                            'student_payment': record.student_debt_total if record.student_payment_id else 0,
+                            'student_payment': record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0,
                         }
                         new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
                         logging.debug(f'{new_record=}')
@@ -317,6 +317,10 @@ def overview_student(student_id):
                         else:  # Negativan iznos (povećanje sredstava)
                             description = f'Preknjižavanje sa: {record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
                         date_ = record.transfer_record.transfer_date
+                    elif record.debt_writeoff_id:
+                        # Rasknjižavanje dugovanja
+                        description = f'Rasknjižavanje: {record.transaction_record_service_item.service_item_service.service_name} - {record.transaction_record_service_item.service_item_name}'
+                        date_ = record.writeoff_record.writeoff_date
                         
                     if record.student_debt_total:
                         # Određivanje tipa transakcije i pravilno postavljanje debt_amount i payment_amount
@@ -337,6 +341,10 @@ def overview_student(student_id):
                                 # Preknjižavanje NA ovu uslugu - povećava dug
                                 debt_amount = 0
                                 payment_amount = record.student_debt_total
+                        elif record.debt_writeoff_id:
+                            # Rasknjižavanje dugovanja - smanjuje dug
+                            payment_amount = abs(record.student_debt_total)
+                            logging.debug(f"RASKNJIŽAVANJE: {record.id}, {payment_amount}, {date_}, {description}")
                         
                         # Kreiramo objekt za transakciju sa precizno definisanim vrednostima
                         test_data = {
@@ -344,6 +352,8 @@ def overview_student(student_id):
                             'service_item_id': record.service_item_id,
                             'student_payment_id': record.student_payment_id,
                             'fund_transfer_id': record.fund_transfer_id,
+                            'debt_writeoff_id': record.debt_writeoff_id,
+                            'write_off_id': record.debt_writeoff_id,  # Alias za template
                             'date': date_,
                             'description': description,
                             'debt_amount': debt_amount,
@@ -572,7 +582,7 @@ def overview_sections():
                         existing_record = next((item for item in data if item['class'] == record.transaction_record_student.student_class and item['section'] == record.transaction_record_student.student_section), None)
                         if existing_record:
                             existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
-                            existing_record['student_payment'] += record.student_debt_total if record.student_payment_id else 0
+                            existing_record['student_payment'] += record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0
                             existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
                     else:
                         new_record = {
@@ -580,7 +590,7 @@ def overview_sections():
                             'class': record.transaction_record_student.student_class,
                             'section': record.transaction_record_student.student_section,
                             'student_debt': record.student_debt_total if record.student_debt_id else 0,
-                            'student_payment': record.student_debt_total if record.student_payment_id else 0,
+                            'student_payment': record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0,
                         }
                         new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
                         new_record['teacher'] = next((item['name'] + ' ' + item['surname'] for item in teacher_clasroom_list if item['class'] == new_record['class'] and item['section'] == new_record['section']), None)
@@ -822,7 +832,7 @@ def send_student_report_email(student_id):
                         'date': date_,
                         'description': description,
                         'debt_amount': record.student_debt_total if record.student_debt_id else 0,
-                        'payment_amount': record.student_debt_total if record.student_payment_id else 0,
+                        'payment_amount': record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0,
                     }
                     
                     if test_data['service_item_id'] in [item['service_item_id'] for item in data]:

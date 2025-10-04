@@ -184,6 +184,7 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     payment_error = db.Column(db.Boolean, nullable=True, default=False)
     debt_sent = db.Column(db.Boolean, nullable=True, default=False)
     fund_transfer_id = db.Column(db.Integer, db.ForeignKey('fund_transfer.id'), nullable=True)
+    debt_writeoff_id = db.Column(db.Integer, db.ForeignKey('debt_write_off.id'), nullable=True)
 
 
 class FundTransfer(db.Model):
@@ -200,6 +201,22 @@ class FundTransfer(db.Model):
     source_service = db.relationship('ServiceItem', foreign_keys=[source_service_id], backref='transfers_from', lazy=True)
     target_service = db.relationship('ServiceItem', foreign_keys=[target_service_id], backref='transfers_to', lazy=True)
     transaction_records = db.relationship('TransactionRecord', backref='transfer_record', lazy=True)
+
+
+class DebtWriteOff(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    writeoff_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('service_item.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    note = db.Column(db.String(255), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relacije
+    student = db.relationship('Student', backref='debt_writeoffs', lazy=True)
+    service = db.relationship('ServiceItem', backref='writeoffs', lazy=True)
+    user = db.relationship('User', backref='writeoffs_created', lazy=True)
+    transaction_records = db.relationship('TransactionRecord', backref='writeoff_record', lazy=True)
 
 
 with app.app_context():

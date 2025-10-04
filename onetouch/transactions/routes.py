@@ -7,7 +7,7 @@ from flask import  render_template, url_for, flash, redirect, request, send_file
 from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
-from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer
+from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer, DebtWriteOff
 from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected
 from onetouch.overviews.functions import get_filtered_transactions_data
 from sqlalchemy.exc import SQLAlchemyError
@@ -638,7 +638,7 @@ def service_total_payment_slip(service_id, student_id):
                         'date': date_,
                         'description': description,
                         'debt_amount': record.student_debt_total if record.student_debt_id else 0,
-                        'payment_amount': record.student_debt_total if record.student_payment_id or record.fund_transfer_id else 0,
+                        'payment_amount': record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0,
                     }
                     
                     if record_data['service_item_id'] in [item['service_item_id'] for item in data]:
@@ -1447,7 +1447,7 @@ def transfer_funds(student_id=None):
             
             if record.student_debt_id:
                 services_data[service_id]['debt_amount'] += record.student_debt_total
-            elif record.student_payment_id or record.fund_transfer_id:
+            elif record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id:
                 services_data[service_id]['payment_amount'] += record.student_debt_total
         
         # Konverzija u listu i računanje salda
@@ -1515,7 +1515,7 @@ def process_transfer_funds():
     transaction_records = TransactionRecord.query.filter_by(student_id=student_id, service_item_id=source_service_id).all()
     
     debt_amount = sum(record.student_debt_total for record in transaction_records if record.student_debt_id)
-    payment_amount = sum(record.student_debt_total for record in transaction_records if record.student_payment_id or record.fund_transfer_id)
+    payment_amount = sum(record.student_debt_total for record in transaction_records if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id)
     
     saldo = debt_amount - payment_amount
     
@@ -1574,7 +1574,7 @@ def process_transfer_funds():
 @transactions.route('/transfers_list', methods=['GET'])
 @login_required
 def transfers_list():
-    """Prikaz liste svih preknjižavanja"""
+    """Prikaz liste svih preknjižavanja i rasknjižavanja"""
     # Provera licence
     school = School.query.first()
     if school and school.license_expiry_date:
@@ -1586,24 +1586,54 @@ def transfers_list():
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     
-    # Osnovna pretraga
-    query = FundTransfer.query
+    # Pretraga preknjižavanja
+    transfer_query = FundTransfer.query
+    writeoff_query = DebtWriteOff.query
     
     # Filtriranje po datumu ako je definisano
     if start_date and end_date:
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d')
         end_date_obj = end_date_obj.replace(hour=23, minute=59, second=59)
-        query = query.filter(FundTransfer.transfer_date.between(start_date_obj, end_date_obj))
+        transfer_query = transfer_query.filter(FundTransfer.transfer_date.between(start_date_obj, end_date_obj))
+        writeoff_query = writeoff_query.filter(DebtWriteOff.writeoff_date.between(start_date_obj, end_date_obj))
     
-    transfers = query.order_by(FundTransfer.transfer_date.desc()).all()
+    transfers = transfer_query.order_by(FundTransfer.transfer_date.desc()).all()
+    writeoffs = writeoff_query.order_by(DebtWriteOff.writeoff_date.desc()).all()
+    
+    # Kombinovanje u jednu listu sa oznakom tipa
+    combined_list = []
+    for transfer in transfers:
+        combined_list.append({
+            'type': 'transfer',
+            'id': transfer.id,
+            'date': transfer.transfer_date,
+            'student': transfer.student,
+            'amount': transfer.amount,
+            'note': transfer.note,
+            'data': transfer
+        })
+    
+    for writeoff in writeoffs:
+        combined_list.append({
+            'type': 'writeoff',
+            'id': writeoff.id,
+            'date': writeoff.writeoff_date,
+            'student': writeoff.student,
+            'amount': writeoff.amount,
+            'note': writeoff.note,
+            'data': writeoff
+        })
+    
+    # Sortiranje po datumu
+    combined_list.sort(key=lambda x: x['date'], reverse=True)
     
     return render_template('transfers_list.html',
-                         transfers=transfers,
+                         combined_list=combined_list,
                          start_date=start_date,
                          end_date=end_date,
-                         legend="Lista preknjižavanja", 
-                         title="Lista preknjižavanja",
+                         legend="Lista preknjižavanja i rasknjižavanja", 
+                         title="Lista preknjižavanja i rasknjižavanja",
                          route_name="transfers_list")
 
 
@@ -1630,3 +1660,110 @@ def view_transfer(transfer_id):
                           legend="Detalji preknjižavanja", 
                           title="Detalji preknjižavanja",
                           route_name="view_transfer")
+
+
+@transactions.route('/write_off_debt', methods=['POST'])
+@login_required
+def write_off_debt():
+    """Obrada zahteva za rasknjižavanje dugovanja"""
+    # Provera licence
+    school = School.query.first()
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            flash('Licenca je istekla. Molimo obnovite licencu da biste nastavili sa korišćenjem aplikacije.', 'danger')
+            return redirect(url_for('main.license_info'))
+
+    student_id = request.form.get('student_id', type=int)
+    debt_service_id = request.form.get('debt_service', type=int)
+    writeoff_amount = request.form.get('writeoff_amount', type=float)
+    writeoff_amount = round(writeoff_amount, 2)
+    writeoff_note = request.form.get('writeoff_note', '')
+    password = request.form.get('password', '')
+    
+    # Validacija osnovnih podataka
+    if not all([student_id, debt_service_id, writeoff_amount, password]):
+        flash('Greška: Nedostaju potrebni podaci.', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    # Provera lozinke
+    if not bcrypt.check_password_hash(current_user.user_password, password):
+        flash('Greška: Neispravna lozinka.', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    # Provera da li usluga ima dugovanje i da li je iznos validan
+    transaction_records = TransactionRecord.query.filter_by(
+        student_id=student_id, 
+        service_item_id=debt_service_id
+    ).all()
+    
+    debt_amount = sum(record.student_debt_total for record in transaction_records if record.student_debt_id)
+    payment_amount = sum(record.student_debt_total for record in transaction_records if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id)
+    
+    saldo = debt_amount - payment_amount
+    
+    # Proveravamo da li usluga ima dugovanje (pozitivan saldo)
+    if saldo <= 0:
+        flash('Greška: Izabrana usluga nema dugovanje.', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    if writeoff_amount > round(saldo, 2):
+        flash(f'Greška: Iznos za rasknjižavanje ne može biti veći od trenutnog duga ({saldo:.2f}).', 'danger')
+        return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+    
+    try:
+        # Kreiranje zapisa o rasknjižavanju
+        debt_writeoff = DebtWriteOff(
+            student_id=student_id,
+            service_id=debt_service_id,
+            amount=writeoff_amount,
+            note=writeoff_note,
+            user_id=current_user.id
+        )
+        db.session.add(debt_writeoff)
+        db.session.flush()
+        
+        # Kreiranje transakcije za umanjenje dugovanja
+        writeoff_transaction = TransactionRecord(
+            student_id=student_id,
+            service_item_id=debt_service_id,
+            student_debt_total=writeoff_amount,
+            purpose_of_payment=f"Rasknjižavanje dugovanja{': ' + writeoff_note if writeoff_note else ''}",
+            debt_writeoff_id=debt_writeoff.id
+        )
+        db.session.add(writeoff_transaction)
+        
+        db.session.commit()
+        flash('Rasknjižavanje dugovanja uspešno izvršeno.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f'Greška prilikom rasknjižavanja: {str(e)}')
+        flash(f'Greška prilikom rasknjižavanja: {str(e)}', 'danger')
+    
+    return redirect(url_for('transactions.transfer_funds', student_id=student_id))
+
+
+@transactions.route('/view_writeoff/<int:writeoff_id>', methods=['GET'])
+@login_required
+def view_writeoff(writeoff_id):
+    """Prikaz detalja rasknjižavanja dugovanja"""
+    # Provera licence
+    school = School.query.first()
+    if school and school.license_expiry_date:
+        days_left = school.days_until_license_expiry()
+        if days_left is not None and days_left <= 0:
+            flash('Licenca je istekla. Molimo obnovite licencu da biste nastavili sa korišćenjem aplikacije.', 'danger')
+            return redirect(url_for('main.license_info'))
+
+    writeoff = DebtWriteOff.query.get_or_404(writeoff_id)
+    
+    # Dobavljanje povezanih transakcija
+    transactions = TransactionRecord.query.filter_by(debt_writeoff_id=writeoff_id).all()
+    
+    return render_template('view_writeoff.html',
+                          writeoff=writeoff,
+                          transactions=transactions,
+                          legend="Detalji rasknjižavanja", 
+                          title="Detalji rasknjižavanja",
+                          route_name="view_writeoff")
