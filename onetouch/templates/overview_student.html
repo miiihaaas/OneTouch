@@ -100,6 +100,8 @@
                         <a href="{{ url_for('transactions.payment_archive', payment_id=record['student_payment_id'] ) }}" class="btn-x btn-primary-x loading" title="Otvorite izvod"><i class="fa-solid fa-file-lines awesomeedit"></i></a> 
                         {% elif 'fund_transfer_id' in record and record['fund_transfer_id'] %} 
                         <a href="{{ url_for('transactions.view_transfer', transfer_id=record['fund_transfer_id']) }}" class="btn-x btn-primary-x loading" title="Pregledaj preknjižavanje"><i class="fa-solid fa-exchange-alt awesomeedit"></i></a> 
+                        {% elif 'write_off_id' in record and record['write_off_id'] %} 
+                        <a href="{{ url_for('transactions.view_writeoff', writeoff_id=record['write_off_id']) }}" class="btn-x btn-primary-x loading" title="Pregledaj rasknjižavanje"><i class="fa-solid fa-ban awesomeedit"></i></a> 
                         {% endif %}
                     </td>
                 </tr>

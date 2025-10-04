@@ -7,8 +7,13 @@
     .positive-balance {
         color: red;
     }
+    .section-divider {
+        border-top: 2px solid #dee2e6;
+        margin: 30px 0;
+    }
 </style>
 
+<!-- Izbor učenika -->
 <div class="form-group">
     <label for="student_select">Izaberite učenika:</label>
     <select id="student_select" class="form-select select2-searchable">
@@ -65,6 +70,8 @@
             </tfoot>
         </table>
 
+        <!-- SEKCIJA 1: Preknjižavanje sa usluge na uslugu -->
+        <h4 class="mt-4 mb-3">1. Preknjižavanje sa usluge na uslugu</h4>
         <form method="POST" action="{{ url_for('transactions.transfer_funds') }}">
             <input type="hidden" name="student_id" value="{{ selected_student_id }}">
             
@@ -110,9 +117,69 @@
 
             <button type="submit" class="btn btn-primary">Izvršite preknjižavanje</button>
         </form>
+
+        <!-- Razdelnik -->
+        <div class="section-divider"></div>
+
+        <!-- SEKCIJA 2: Rasknjižavanje dugovanja -->
+        <h4 class="mt-4 mb-3">2. Rasknjižavanje dugovanja (oprost duga)</h4>
+        <form method="POST" id="writeOffForm" action="{{ url_for('transactions.write_off_debt') }}">
+            <input type="hidden" name="student_id" value="{{ selected_student_id }}">
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="debt_service">Usluga sa dugom:</label>
+                    <select name="debt_service" id="debt_service" class="form-select" required>
+                        <option value="">Izaberite uslugu za rasknjižavanje</option>
+                        {% for service in services_with_debt %}
+                        <option value="{{ service.service_id }}" data-debt="{{ service.saldo|round(2) }}">
+                            {{ service.service_item.service_item_service.service_name }} - {{ service.service_item.service_item_name }}
+                            (dug: {{ service.saldo|round(2) }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="writeoff_amount">Iznos za rasknjižavanje:</label>
+                    <input type="number" name="writeoff_amount" id="writeoff_amount" class="form-control" step="0.01" min="0.01" required>
+                    <small class="form-text text-muted">Maksimalni iznos: <span id="max_debt_display">0.00</span></small>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="writeoff_note">Razlog rasknjižavanja (opciono):</label>
+                    <input type="text" name="writeoff_note" id="writeoff_note" class="form-control" maxlength="255" placeholder="Npr. Oprost duga, socijalni slučaj, itd.">
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#WriteOffModal" onclick="prepareWriteOff()">Rasknjiži dugovanje</button>
+        </form>
     </div>
 </div>
 {% endif %}
+
+<!-- Modal za potvrdu rasknjižavanja sa lozinkom -->
+<div class="modal fade" id="WriteOffModal" tabindex="-1" role="dialog" aria-labelledby="WriteOffModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="WriteOffModalLabel">Potvrda rasknjižavanja dugovanja</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="writeoff_confirmation_text">Da biste rasknjižili dugovanje potrebno je potvrditi svojom lozinkom:</p>
+                <input class="form-control" type="password" id="writeoff_password" name="writeoff_password" placeholder="Unesite lozinku">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                <button class="btn btn-danger" type="button" onclick="submitWriteOff()">Potvrdite rasknjižavanje</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -132,6 +199,74 @@
                 window.location.href = "{{ url_for('transactions.transfer_funds') }}/" + $(this).val();
             }
         });
+
+        // Ažuriranje maksimalnog iznosa dugovanja
+        $('#debt_service').on('change', function() {
+            const selectedOption = $(this).find('option:selected');
+            const maxDebt = selectedOption.data('debt');
+            
+            if (maxDebt) {
+                $('#max_debt_display').text(parseFloat(maxDebt).toFixed(2));
+                $('#writeoff_amount').attr('max', maxDebt);
+            } else {
+                $('#max_debt_display').text('0.00');
+                $('#writeoff_amount').removeAttr('max');
+            }
+        });
     });
+
+    // Priprema modala za rasknjižavanje
+    function prepareWriteOff() {
+        const debtService = $('#debt_service').val();
+        const writeoffAmount = $('#writeoff_amount').val();
+        
+        if (!debtService) {
+            alert('Morate izabrati uslugu sa dugom.');
+            $('#WriteOffModal').modal('hide');
+            return false;
+        }
+        
+        if (!writeoffAmount || parseFloat(writeoffAmount) <= 0) {
+            alert('Morate uneti validan iznos za rasknjižavanje.');
+            $('#WriteOffModal').modal('hide');
+            return false;
+        }
+        
+        const maxDebt = parseFloat($('#debt_service').find('option:selected').data('debt'));
+        if (parseFloat(writeoffAmount) > maxDebt) {
+            alert('Iznos za rasknjižavanje ne može biti veći od trenutnog duga (' + maxDebt.toFixed(2) + ').');
+            $('#WriteOffModal').modal('hide');
+            return false;
+        }
+        
+        // Očisti prethodno unesenu lozinku
+        $('#writeoff_password').val('');
+    }
+
+    // Slanje forme za rasknjižavanje
+    function submitWriteOff() {
+        const password = $('#writeoff_password').val();
+        
+        if (!password) {
+            alert('Morate uneti lozinku.');
+            return false;
+        }
+        
+        // Dodaj lozinku u formu
+        const form = $('#writeOffForm');
+        
+        // Ukloni staro polje za lozinku ako postoji
+        form.find('input[name="password"]').remove();
+        
+        // Dodaj novo polje za lozinku
+        $('<input>').attr({
+            type: 'hidden',
+            name: 'password',
+            value: password
+        }).appendTo(form);
+        
+        // Submituj formu
+        form.submit();
+    }
 </script>
 {% endblock %}

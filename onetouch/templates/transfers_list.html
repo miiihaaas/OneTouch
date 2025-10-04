@@ -3,15 +3,21 @@
 <style>
     @media (max-width: 991px)  {
         .mobtable td:nth-of-type(1):before { content: "Datum"; }
-        .mobtable td:nth-of-type(2):before { content: "Učenik"; }
-        .mobtable td:nth-of-type(3):before { content: "Sa usluge"; }
-        .mobtable td:nth-of-type(4):before { content: "Na uslugu"; }
+        .mobtable td:nth-of-type(2):before { content: "Tip"; }
+        .mobtable td:nth-of-type(3):before { content: "Učenik"; }
+        .mobtable td:nth-of-type(4):before { content: "Detalji"; }
         .mobtable td:nth-of-type(5):before { content: "Iznos"; }
         .mobtable td:nth-of-type(6):before { content: "Napomena"; }
         .mobtable td:nth-of-type(7):before { content: "Akcije"; }
     }
+    .badge-transfer {
+        background-color: #104e97;
+    }
+    .badge-writeoff {
+        background-color: #b40164;
+    }
 </style>
-<h2>Lista preknjižavanja</h2>
+<h2>Lista preknjižavanja i rasknjižavanja</h2>
 <div class="row align-items-end">
     <div class="col">
         <label for="start-date" class="form-label">Početni datum:</label>
@@ -31,26 +37,43 @@
         <tr>
             <th>Datum</th>
             <th>Datum_python</th>
+            <th>Tip</th>
             <th>Učenik</th>
-            <th>Sa usluge</th>
-            <th>Na uslugu</th>
+            <th>Detalji</th>
             <th>Iznos</th>
             <th>Napomena</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        {% for transfer in transfers %}
+        {% for item in combined_list %}
         <tr>
-            <td>{{ transfer.transfer_date.strftime('%d.%m.%Y.') }}</td>
-            <td>{{ transfer.transfer_date }}</td>
-            <td>{{ transfer.student.student_name }} {{ transfer.student.student_surname }} ({{ transfer.student.student_class }}/{{ transfer.student.student_section }})</td>
-            <td>{{ transfer.source_service.service_item_service.service_name }} - {{ transfer.source_service.service_item_name }}</td>
-            <td>{{ transfer.target_service.service_item_service.service_name }} - {{ transfer.target_service.service_item_name }}</td>
-            <td>{{ transfer.amount|round(2) }}</td>
-            <td>{{ transfer.note }}</td>
+            <td>{{ item.date.strftime('%d.%m.%Y.') }}</td>
+            <td>{{ item.date }}</td>
             <td>
-                <a href="{{ url_for('transactions.view_transfer', transfer_id=transfer.id) }}" class="btn-x btn-primary-x loading" title="Pregledaj"><i class="fa fa-eye awesomeedit loading" aria-hidden="true"></i></a>
+                {% if item.type == 'transfer' %}
+                <span class="badge badge-transfer">Preknjižavanje</span>
+                {% else %}
+                <span class="badge badge-writeoff">Rasknjižavanje</span>
+                {% endif %}
+            </td>
+            <td>{{ item.student.student_name }} {{ item.student.student_surname }} ({{ item.student.student_class }}/{{ item.student.student_section }})</td>
+            <td>
+                {% if item.type == 'transfer' %}
+                Sa: {{ item.data.source_service.service_item_service.service_name }} - {{ item.data.source_service.service_item_name }}<br>
+                Na: {{ item.data.target_service.service_item_service.service_name }} - {{ item.data.target_service.service_item_name }}
+                {% else %}
+                {{ item.data.service.service_item_service.service_name }} - {{ item.data.service.service_item_name }}
+                {% endif %}
+            </td>
+            <td>{{ item.amount|round(2) }}</td>
+            <td>{{ item.note if item.note else '-' }}</td>
+            <td>
+                {% if item.type == 'transfer' %}
+                <a href="{{ url_for('transactions.view_transfer', transfer_id=item.id) }}" class="btn-x btn-primary-x loading" title="Pregledaj"><i class="fa fa-eye awesomeedit loading" aria-hidden="true"></i></a>
+                {% else %}
+                <a href="{{ url_for('transactions.view_writeoff', writeoff_id=item.id) }}" class="btn-x btn-primary-x loading" title="Pregledaj"><i class="fa fa-eye awesomeedit loading" aria-hidden="true"></i></a>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
