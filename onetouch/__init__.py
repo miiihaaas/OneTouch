@@ -137,23 +137,25 @@ def check_license_expiry():
     return warning_shown
 
 
+from onetouch.errors.routes import errors
+from onetouch.ai_agent.routes import ai_agent
 from onetouch.main.routes import main
+from onetouch.overviews.routes import overviews
 from onetouch.schools.routes import schools
 from onetouch.students.routes import students
 from onetouch.suppliers.routes import suppliers
 from onetouch.teachers.routes import teachers
 from onetouch.transactions.routes import transactions
-from onetouch.overviews.routes import overviews
 from onetouch.users.routes import users
-from onetouch.errors.routes import errors
 
 
+app.register_blueprint(errors)
+app.register_blueprint(ai_agent)
 app.register_blueprint(main)
+app.register_blueprint(overviews)
 app.register_blueprint(schools)
 app.register_blueprint(students)
 app.register_blueprint(suppliers)
 app.register_blueprint(teachers)
 app.register_blueprint(transactions)
-app.register_blueprint(overviews)
 app.register_blueprint(users)
-app.register_blueprint(errors)
