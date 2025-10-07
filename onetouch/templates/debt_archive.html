@@ -13,7 +13,9 @@
         .mobtable td:nth-of-type(9):before { content: "Akcije"; }
     }
 </style>
-<h1>Razredni starešina: {{ teacher.teacher_name }} {{ teacher.teacher_surname }}</h1>
+{% if teacher %}
+<h1>Odeljenski starešina: {{ teacher.teacher_name }} {{ teacher.teacher_surname }}</h1>
+{% endif %}
 <div class="form-group" style="display: inline-block;">
     <label for="classes" class="form-control-label">Razred</label>
     <input id="classes" name="classes" type="text" class="form-control" value="{{ debt.debt_class }}" disabled>
