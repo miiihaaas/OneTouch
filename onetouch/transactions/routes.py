@@ -366,6 +366,7 @@ def submit_records():
         number_of_errors = 0
         student_ids = [student.id for student in Student.query.all()]
         service_item_ids = [service_item.id for service_item in ServiceItem.query.all()]
+        service_item_ids.append(0)
         for i in range(len(data['records'])):
             record_id = data['records'][i]['record_id']
             student_id = data['records'][i]['student_id']
