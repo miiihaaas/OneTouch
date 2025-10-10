@@ -758,6 +758,7 @@
             }
         
             // Send message to backend
+            const chatUrl = "{{ url_for('ai_agent.chat') }}";
             async function sendMessage() {
                 const message = chatInput.value.trim();
                 if (!message) return;
@@ -768,7 +769,8 @@
                 showTyping(true);
         
                 try {
-                    const response = await fetch('/api/ai/chat', {
+                    // Dinamički koristi URL koji Flask generiše
+                    const response = await fetch(chatUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message: message })

@@ -366,6 +366,7 @@ def submit_records():
         number_of_errors = 0
         student_ids = [student.id for student in Student.query.all()]
         service_item_ids = [service_item.id for service_item in ServiceItem.query.all()]
+        service_item_ids.append(0)
         for i in range(len(data['records'])):
             record_id = data['records'][i]['record_id']
             student_id = data['records'][i]['student_id']
@@ -1168,7 +1169,59 @@ def posting_payment():
                     error_mesage = 'Niste izabrali XML fajl'
                     flash(error_mesage, 'danger')
                     return render_template('posting_payment.html', error_mesage=error_mesage)
-                tree = ET.parse(file)
+                
+                # Čitanje fajla i čišćenje invalid XML karaktera
+                xml_content = file.read()
+                # Dekodovanje sa zamenom problematičnih karaktera
+                try:
+                    xml_string = xml_content.decode('utf-8', errors='replace')
+                except UnicodeDecodeError:
+                    # Ako utf-8 ne uspe, pokušaj sa drugim enkodingom
+                    try:
+                        xml_string = xml_content.decode('windows-1252', errors='replace')
+                    except UnicodeDecodeError:
+                        xml_string = xml_content.decode('iso-8859-2', errors='replace')
+                
+                # Zamena replacement karaktera i drugih invalid XML karaktera
+                # XML dozvoljava samo određene karaktere: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+                def clean_invalid_xml_chars(text):
+                    """Uklanja ili zamenjuje invalid XML karaktere"""
+                    # Uklanjanje BOM karaktera ako postoje
+                    if text.startswith('\ufeff'):
+                        text = text[1:]
+                    
+                    # Eksplicitna zamena najčešćih problematičnih karaktera
+                    problematic_chars = {
+                        '�': ' ',           # Replacement character
+                        '\x00': '',         # NULL byte
+                        '\x0b': ' ',        # Vertical tab
+                        '\x0c': ' ',        # Form feed
+                        '\x1a': ' ',        # Substitute character
+                        '\x1b': ' ',        # Escape
+                        '\x7f': ' ',        # Delete
+                        '\x80': ' ',        # Windows-1252 problematični karakteri
+                        '\x81': ' ',
+                        '\x8d': ' ',
+                        '\x8f': ' ',
+                        '\x90': ' ',
+                        '\x9d': ' ',
+                    }
+                    
+                    for old_char, new_char in problematic_chars.items():
+                        text = text.replace(old_char, new_char)
+                    
+                    # Uklanjanje svih ostalih kontrolnih karaktera koji nisu dozvoljeni u XML-u
+                    valid_chars = (
+                        lambda c: c == '\n' or c == '\r' or c == '\t' or 
+                        (ord(c) >= 0x20 and ord(c) <= 0xD7FF) or
+                        (ord(c) >= 0xE000 and ord(c) <= 0xFFFD)
+                    )
+                    return ''.join(c if valid_chars(c) else ' ' for c in text)
+                
+                xml_string = clean_invalid_xml_chars(xml_string)
+                
+                # Parsiranje očišćenog XML-a
+                tree = ET.ElementTree(ET.fromstring(xml_string.encode('utf-8')))
                 root = tree.getroot()
 
                 #! nova logika za SPIRI .xml fajl
