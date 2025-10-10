@@ -1044,7 +1044,7 @@ def generate_pdf_reports(student_id):
                 'primalac': primalac,
                 'sifra_placanja': 253 if service_item.reference_number_spiri else 221,
                 'valuta': 'RSD',
-                'iznos': saldo,
+                'iznos': f'{saldo:.2f}',
                 'racun_primaoca': bank_account_number,
                 'model': '97' if service_item.reference_number_spiri else '',
                 'poziv_na_broj': service_item.reference_number_spiri if service_item.reference_number_spiri else '',
