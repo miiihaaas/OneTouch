@@ -139,7 +139,7 @@
         {% elif service_balance.value < 0 %}
         <tr class="table-footer negativna-vrednost">
             <td colspan="6" style="text-align: right;">
-                <small>Preplata za uslugu: {{ "{:.2f}".format(abs(service_balance.value)) }}</small>
+                <small>Preplata za uslugu: {{ "{:.2f}".format(service_balance.value|abs) }}</small>
             </td>
         </tr>
         {% endif %}
