@@ -154,10 +154,6 @@
 
             // Postavljanje nove vrednosti u input elementu
             $studentInput.val(studentDetails);
-
-            row.invalidate().draw();
-            // Fokusiranje input polja nakon ažuriranja vrednosti
-            $(this).focus();
         });
         // Promena vrednosti u koloni 'ID usluge'
         $('#data tbody').on('input', 'input[id^="service_id_"]', function() {
@@ -167,15 +163,11 @@
             console.log('debuging - red: ', row)
             console.log('debuging - serviceId: ', serviceId)
             console.log('debuging - serviceDetails: ', serviceDetails)
-            // Pristupamo input elementu u koloni 'Učenik' unutar trenutnog reda
+            // Pristupamo input elementu u koloni 'Detalji usluge' unutar trenutnog reda
             var $serviceInput = $(this).closest('tr').find('td:eq(5) input');
 
             // Postavljanje nove vrednosti u input elementu
             $serviceInput.val(serviceDetails);
-
-            row.invalidate().draw();
-            // Fokusiranje input polja nakon ažuriranja vrednosti
-            $(this).focus();
         });
         const buttonSave = $('#save_button');
         buttonSave.on('click', (event) => {
