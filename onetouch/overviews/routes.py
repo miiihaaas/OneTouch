@@ -284,14 +284,27 @@ def overview_student(student_id):
             
             # Obrada transakcija
             for record in transaction_records:
-                if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total > 0:
+                # Dodavanje usluge u listu bez obzira na to da li je zaduženje pozitivno ili negativno
+                if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total != 0:
                     try:
+                        # Određivanje datuma na osnovu tipa transakcije
+                        if record.student_debt_id:
+                            transaction_date = record.transaction_record_student_debt.student_debt_date
+                        elif record.student_payment_id:
+                            transaction_date = record.transaction_record_student_payment.payment_date
+                        elif record.fund_transfer_id:
+                            transaction_date = record.transfer_record.transfer_date
+                        elif record.debt_writeoff_id:
+                            transaction_date = record.writeoff_record.writeoff_date
+                        else:
+                            continue  # Preskoči ako nije nijedan od očekivanih tipova
+                        
                         service_data = {
                             'id': record.service_item_id,
                             'service_debt_id': record.student_debt_id if record.student_debt_id else ServiceItem.query.get_or_404(int(record.service_item_id)).id,
                             'service_item_date': record.transaction_record_service_item.service_item_date,
                             'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
-                            'date': record.transaction_record_student_debt.student_debt_date if record.student_debt_id else record.transaction_record_student_payment.payment_date,
+                            'date': transaction_date,
                         }
                         
                         if service_data['date'].date() >= start_date and service_data['date'].date() <= end_date:
@@ -798,14 +811,27 @@ def send_student_report_email(student_id):
         
         # Obrada transakcija - isti kod kao u overview_student
         for record in transaction_records:
-            if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total > 0:
+            # Dodavanje usluge u listu bez obzira na to da li je zaduženje pozitivno ili negativno
+            if (record.service_item_id not in [item['id'] for item in unique_services_list]) and record.student_debt_total != 0:
                 try:
+                    # Određivanje datuma na osnovu tipa transakcije
+                    if record.student_debt_id:
+                        transaction_date = record.transaction_record_student_debt.student_debt_date
+                    elif record.student_payment_id:
+                        transaction_date = record.transaction_record_student_payment.payment_date
+                    elif record.fund_transfer_id:
+                        transaction_date = record.transfer_record.transfer_date
+                    elif record.debt_writeoff_id:
+                        transaction_date = record.writeoff_record.writeoff_date
+                    else:
+                        continue  # Preskoči ako nije nijedan od očekivanih tipova
+                    
                     service_data = {
                         'id': record.service_item_id,
                         'service_debt_id': record.student_debt_id if record.student_debt_id else ServiceItem.query.get_or_404(int(record.service_item_id)).id,
                         'service_item_date': record.transaction_record_service_item.service_item_date,
                         'service_name': record.transaction_record_service_item.service_item_service.service_name + ' - ' + record.transaction_record_service_item.service_item_name,
-                        'date': record.transaction_record_student_debt.student_debt_date if record.student_debt_id else record.transaction_record_student_payment.payment_date,
+                        'date': transaction_date,
                     }
                     
                     if service_data['date'].date() >= start_date and service_data['date'].date() <= end_date:
