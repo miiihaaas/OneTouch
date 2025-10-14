@@ -114,7 +114,35 @@
     <div class="wrapper d-flex align-items-stretch">
       
       {% if current_user.is_authenticated %}
-      <nav id="sidebar" class>
+      <!-- Podrazumevano je sakriven (active klasa) -->
+      <nav id="sidebar" class="active">
+        <script>
+          // Izvršava se ODMAH - postavi sidebar i navbar items u pravo stanje
+          (function() {
+            var sidebarState = localStorage.getItem("sidebarActive");
+            var sidebar = document.getElementById('sidebar');
+            
+            // Ako sidebarActive NIJE "true" (null ili "false"), sidebar treba biti vidljiv
+            if (sidebarState !== "true" && sidebar) {
+              sidebar.classList.remove('active');
+              // Sidebar je vidljiv → sakrij navbar items (osim logout)
+              var navbarItems = document.querySelectorAll(".navbar-nav .nav-item");
+              navbarItems.forEach(function(item) {
+                if (!item.querySelector('a[href*="logout"]')) {
+                  item.style.opacity = "0";
+                  item.classList.add("hidden");
+                }
+              });
+            } else {
+              // Sidebar je sakriven → prikaži navbar items
+              var navbarItems = document.querySelectorAll(".navbar-nav .nav-item");
+              navbarItems.forEach(function(item) {
+                item.style.opacity = "1";
+                item.classList.remove("hidden");
+              });
+            }
+          })();
+        </script>
         <div class="p-4 pt-5">
           <!--<a href="{{url_for('main.home')}}"><img src="{{ url_for('static', filename='img/logo.png') }}" class="login-logo" style="width: 95%;"></a>-->
           <div class="accordion leftcolacc" id="accordionMenu">
@@ -239,15 +267,8 @@
           var sidebar = document.getElementById("sidebar");
           var sidebarToggle = document.getElementById("sidebarToggle");
   
-          // Check if the 'sidebarActive' key is in localStorage
-          var isSidebarActive = localStorage.getItem("sidebarActive");
-  
-          // Set the initial state based on localStorage
-          if (isSidebarActive === "true") {
-              sidebar.classList.remove("active");
-          } else {
-              sidebar.classList.add("active");
-          }
+          // Inicijalno stanje je već postavljeno inline script-om
+          // Ovde samo setup-ujemo toggle funkcionalnost
   
           // Function to toggle the sidebar and update localStorage
           function toggleSidebar() {
@@ -282,9 +303,6 @@
   
           // Add a click event listener to the button
           sidebarToggle.addEventListener("click", toggleSidebar);
-  
-          // Run the function on page load to update the visibility
-          toggleSidebar();
       });
     </script>
 
