@@ -38,6 +38,18 @@
                                     <label class="form-control-label" for="school_name">Naziv škole</label>
                                     <input type="text" class="form-control form-control-lg" id="school_name" name="school_name" value="{{ school.school_name }}" required>
                                 </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-control-label" for="broj_razreda">Broj razreda</label>
+                                        <input type="number" class="form-control form-control-lg" id="broj_razreda" name="broj_razreda" value="{{ school.broj_razreda }}" min="1" max="12" required>
+                                        <small class="form-text text-muted">Osnovna škola: 8, Srednja škola: 4, Muzička škola: 6.</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-control-label" for="broj_odeljenja">Broj odeljenja</label>
+                                        <input type="number" class="form-control form-control-lg" id="broj_odeljenja" name="broj_odeljenja" value="{{ school.broj_odeljenja }}" min="1" max="30" required>
+                                        <small class="form-text text-muted">Maksimalan broj odeljenja po razredu.</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         

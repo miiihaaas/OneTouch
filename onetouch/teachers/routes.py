@@ -100,7 +100,8 @@ def teacher_list():
                             active_date_start=active_date_start,
                             active_date_end=active_date_end,
                             danas=danas,
-                            license_expired=license_expired)
+                            license_expired=license_expired,
+                            school=school)
                             
     except Exception as e:
         logging.error(f"Neočekivana greška u teacher_list: {str(e)}")

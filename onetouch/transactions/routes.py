@@ -40,7 +40,8 @@ def student_debts():
                             students=students, 
                             service_items=service_items, 
                             teachers=teachers,
-                            route_name=route_name)
+                            route_name=route_name,
+                            school=school)
 
 
 @transactions.route('/add_new_student', methods=['POST']) #! dodaje novog studenta u postojeće zaduženje (npr došao novi učenik tokom školse godine i treba da se zaduži za osiguranje...)
@@ -420,6 +421,7 @@ def debts_archive_list():
         return redirect(url_for('users.login'))
     try:
         route_name = request.endpoint
+        school = School.query.first()
         danas = date.today()
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
@@ -450,7 +452,8 @@ def debts_archive_list():
                                 start_date=start_date,
                                 end_date=end_date,
                                 legend="Arhiva naloga",
-                                route_name=route_name)
+                                route_name=route_name,
+                                school=school)
                                 
     except ValueError as e:
         logging.error(f"Greška pri konverziji datuma: {str(e)}")

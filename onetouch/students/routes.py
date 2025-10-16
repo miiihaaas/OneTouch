@@ -104,7 +104,8 @@ def student_list():
                                 active_date_end=active_date_end,
                                 danas=danas,
                                 route_name=route_name,
-                                license_expired=license_expired)
+                                license_expired=license_expired,
+                                school=school)
     except Exception as e:
         logger.error(f"Neočekivana greška u student_list: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')

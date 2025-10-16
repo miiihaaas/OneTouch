@@ -23,18 +23,30 @@
         <label for="searchRazred">Pretraga po razredu:</label>
         <select id="searchRazred" class="form-select">
             <option value="">Svi razredi</option>
-            {% for class in range(9) %}
-                <option value="{{ class }}">{{ class }}</option>
-            {% endfor %}
+            {% if school %}
+                {% for class in range(school.broj_razreda + 1) %}
+                    <option value="{{ class }}">{{ class }}</option>
+                {% endfor %}
+            {% else %}
+                {% for class in range(9) %}
+                    <option value="{{ class }}">{{ class }}</option>
+                {% endfor %}
+            {% endif %}
         </select>
     </div>
     <div class="col form-group">
         <label for="searchOdeljenje">Pretraga po odeljenju:</label>
         <select id="searchOdeljenje" class="form-select">
             <option value="">Sva odeljenja</option>
-            {% for section in range(16) %}
-                <option value="{{ section }}">{{ section }}</option>
-            {% endfor %}
+            {% if school %}
+                {% for section in range(school.broj_odeljenja + 1) %}
+                    <option value="{{ section }}">{{ section }}</option>
+                {% endfor %}
+            {% else %}
+                {% for section in range(16) %}
+                    <option value="{{ section }}">{{ section }}</option>
+                {% endfor %}
+            {% endif %}
         </select>
     </div>
     <div class="col form-group">
