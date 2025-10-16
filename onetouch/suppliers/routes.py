@@ -410,7 +410,8 @@ def service_profile_list():
                                 register_form = register_form,
                                 edit_form = edit_form, getattr=builtins.getattr,
                                 route_name = route_name,
-                                license_expired = license_expired)
+                                license_expired = license_expired,
+                                school=school)
     except Exception as e:
         logger.error(f"Neočekivana greška u service_profile_list: {str(e)}")
         flash('Došlo je do neočekivane greške.', 'danger')

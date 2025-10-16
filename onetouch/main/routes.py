@@ -67,6 +67,8 @@ def school_license():
             school.school_zip_code = request.form.get('school_zip_code', school.school_zip_code)
             school.school_city = request.form.get('school_city', school.school_city)
             school.school_municipality = request.form.get('school_municipality', school.school_municipality)
+            school.broj_razreda = request.form.get('broj_razreda', school.broj_razreda)
+            school.broj_odeljenja = request.form.get('broj_odeljenja', school.broj_odeljenja)
             
             # Ažuriranje finansijskih informacija
             if request.form.get('class_plus_one'):

@@ -45,18 +45,34 @@
         <select id="searchRazred" class="form-select">
             {% if razred|string == "" %}
                 <option value="">Svi razredi</option>
-                {% for class in range(9) %}
-                    <option value="{{ class }}">{{ class }}</option>
-                {% endfor %}
+                {% if school %}
+                    {% for class in range(school.broj_razreda + 1) %}
+                        <option value="{{ class }}">{{ class }}</option>
+                    {% endfor %}
+                {% else %}
+                    {% for class in range(9) %}
+                        <option value="{{ class }}">{{ class }}</option>
+                    {% endfor %}
+                {% endif %}
             {% else %}
                 <option value="">Svi razredi</option>
-                {% for class in range(9) %}
-                    {% if class|string == razred|string %}
-                        <option value="{{ class }}" selected>{{ class }}</option>
-                    {% else %}
-                        <option value="{{ class }}">{{ class }}</option>
-                    {% endif %}
-                {% endfor %}
+                {% if school %}
+                    {% for class in range(school.broj_razreda + 1) %}
+                        {% if class|string == razred|string %}
+                            <option value="{{ class }}" selected>{{ class }}</option>
+                        {% else %}
+                            <option value="{{ class }}">{{ class }}</option>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {% for class in range(9) %}
+                        {% if class|string == razred|string %}
+                            <option value="{{ class }}" selected>{{ class }}</option>
+                        {% else %}
+                            <option value="{{ class }}">{{ class }}</option>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             {% endif %}
         </select>
     </div>    
@@ -65,18 +81,34 @@
         <select id="searchOdeljenje" class="form-select">
             {% if odeljenje|string == "" %}
                 <option value="">Sva odeljenja</option>
-                {% for section in range(0,17) %}
-                    <option value="{{ section }}">{{ section }}</option>
-                {% endfor %}
+                {% if school %}
+                    {% for section in range(school.broj_odeljenja + 1) %}
+                        <option value="{{ section }}">{{ section }}</option>
+                    {% endfor %}
+                {% else %}
+                    {% for section in range(0,17) %}
+                        <option value="{{ section }}">{{ section }}</option>
+                    {% endfor %}
+                {% endif %}
             {% else %}
                 <option value="">Sva odeljenja</option>
-                {% for section in range(15) %}
-                    {% if section|string == odeljenje|string %}
-                        <option value="{{ section }}" selected>{{ section }}</option>
-                    {% else %}
-                        <option value="{{ section }}">{{ section }}</option>
-                    {% endif %}
-                {% endfor %}
+                {% if school %}
+                    {% for section in range(school.broj_odeljenja + 1) %}
+                        {% if section|string == odeljenje|string %}
+                            <option value="{{ section }}" selected>{{ section }}</option>
+                        {% else %}
+                            <option value="{{ section }}">{{ section }}</option>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {% for section in range(15) %}
+                        {% if section|string == odeljenje|string %}
+                            <option value="{{ section }}" selected>{{ section }}</option>
+                        {% else %}
+                            <option value="{{ section }}">{{ section }}</option>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             {% endif %}
         </select>
     </div>

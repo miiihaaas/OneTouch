@@ -52,18 +52,30 @@
     <label for="classes" class="form-control-label">Razred</label>
     <select name="classes" id="classes" class="form-select">
         <option value="s">Selektujte razred</option>
-        {% for i in range(0,9) %}
-        <option value="{{i}}">{{i}}</option>
-        {% endfor %}
+        {% if school %}
+            {% for i in range(school.broj_razreda + 1) %}
+            <option value="{{i}}">{{i}}</option>
+            {% endfor %}
+        {% else %}
+            {% for i in range(0,9) %}
+            <option value="{{i}}">{{i}}</option>
+            {% endfor %}
+        {% endif %}
     </select>
 </div>
 <div class="form-group" style="display: inline-block;">
     <label for="section" class="form-control-label">Odeljenje</label>
     <select name="section" id="section" class="form-select" disabled>
         <option value="">Selektujte odeljenje</option>
-        {% for i in range(0,17) %}
-        <option value="{{i}}">{{i}}</option>
-        {% endfor %}
+        {% if school %}
+            {% for i in range(school.broj_odeljenja + 1) %}
+            <option value="{{i}}">{{i}}</option>
+            {% endfor %}
+        {% else %}
+            {% for i in range(0,17) %}
+            <option value="{{i}}">{{i}}</option>
+            {% endfor %}
+        {% endif %}
     </select>
 </div>
 <div class="form-group spornispan" style="display: inline-block;">

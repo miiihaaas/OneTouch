@@ -185,6 +185,7 @@ def overview_students():
             
             report_students = gen_report_student_list(export_data, start_date, end_date, filtered_records, service_id, razred, odeljenje, dugovanje, preplata)
             
+            school = School.query.first()
             return render_template('overview_students.html', 
                                     title='Pregled po učeniku', 
                                     legend="Pregled po učeniku", 
@@ -200,7 +201,8 @@ def overview_students():
                                     dugovanje=dugovanje,
                                     preplata=preplata,
                                     route_name=route_name,
-                                    use_school_year=use_school_year)
+                                    use_school_year=use_school_year,
+                                    school=school)
             
         except SQLAlchemyError as e:
             logging.error(f'Greška pri pristupu bazi podataka: {str(e)}')
@@ -612,6 +614,7 @@ def overview_sections():
 
     report_school = gen_report_school(data, start_date, end_date, filtered_records, service_id, razred, odeljenje)
     
+    school = School.query.first()
     return render_template('overview_sections.html',
                             title='Pregled škole po uslugama', 
                             legend="Pregled škole po uslugama",
@@ -624,7 +627,8 @@ def overview_sections():
                             razred=razred,
                             odeljenje=odeljenje,
                             route_name=route_name,
-                            use_school_year=use_school_year)
+                            use_school_year=use_school_year,
+                            school=school)
 
 
 @overviews.route("/overview_debts", methods=['GET', 'POST'])
