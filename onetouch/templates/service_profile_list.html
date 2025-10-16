@@ -475,9 +475,15 @@
                     </div>
                 {% else %}
                 <select name="classes" id="classes" class="js-example-basic-multiple" name="states[]" multiple="multiple" style="width: 100%;">
-                    {% for i in range(0,9) %}
-                        <option value="{{i|string}}">{{i|string}}</option>
-                    {% endfor %}
+                    {% if school %}
+                        {% for i in range(school.broj_razreda + 1) %}
+                            <option value="{{i|string}}">{{i|string}}</option>
+                        {% endfor %}
+                    {% else %}
+                        {% for i in range(0,9) %}
+                            <option value="{{i|string}}">{{i|string}}</option>
+                        {% endfor %}
+                    {% endif %}
                 </select>
                 {% endif %}
             </div>
@@ -837,8 +843,14 @@
                 // Pretpostavljam da je serviceItemClasses string koji sadrži opcije, npr. "1,3,5"
                 const serviceItemClassesOptions = serviceItemClasses.split(',').map(option => option.trim()); // Uklanjanje belih prostora
                 let options = [];
+                
+                {% if school %}
+                const maxClasses = {{ school.broj_razreda + 1 }};
+                {% else %}
+                const maxClasses = 9;
+                {% endif %}
 
-                for (let i = 0; i < 9; i++) {
+                for (let i = 0; i < maxClasses; i++) {
                     let isSelected = serviceItemClassesOptions.includes(i.toString()); // Provera da li je i selektovan
                     console.log(`debugging - ${i}: selected: ${isSelected}`); // Debugging, da vidiš koji su selektovani
 
