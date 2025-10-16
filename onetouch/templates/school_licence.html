@@ -1,0 +1,185 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    /* Stil za overriding ograničenja širine iz layout.html */
+    .container {
+        max-width: 100%;
+    }
+    .col-md-12 {
+        padding: 0;
+    }
+    main.container {
+        padding: 0;
+        margin: 0;
+        max-width: 100%;
+        width: 100%;
+    }
+    .row {
+        margin: 0;
+    }
+</style>
+
+<div class="content-section w-100" style="max-width: 100%; padding: 0; margin-top: 10px; margin-bottom: 20px;">
+    <form method="POST" action="{{ url_for('main.school_license') }}" style="width: 100%;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <fieldset class="form-group m0" style="max-width: 100%; margin: 0; padding: 0;">
+            <div class="container-fluid px-4">
+                <div class="row">
+                    <!-- LEVI STUBAC - Informacije o školi, Adresa i Kontakt informacije -->
+                    <div class="col-md-6">
+                        <!-- Informacije o školi -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Informacije o školi</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label" for="school_name">Naziv škole</label>
+                                    <input type="text" class="form-control form-control-lg" id="school_name" name="school_name" value="{{ school.school_name }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Adresa -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Adresa</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label" for="school_address">Ulica i broj</label>
+                                    <input type="text" class="form-control form-control-lg" id="school_address" name="school_address" value="{{ school.school_address }}" required>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-control-label" for="school_zip_code">Poštanski broj</label>
+                                        <input type="number" class="form-control form-control-lg" id="school_zip_code" name="school_zip_code" value="{{ school.school_zip_code }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-control-label" for="school_city">Grad</label>
+                                        <input type="text" class="form-control form-control-lg" id="school_city" name="school_city" value="{{ school.school_city }}" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-control-label" for="school_municipality">Opština</label>
+                                    <input type="text" class="form-control form-control-lg" id="school_municipality" name="school_municipality" value="{{ school.school_municipality }}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- DESNI STUBAC - Finansijske informacije -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Finansijske informacije</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label" for="class_plus_one">Datum kada je poslednji put urađen +1 razred</label>
+                                    <input type="date" class="form-control form-control-lg" id="class_plus_one" name="class_plus_one" value="{{ school.class_plus_one.strftime('%Y-%m-%d') if school.class_plus_one else '' }}" required>
+                                    <small class="form-text text-muted">Datum kada učenici prelaze u viši razred.</small>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label class="form-control-label" for="license_expiry_date">Datum isteka licence</label>
+                                    <input type="date" class="form-control form-control-lg" id="license_expiry_date" name="license_expiry_date" value="{{ school.license_expiry_date.strftime('%Y-%m-%d') if school.license_expiry_date else '' }}">
+                                    <small class="form-text text-muted">Datum do kada je licenca validna.</small>
+                                </div>
+                                
+                                {% if school.days_until_license_expiry() is not none %}
+                                <div class="alert {% if school.days_until_license_expiry() <= 30 %}alert-danger{% elif school.days_until_license_expiry() <= 60 %}alert-message{% else %}alert-info{% endif %} mt-3" role="alert">
+                                    <strong>Status licence:</strong>
+                                    {% if school.days_until_license_expiry() < 0 %}
+                                        Licenca je istekla pre {{ -school.days_until_license_expiry() }} dana.
+                                    {% elif school.days_until_license_expiry() == 0 %}
+                                        Licenca ističe danas.
+                                    {% else %}
+                                        Licenca ističe za {{ school.days_until_license_expiry() }} dana.
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dugme za slanje -->
+                <div class="row">
+                    <div class="col-12 mt-4 text-center">
+                        <button type="submit" class="btn btn-primary btn-lg btn-in-center loading">Sačuvajte izmene</button>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+</div>
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    // Inicijalizacija
+    document.addEventListener('DOMContentLoaded', function() {
+        // Uklanja ograničenja širine za glavne kontejnere
+        document.querySelectorAll('main.container').forEach(function(container) {
+            container.style.maxWidth = '100%';
+            container.style.width = '100%';
+            container.style.padding = '0';
+            container.style.margin = '0';
+        });
+        
+        document.querySelectorAll('.col-md-12').forEach(function(col) {
+            col.style.padding = '0';
+        });
+        
+        document.querySelectorAll('.row').forEach(function(row) {
+            row.style.margin = '0';
+            row.style.width = '100%';
+        });
+    });
+</script>
+<style>
+    .bank-account-card {
+        transition: all 0.3s ease;
+    }
+    .bank-account-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .form-control-lg:focus {
+        border-color: #104e97;
+        box-shadow: 0 0 0 0.2rem rgba(16, 78, 151, 0.25);
+    }
+    .bg-implicit-deepblue, .bg-implicit-skyblue {
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,.075);
+    }
+    .card {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .card-header h4 {
+        font-weight: 600;
+    }
+    
+    /* Responzivnost za mobilne uređaje */
+    @media (max-width: 768px) {
+        .col-md-6 {
+            margin-bottom: 20px;
+        }
+        .btn-lg {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .bank-account-card {
+            margin-bottom: 20px;
+        }
+        .container-fluid {
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+        }
+        main.container {
+            padding: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
