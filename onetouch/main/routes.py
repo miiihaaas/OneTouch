@@ -6,7 +6,7 @@ from onetouch import mail
 from onetouch.main.functions import send_license_expiry_notification
 from onetouch.users.routes import send_reset_email
 import logging
-from onetouch.models import User
+from onetouch.models import User, School
 from onetouch import db
 
 main = Blueprint('main', __name__)
@@ -50,6 +50,46 @@ def users():
                                 users=users)
     except Exception as e:
         logging.error(f'Error in users route: {str(e)}')
+        flash(f'Došlo je do greške prilikom učitavanja stranice. {str(e)}', 'danger')
+        return render_template('errors/500.html'), 500
+
+
+@main.route("/school_license", methods=['GET', 'POST'])
+@login_required
+def school_license():
+    try:
+        school = School.query.first()
+        route_name = request.endpoint
+        if request.method == 'POST':
+            # Ažuriranje osnovnih informacija o školi
+            school.school_name = request.form.get('school_name', school.school_name)
+            school.school_address = request.form.get('school_address', school.school_address)
+            school.school_zip_code = request.form.get('school_zip_code', school.school_zip_code)
+            school.school_city = request.form.get('school_city', school.school_city)
+            school.school_municipality = request.form.get('school_municipality', school.school_municipality)
+            
+            # Ažuriranje finansijskih informacija
+            if request.form.get('class_plus_one'):
+                from datetime import datetime
+                school.class_plus_one = datetime.strptime(request.form['class_plus_one'], '%Y-%m-%d').date()
+            
+            if request.form.get('license_expiry_date'):
+                from datetime import datetime
+                school.license_expiry_date = datetime.strptime(request.form['license_expiry_date'], '%Y-%m-%d').date()
+            
+            db.session.commit()
+            flash('Podaci o školi su uspešno ažurirani.', 'success')
+            return redirect(url_for('main.school_license'))
+        else:
+            from flask_wtf.csrf import generate_csrf
+            return render_template('school_licence.html', 
+                                    title='Škola',
+                                    legend='Podaci o školi',
+                                    route_name=route_name,
+                                    csrf_token=generate_csrf,
+                                    school=school)
+    except Exception as e:
+        logging.error(f'Error in school_license route: {str(e)}')
         flash(f'Došlo je do greške prilikom učitavanja stranice. {str(e)}', 'danger')
         return render_template('errors/500.html'), 500
 

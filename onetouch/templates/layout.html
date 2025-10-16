@@ -68,9 +68,6 @@
                     <a class="dropdown-item loading" href="{{ url_for('students.student_list') }}">Učenici</a>
                     <a class="dropdown-item loading" href="{{ url_for('teachers.teacher_list') }}">Odeljenske starešine</a>
                     <a class="dropdown-item loading" href="{{ url_for('schools.school_profile') }}">Podaci škole</a>
-                    {% if current_user.user_role == 'admin' %}
-                    <a class="dropdown-item loading" href="{{ url_for('main.users') }}">Korisnici</a>
-                    {% endif %}
                     <a class="dropdown-item loading" href="{{ url_for('suppliers.supplier_list') }}">Dobavljači</a>
                     <a class="dropdown-item loading" href="{{ url_for('suppliers.service_list') }}">Tip usluge</a>
                     <a class="dropdown-item loading" href="{{ url_for('suppliers.service_profile_list') }}">Detalji usluge</a>
@@ -100,6 +97,15 @@
                     <a class="dropdown-item loading" href="{{ url_for('transactions.transfers_list') }}">Arhiva preknjižavanja</a>
                   </div>
                 </li>
+                {% if current_user.user_role == 'admin' %}
+                <li class="nav-item dropdown dropdown--align-right">
+                  <a class="nav-link dropdown-toggle" href="" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin podešavanja</a>
+                  <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item loading" href="{{ url_for('main.users') }}">Korisnici</a>
+                    <a class="dropdown-item loading" href="{{ url_for('main.school_license') }}">Škola</a>
+                  </div>
+                </li>
+                {% endif %}
                 <!-- <i class="fa-solid fa-window-minimize fa-rotate-90 awesomedelete mt-2" style="color: white;"></i> -->
                 <a class="nav-item nav-link" href="{{ url_for('users.logout') }}" style="opacity: 1;">Odjavite se</a>
               {% else %}
@@ -158,9 +164,6 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('students.student_list') }}" id="student_list">Učenici</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('teachers.teacher_list') }}" id="teacher_list">Odeljenske starešine</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('schools.school_profile') }}" id="school">Podaci škole</a>
-                  {% if current_user.user_role == 'admin' %}
-                  <a class="nav-item nav-link loading" href="{{ url_for('main.users') }}" id="users">Korisnici</a>
-                  {% endif %}
                   <a class="nav-item nav-link loading" href="{{ url_for('suppliers.supplier_list') }}" id="supplier_list">Dobavljači</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('suppliers.service_list') }}" id="service_list">Tip usluge</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('suppliers.service_profile_list') }}" id="service_profile_list">Detalji usluge</a>
@@ -209,6 +212,21 @@
                 </div>
               </div>
             </div>
+            {% if current_user.user_role == 'admin' %}
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingFive">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                  Admin Podešavanja
+                </button>
+              </h2>
+              <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#accordionMenu">
+                <div class="accordion-body">
+                  <a class="nav-item nav-link loading" href="{{ url_for('main.users') }}" id="users">Korisnici</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('main.school_license') }}" id="school_license">Škola</a>
+                </div>
+              </div>
+            </div>
+            {% endif %}
           </div>
         </div>
       </nav>
@@ -344,7 +362,6 @@
 				"student_list": { section: '#collapseOne', link: '#student_list' },
 				"teacher_list": { section: '#collapseOne', link: '#teacher_list' },
         "school": { section: '#collapseOne', link: '#school' },
-        "users": { section: '#collapseOne', link: '#users' },
         "supplier_list": { section: '#collapseOne', link: '#supplier_list' },
         "service_list": { section: '#collapseOne', link: '#service_list' },
         "service_profile_list": { section: '#collapseOne', link: '#service_profile_list' },
@@ -360,10 +377,20 @@
         "payment_archive": { section: '#collapseFour', link: '#payment_archive' },
         "debt_archive": { section: '#collapseFour', link: '#debt_archive' },
         "transfers_list": { section: '#collapseFour', link: '#transfers_list' },
+        "users": { section: '#collapseFive', link: '#users' },
+        "school_license": { section: '#collapseFive', link: '#school_license' },
 			};
 
+			// Sortiramo ključeve od najdužeg ka najkraćem da bi izbegli lažne matcheve
+			// Npr. ako URL sadrži "school_license", najpre proveravamo "school_license" pre "school"
+			// jer bi "school" takođe matchovao kao substring od "school_license"
+			var sortedKeys = Object.keys(mapping).sort(function(a, b) {
+				return b.length - a.length;
+			});
+
 			// Check if the URL contains a keyword/identifier from the mapping
-			for (var key in mapping) {
+			for (var i = 0; i < sortedKeys.length; i++) {
+				var key = sortedKeys[i];
 				if (url.indexOf(key) > -1) {
 					$(mapping[key].section).addClass('show');
 					$(mapping[key].link).addClass('active-link');
