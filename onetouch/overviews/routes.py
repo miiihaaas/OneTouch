@@ -137,7 +137,7 @@ def overview_students():
                 # Proveri da li postoji service_item
                 if record.transaction_record_service_item is None:
                     logging.warning(f'Record {record.id} nema povezan service_item_id')
-                    flash(f'Stavka {record.id} nema validan id usluge (service_item_id={record.service_item_id}). Pogledati izvod sa id={record.student_payment_id}', 'danger')
+                    flash(f'Stavka {record.id} nema validan id usluge (service_item_id={record.service_item_id}). Pogledati izvod {record.transaction_record_student_payment.statment_number}.', 'danger')
                     return redirect(url_for('main.home'))
                 if record.service_item_id not in [option['value'] for option in options]:
                     options.append({
