@@ -194,7 +194,25 @@
         
         // Ažuriranje polja za prikaz broja zaduženih učenika
         document.getElementById('student_count').value = count;
+        
+        // Ažuriranje stanja dugmeta nakon promene broja zaduženih učenika
+        updateSaveButtonState();
+        
         return count;
+    }
+    
+    // Funkcija za kontrolu stanja dugmeta "Save" na osnovu broja zaduženih učenika
+    function updateSaveButtonState() {
+        const studentCountInput = document.getElementById('student_count');
+        const saveButton = document.getElementById('save_button');
+        
+        const count = parseInt(studentCountInput.value) || 0;
+        
+        if (count > 0) {
+            saveButton.disabled = false;
+        } else {
+            saveButton.disabled = true;
+        }
     }
     
     // Funkcija za izračunavanje iznosa zaduženja
@@ -251,7 +269,14 @@ $(document).ready(function() {
             hidePreloader();
             // Inicijalno prebroji zadužene učenike
             countChargedStudents();
+            // Inicijalno postavi stanje dugmeta
+            updateSaveButtonState();
         }, 500);
+        
+        // Dodaj event listener na student_count polje za praćenje promena
+        const studentCountInput = document.getElementById('student_count');
+        studentCountInput.addEventListener('input', updateSaveButtonState);
+        studentCountInput.addEventListener('change', updateSaveButtonState);
         
         const selectFieldClasses = $('#classes');
         const selectFieldSection = $('#section');
@@ -320,7 +345,6 @@ $(document).ready(function() {
                 selectFieldInstallment.prop('value', 0);
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
-                buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
                 inputZaduziSveKolicina.prop('disabled', true);
             } else {
@@ -333,7 +357,6 @@ $(document).ready(function() {
                 selectFieldInstallment.prop('value', 0);
                 inputFieldPurposeOfPayment.prop('value', "");
                 inputFieldPurposeOfPayment.prop('disabled', true);
-                buttonSave.prop('disabled', true);
                 inputFieldInstallmentValue.prop('value', "----");
                 showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
@@ -343,7 +366,6 @@ $(document).ready(function() {
                     success: function(data) {
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
-                        buttonSave.prop('disabled', true);
                         hidePreloader(); // Sakrivanje preloadera nakon završetka
                     },
                     error: function() {
@@ -377,7 +399,6 @@ $(document).ready(function() {
                 });
                 // Ažuriraj broj zaduženih učenika nakon resetovanja količina
                 countChargedStudents();
-                buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
                 inputZaduziSveKolicina.prop('disabled', true);
             } else {
@@ -395,7 +416,6 @@ $(document).ready(function() {
                     $(this).prop('readonly', true);
                     $(this).prop('value', 0);
                 });
-                buttonSave.prop('disabled', true);
 
                 showPreloader(); // Prikazivanje preloadera pre AJAX zahteva
                 $.ajax({
@@ -407,7 +427,6 @@ $(document).ready(function() {
                         selectFieldServiceItem.prop('disabled', false);
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
-                        buttonSave.prop('disabled', true);
                         hidePreloader(); // Sakrivanje preloadera nakon završetka
                     },
                     error: function() {
@@ -438,7 +457,6 @@ $(document).ready(function() {
                     $(this).prop('readonly', true);
                     $(this).prop('value', 0);
                 });
-                buttonSave.prop('disabled', true);
                 buttonZaduziSve.prop('disabled', true);
                 inputZaduziSveKolicina.prop('disabled', true);
             } else {
@@ -455,7 +473,6 @@ $(document).ready(function() {
                         inputFieldInstallmentValue.prop('value', "----");
                         inputFieldPurposeOfPayment.prop('value', "");
                         inputFieldPurposeOfPayment.prop('disabled', true);
-                        buttonSave.prop('disabled', true);
 
                         const selectedServiceId = selectFieldServiceItem.val();
                         const selectedServiceText = selectFieldServiceItem.find('option:selected').text();
@@ -537,7 +554,6 @@ $(document).ready(function() {
                     $(this).prop('readonly', true);
                     $(this).prop('value', 0);
                 });
-                buttonSave.prop('disabled', true);
             } else {
                 inputFieldQuantityValue.each(function() {
                     $(this).prop('readonly', false);
@@ -572,11 +588,9 @@ $(document).ready(function() {
                             inputFieldPurposeOfPayment.prop('disabled', false);
                             inputFieldPurposeOfPayment.prop('placeholder', "da bi ste sačuvali zaduženje potrebno je uneti svrhu uplate");
                             if (inputFieldPurposeOfPayment.val().length > 35) {
-                                buttonSave.prop('disabled', true);
                                 inputFieldPurposeOfPayment.addClass("error-result");
                                 errorMessage.show(); // Prikazati errorMessage
                             } else {
-                                buttonSave.prop('disabled', false);
                                 inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
                                 errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
                             }
@@ -596,14 +610,11 @@ $(document).ready(function() {
         const errorMessage = $("#errorMessage");
         inputFieldPurposeOfPayment.on('input', function() {
             if (inputFieldPurposeOfPayment.val() === "") {
-                buttonSave.prop('disabled', true);
                 errorMessage.hide(); // Sakrijte errorMessage
             } else if (inputFieldPurposeOfPayment.val().length > 35) {
-                buttonSave.prop('disabled', true);
                 inputFieldPurposeOfPayment.addClass("error-result");
                 errorMessage.show(); // Prikazati errorMessage
             } else {
-                buttonSave.prop('disabled', false);
                 inputFieldPurposeOfPayment.removeClass("error-result"); // Uklonite error klase ako nisu potrebne
                 errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
             }
@@ -642,7 +653,6 @@ $(document).ready(function() {
             });
             inputFieldPurposeOfPayment.val("");
             inputFieldPurposeOfPayment.prop('disabled', true);
-            buttonSave.prop('disabled', true);
         }
 
         // ograničava vrednosti u intervalu min-max za svaki input element u koloni 'Količina'
@@ -761,7 +771,6 @@ $(document).ready(function() {
                 alert('Došlo je do greške prilikom čuvanja podataka. Molimo pokušajte ponovo.');
             }
         })
-        buttonSave.prop('disabled', true);
     })
 </script>
 <script>
