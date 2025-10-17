@@ -134,6 +134,10 @@ def overview_students():
                                 
             options = []
             for record in filtered_records:
+                # Proveri da li postoji service_item
+                if record.transaction_record_service_item is None:
+                    logging.warning(f'Record {record.id} nema povezan service_item_id')
+                    continue
                 if record.service_item_id not in [option['value'] for option in options]:
                     options.append({
                         'value': record.service_item_id,
