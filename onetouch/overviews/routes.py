@@ -3,7 +3,7 @@ import json
 import logging
 import os
 from datetime import datetime, date
-from flask import Blueprint, render_template, url_for, flash, redirect, request, abort, current_app
+from flask import Blueprint, render_template, url_for, flash, redirect, request, abort, current_app, make_response
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord, School
 from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list, send_mail, add_fonts
@@ -11,6 +11,9 @@ from onetouch.overviews.functions import get_filtered_transactions_data, add_fil
 from flask_mail import Message
 from onetouch import mail, app
 from sqlalchemy.exc import SQLAlchemyError
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from io import BytesIO
 
 overviews = Blueprint('overviews', __name__)
 
@@ -1385,3 +1388,344 @@ def send_debt_emails(student_id):
         logging.error(f'Greška pri slanju e-maila: {str(e)}')
         flash(f'Došlo je do greške pri slanju e-maila: {str(e)}', 'danger')
         return redirect(url_for('overviews.overview_debts'))
+
+
+@overviews.route('/export_overview_students_excel', methods=['GET'])
+@login_required
+def export_overview_students_excel():
+    try:
+        danas = date.today()
+        
+        # Dobavljanje parametara iz URL-a
+        try:
+            start_date = request.args.get('start_date')
+            end_date = request.args.get('end_date')
+            service_id = request.args.get('service_id')
+            razred = request.args.get('razred')
+            odeljenje = request.args.get('odeljenje')
+            dugovanje = request.args.get('debts')
+            preplata = request.args.get('overpayments')
+            
+            # Postavljanje podrazumevanih vrednosti
+            service_id = '0' if not service_id else service_id
+            razred = '' if not razred else razred
+            odeljenje = '' if not odeljenje else odeljenje
+            dugovanje = True if dugovanje == 'true' else False
+            preplata = True if preplata == 'true' else False
+            
+            # Postavljanje datuma
+            current_year = request.args.get('current_year')
+            use_school_year = current_year == 'true'
+            
+            # Provera da li je current_year promenjen iz true u false (switch isključen)
+            current_year_changed = request.args.get('current_year') is not None
+            
+            if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
+                # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+                if use_school_year:
+                    if danas.month >= 9:  # Septembar ili kasnije
+                        start_date = danas.replace(month=9, day=1)
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                    else:  # Pre septembra
+                        start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                        end_date = danas.replace(month=8, day=31)
+                # Ako je switch isključen, vrati na podrazumevane vrednosti
+                elif current_year_changed and not use_school_year:
+                    start_date = danas.replace(month=9, day=1, year=2020)
+                    if danas.month < 9:
+                        end_date = danas.replace(month=8, day=31)
+                    else:
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                # Podrazumevane vrednosti ako nije ništa od gore navedenog
+                else:
+                    start_date = danas.replace(month=9, day=1, year=2020)
+                    if danas.month < 9:
+                        end_date = danas.replace(month=8, day=31)
+                    else:
+                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            
+            if isinstance(start_date, str):
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+                
+        except ValueError as e:
+            logging.error(f'Greška pri obradi datuma: {str(e)}')
+            flash('Neispravan format datuma.', 'danger')
+            return redirect(url_for('overviews.overview_students'))
+            
+        try:
+            # Dobavljanje transakcija iz baze (isti kod kao u overview_students)
+            records = TransactionRecord.query.join(Student).filter(Student.student_class < 9).all()
+            
+            filtered_records = []
+            
+            # Filtriranje po razredu i odeljenju
+            if razred == '' and odeljenje == '':
+                for record in records:
+                    if record.student_debt_id:
+                        if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                            filtered_records.append(record)
+                    elif record.student_payment_id:
+                        if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                            filtered_records.append(record)
+            elif razred != '' and odeljenje == '':
+                for record in records:
+                    current_class = record.transaction_record_student.student_class
+                    if current_class == int(razred):
+                        if record.student_debt_id:
+                            if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                                filtered_records.append(record)
+                        elif record.student_payment_id:
+                            if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                                filtered_records.append(record)
+            elif odeljenje != '' and razred == '':
+                for record in records:
+                    current_section = record.transaction_record_student.student_section
+                    if current_section == int(odeljenje):
+                        if record.student_debt_id:
+                            if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                                filtered_records.append(record)
+                        elif record.student_payment_id:
+                            if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                                filtered_records.append(record)
+            else:
+                for record in records:
+                    current_class = record.transaction_record_student.student_class
+                    current_section = record.transaction_record_student.student_section
+                    if current_class == int(razred) and current_section == int(odeljenje):
+                        if record.student_debt_id:
+                            if (start_date <= record.transaction_record_student_debt.student_debt_date.date() <= end_date):
+                                filtered_records.append(record)
+                        elif record.student_payment_id:
+                            if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                                filtered_records.append(record)
+            
+            export_data = []
+            for record in filtered_records:
+                if service_id == '0' or int(service_id) == record.service_item_id:
+                    if record.student_id in [student['student_id'] for student in export_data]:
+                        existing_record = next((item for item in export_data if item["student_id"] == record.student_id), None)
+                        existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
+                        existing_record['student_payment'] += record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0
+                        existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
+                    else:
+                        new_record = {
+                            'student_id': record.student_id,
+                            'student_name': record.transaction_record_student.student_name,
+                            'student_surname': record.transaction_record_student.student_surname,
+                            'student_class': record.transaction_record_student.student_class,
+                            'student_section': record.transaction_record_student.student_section,
+                            'student_debt': record.student_debt_total if record.student_debt_id else 0,
+                            'student_payment': record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0,
+                        }
+                        new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
+                        if int(new_record['student_id']) > 1:
+                            export_data.append(new_record)
+            
+            filtered_export_data = []
+            for record in export_data:
+                if dugovanje:
+                    if record['saldo'] > 0:
+                        filtered_export_data.append(record)
+                elif preplata:
+                    if record['saldo'] < 0:
+                        filtered_export_data.append(record)
+            if len(filtered_export_data) > 0:
+                export_data = filtered_export_data
+            
+            # Kreiranje novog Excel fajla
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "Pregled učenika"
+            
+            # Definisanje stilova
+            header_font = Font(name='Arial', size=12, bold=True, color='FFFFFF')
+            header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+            header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+            title_font = Font(name='Arial', size=12, bold=True)
+            
+            # Definisanje ivica
+            thin_border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+            
+            # Dodavanje informacija na vrh
+            current_row = 1
+            
+            # Naslov izveštaja
+            cell = ws.cell(row=current_row, column=1)
+            cell.value = "Pregled po učeniku"
+            cell.font = Font(name='Arial', size=14, bold=True)
+            ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=7)
+            cell.alignment = Alignment(horizontal='center')
+            current_row += 2
+            
+            # Informacije o filterima
+            filter_parts = []
+            if service_id != '0':
+                service_item = ServiceItem.query.get(int(service_id))
+                if service_item:
+                    filter_parts.append(f"Usluga: {service_item.service_item_service.service_name} - {service_item.service_item_name}")
+            if razred:
+                filter_parts.append(f"Razred: {razred}")
+            if odeljenje:
+                filter_parts.append(f"Odeljenje: {odeljenje}")
+            if dugovanje:
+                filter_parts.append("Prikazana dugovanja")
+            if preplata:
+                filter_parts.append("Prikazane preplate")
+            filter_parts.append(f"Period: {start_date.strftime('%d.%m.%Y')} - {end_date.strftime('%d.%m.%Y')}")
+            
+            if filter_parts:
+                filter_text = "Primenjeni filteri: " + ", ".join(filter_parts)
+                cell = ws.cell(row=current_row, column=1)
+                cell.value = filter_text
+                cell.font = title_font
+                ws.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=7)
+                current_row += 2
+            
+            # Dodavanje zaglavlja
+            headers = ['ID učenika', 'Učenik', 'Razred', 'Odeljenje', 'Zaduženje', 'Uplate', 'Saldo']
+            for col_num, header in enumerate(headers, 1):
+                cell = ws.cell(row=current_row, column=col_num)
+                cell.value = header
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = header_alignment
+                cell.border = thin_border
+            
+            # Podešavanje širine kolona
+            column_widths = [15, 30, 10, 15, 15, 15, 15]
+            for i, width in enumerate(column_widths, 1):
+                ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = width
+            
+            # Pamtimo red zaglavlja
+            header_row = current_row
+            
+            # Dodavanje podataka
+            zaduzenje_sum = 0
+            uplate_sum = 0
+            saldo_sum = 0
+            
+            for row_num, student in enumerate(export_data, 1):
+                data_row = header_row + row_num
+                
+                # ID učenika
+                cell = ws.cell(row=data_row, column=1)
+                cell.value = str(student['student_id']).zfill(4)
+                cell.alignment = Alignment(horizontal='center')
+                cell.border = thin_border
+                
+                # Učenik (ime i prezime)
+                cell = ws.cell(row=data_row, column=2)
+                cell.value = f"{student['student_name']} {student['student_surname']}"
+                cell.border = thin_border
+                
+                # Razred
+                cell = ws.cell(row=data_row, column=3)
+                cell.value = student['student_class']
+                cell.alignment = Alignment(horizontal='center')
+                cell.border = thin_border
+                
+                # Odeljenje
+                cell = ws.cell(row=data_row, column=4)
+                cell.value = student['student_section']
+                cell.alignment = Alignment(horizontal='center')
+                cell.border = thin_border
+                
+                # Zaduženje
+                cell = ws.cell(row=data_row, column=5)
+                cell.value = round(student['student_debt'], 2)
+                cell.number_format = '#,##0.00'
+                cell.alignment = Alignment(horizontal='right')
+                cell.border = thin_border
+                zaduzenje_sum += student['student_debt']
+                
+                # Uplate
+                cell = ws.cell(row=data_row, column=6)
+                cell.value = round(student['student_payment'], 2)
+                cell.number_format = '#,##0.00'
+                cell.alignment = Alignment(horizontal='right')
+                cell.border = thin_border
+                uplate_sum += student['student_payment']
+                
+                # Saldo
+                cell = ws.cell(row=data_row, column=7)
+                cell.value = round(student['saldo'], 2)
+                cell.number_format = '#,##0.00'
+                cell.alignment = Alignment(horizontal='right')
+                cell.border = thin_border
+                saldo_sum += student['saldo']
+            
+            # Dodavanje reda sa sumama
+            suma_row = header_row + len(export_data) + 1
+            
+            # Labela "Ukupno"
+            cell = ws.cell(row=suma_row, column=1)
+            cell.value = "Ukupno:"
+            cell.font = Font(name='Arial', size=12, bold=True)
+            cell.alignment = Alignment(horizontal='right')
+            ws.merge_cells(start_row=suma_row, start_column=1, end_row=suma_row, end_column=4)
+            
+            # Suma zaduženja
+            cell = ws.cell(row=suma_row, column=5)
+            cell.value = round(zaduzenje_sum, 2)
+            cell.number_format = '#,##0.00'
+            cell.font = Font(name='Arial', size=12, bold=True)
+            cell.alignment = Alignment(horizontal='right')
+            cell.border = Border(top=Side(style='double'), bottom=Side(style='double'))
+            
+            # Suma uplata
+            cell = ws.cell(row=suma_row, column=6)
+            cell.value = round(uplate_sum, 2)
+            cell.number_format = '#,##0.00'
+            cell.font = Font(name='Arial', size=12, bold=True)
+            cell.alignment = Alignment(horizontal='right')
+            cell.border = Border(top=Side(style='double'), bottom=Side(style='double'))
+            
+            # Suma salda
+            cell = ws.cell(row=suma_row, column=7)
+            cell.value = round(saldo_sum, 2)
+            cell.number_format = '#,##0.00'
+            cell.font = Font(name='Arial', size=12, bold=True)
+            cell.alignment = Alignment(horizontal='right')
+            cell.border = Border(top=Side(style='double'), bottom=Side(style='double'))
+            
+            # Generisanje naziva fajla
+            filename = "Pregled_ucenika"
+            if service_id != '0':
+                filename += f"_usluga_{service_id}"
+            if razred:
+                filename += f"_razred_{razred}"
+            if odeljenje:
+                filename += f"_odeljenje_{odeljenje}"
+            if dugovanje:
+                filename += "_dugovanja"
+            if preplata:
+                filename += "_preplate"
+            filename += f"_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+            
+            # Čuvanje fajla u memoriji i slanje kao odgovor
+            output = BytesIO()
+            wb.save(output)
+            output.seek(0)
+            
+            response = make_response(output.read())
+            response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+            response.headers["Content-type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            
+            logging.info(f"Generisan Excel pregled učenika. Filteri: period={start_date}-{end_date}, usluga={service_id}, razred={razred}, odeljenje={odeljenje}")
+            return response
+            
+        except SQLAlchemyError as e:
+            logging.error(f'Greška pri pristupu bazi podataka: {str(e)}')
+            flash('Došlo je do greške pri učitavanju podataka.', 'danger')
+            return redirect(url_for('overviews.overview_students'))
+            
+    except Exception as e:
+        logging.error(f'Neočekivana greška pri izvozu pregleda učenika u Excel: {str(e)}')
+        flash('Došlo je do greške pri generisanju Excel fajla.', 'danger')
+        return redirect(url_for('overviews.overview_students'))
