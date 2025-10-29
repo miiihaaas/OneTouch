@@ -136,10 +136,11 @@
         <label for="end-date" class="form-label">Krajnji datum:</label>
         <input class="form-control" type="date" id="end-date" name="end-date" value="{{ end_date }}" min="">
     </div>
-    <div class="col form-group">
+    <div class="col-md-3 form-group">
         <a class="btn btn-danger" href="./overview_students">Reset filtera</a>
     </div>
     <div class="col form-group cstm-3">
+        <a href="javascript:void(0);" onclick="exportToExcel()" id="excelExportBtn" class="btn btn-secondary" title="Izvoz u Excel formatu"><i class="fa-solid fa-file-excel"></i></a>
         <!-- <a id="resetButton" class="btn btn-primary" href="{{ url_for('static', filename='reports/report_student_list.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
         <a id="resetButton" class="btn btn-primary loading" href="{{ url_for('transactions.get_report', filename='report_student_list.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
     </div>
@@ -193,6 +194,62 @@
 {% endblock content%}
 {% block scripts %}
 <script>
+    function exportToExcel() {
+        // Prikaz loading indikatora
+        var excelBtn = document.getElementById('excelExportBtn');
+        var originalContent = excelBtn.innerHTML;
+        excelBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Generisanje...';
+        excelBtn.disabled = true;
+        excelBtn.style.pointerEvents = 'none';
+        
+        // Dohvatanje vrednosti filtera
+        var razred = document.getElementById('searchRazred').value;
+        var odeljenje = document.getElementById('searchOdeljenje').value;
+        var startDate = document.getElementById('start-date').value;
+        var endDate = document.getElementById('end-date').value;
+        var serviceId = document.getElementById('searchUsluga').value;
+        var debtsCheckbox = document.getElementById('debts').checked;
+        var overpaymentsCheckbox = document.getElementById('overpayments').checked;
+        var currentYearChecked = document.getElementById('current-year').checked;
+        
+        // Kreiranje URL-a sa parametrima
+        var url = "{{ url_for('overviews.export_overview_students_excel') }}";
+        var params = [];
+        
+        if (startDate) {
+            params.push('start_date=' + startDate);
+        }
+        if (endDate) {
+            params.push('end_date=' + endDate);
+        }
+        if (serviceId) {
+            params.push('service_id=' + serviceId);
+        }
+        if (razred) {
+            params.push('razred=' + razred);
+        }
+        if (odeljenje) {
+            params.push('odeljenje=' + odeljenje);
+        }
+        params.push('debts=' + debtsCheckbox);
+        params.push('overpayments=' + overpaymentsCheckbox);
+        params.push('current_year=' + currentYearChecked);
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+        
+        // Pokretanje preuzimanja
+        window.location.href = url;
+        
+        // Vraćanje dugmeta u normalno stanje nakon 3 sekunde
+        setTimeout(function() {
+            excelBtn.innerHTML = originalContent;
+            excelBtn.disabled = false;
+            excelBtn.style.pointerEvents = 'auto';
+        }, 10000);
+    }
+
     // Dobijanje reference na HTML elemente koji će prikazivati sume
     var zaduzenjeSumElement = document.getElementById('zaduzenjeSum');
     var uplateSumElement = document.getElementById('uplateSum');
