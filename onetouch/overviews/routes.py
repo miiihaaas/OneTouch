@@ -557,6 +557,12 @@ def overview_sections():
             elif record.student_payment_id:
                 if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                     filtered_records.append(record)
+            elif record.fund_transfer_id:
+                if (start_date <= record.transfer_record.transfer_date.date() <= end_date):
+                    filtered_records.append(record)
+            elif record.debt_writeoff_id:
+                if (start_date <= record.writeoff_record.writeoff_date.date() <= end_date):
+                    filtered_records.append(record)
     elif razred != '' and odeljenje == '': #! ako je definisan razred, izlistaj sva odeljenja tog razreda
         for record in records:
             current_class = record.transaction_record_student.student_class
@@ -567,6 +573,12 @@ def overview_sections():
                 elif record.student_payment_id:
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
                         filtered_records.append(record)
+                elif record.fund_transfer_id:
+                    if (start_date <= record.transfer_record.transfer_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.debt_writeoff_id:
+                    if (start_date <= record.writeoff_record.writeoff_date.date() <= end_date):
+                        filtered_records.append(record)
     elif odeljenje != '' and razred == '': #! ako je definisana odeljenja, izlistaj sve studente tog odeljenja
         for record in records:
             current_section = record.transaction_record_student.student_section
@@ -576,6 +588,12 @@ def overview_sections():
                         filtered_records.append(record)
                 elif record.student_payment_id:
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.fund_transfer_id:
+                    if (start_date <= record.transfer_record.transfer_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.debt_writeoff_id:
+                    if (start_date <= record.writeoff_record.writeoff_date.date() <= end_date):
                         filtered_records.append(record)
     else:
         for record in records:
@@ -589,6 +607,12 @@ def overview_sections():
                         filtered_records.append(record)
                 elif record.student_payment_id:
                     if (start_date <= record.transaction_record_student_payment.payment_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.fund_transfer_id:
+                    if (start_date <= record.transfer_record.transfer_date.date() <= end_date):
+                        filtered_records.append(record)
+                elif record.debt_writeoff_id:
+                    if (start_date <= record.writeoff_record.writeoff_date.date() <= end_date):
                         filtered_records.append(record)
     logging.debug(f'nakon filtriranja: {len(filtered_records)=}')
     
