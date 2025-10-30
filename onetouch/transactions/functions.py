@@ -809,8 +809,8 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
                 
                 # Priprema teksta za opis usluge
                 opis_text = record["description"]
-                if record.get("payment_amount"):
-                    opis_text += f' #{record["student_payment_id"]}'
+                if record.get("payment_amount") and record.get("student_payment_id"):
+                    opis_text += f' (izvod: {record["student_payment_id"]})'
                 
                 # Računanje broja linija za visinu reda
                 temp_lines = pdf.multi_cell(88, 4, opis_text, split_only=True)
