@@ -760,56 +760,123 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
         #     self.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
     
         def header(self):
-            # Postavite font i veličinu teksta za zaglavlje
-            self.set_font('DejaVuSansCondensed', 'B', 12)
-            
-            # Dodajte informacije o školi
-            self.cell(0, 6, f'{school.school_name}', 0, 1, 'R')
-            self.cell(0, 6, f' {school.school_address}', 0, 1, 'R')
-            self.cell(0, 6, f'{school.school_zip_code} {school.school_city}', 0, 1, 'R')
+            # Zaglavlje sa informacijama o školi
+            self.set_font('DejaVuSansCondensed', 'B', 10)
+            self.set_text_color(80, 80, 80)
+            self.cell(0, 5, f'{school.school_name}', new_x='LMARGIN', new_y='NEXT', align='R')
+            self.cell(0, 5, f'{school.school_address}', new_x='LMARGIN', new_y='NEXT', align='R')
+            self.cell(0, 5, f'{school.school_zip_code} {school.school_city}', new_x='LMARGIN', new_y='NEXT', align='R')
+            self.set_text_color(0, 0, 0)
+            self.ln(3)
     
     pdf = PDF()
     add_fonts(pdf)
     pdf.add_page()
     
-    pdf.set_font('DejaVuSansCondensed', 'B', 18)
-    pdf.cell(40, 8, '', 0, 1, 'R')
-    pdf.cell(0, 8, f'Pregled stanja učenika: {student.student_name} {student.student_surname}', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
-    pdf.cell(0, 8, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', 0, 1, 'C')  # Promenite "new_y" u 0 i uklonite "border"
-    pdf.cell(40, 8, '', 0, 1, 'R')
+    # Glavni naslov
+    pdf.ln(5)
+    pdf.set_font('DejaVuSansCondensed', 'B', 16)
+    pdf.cell(0, 8, f'Pregled stanja učenika: {student.student_name} {student.student_surname}', new_x='LMARGIN', new_y='NEXT', align='C')
+    
+    # Period
+    pdf.set_font('DejaVuSansCondensed', '', 11)
+    pdf.set_text_color(60, 60, 60)
+    pdf.cell(0, 6, f'Period: od {start_date.strftime("%d.%m.%Y.")} do {end_date.strftime("%d.%m.%Y.")}', new_x='LMARGIN', new_y='NEXT', align='C')
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(8)
+    
     zaduzenje = 0
     uplate = 0
     for service in unique_services_list:
-        pdf.set_font('DejaVuSansCondensed', 'B', 16)
-        pdf.cell(0, 8, f'({service["id"]:03}) {service["service_name"]}', 0, 1, 'L')
-        pdf.set_fill_color(200, 200, 200)  # Postavite svetlo sivu boju za ćelije
-        pdf.set_font('DejaVuSansCondensed', 'B', 12)
-        pdf.cell(25, 8, 'Datum', 1, 0, 'C', 1)  # Dodajte border, 40 je širina ćelije
-        pdf.cell(85, 8, 'Opis usluge', 1, 0, 'C', 1)  # Dodajte border, 60 je širina ćelije
-        pdf.cell(25, 8, 'Zaduženje', 1, 0, 'C', 1)  # Dodajte border, 30 je širina ćelije
-        pdf.cell(25, 8, 'Uplate', 1, 0, 'C', 1)  # Dodajte border, 30 je širina ćelije
-        pdf.cell(25, 8, 'Saldo', 1, 1, 'C', 1)  # Dodajte border, 30 je širina ćelije i prelazi u novi red
+        # Naziv usluge
+        pdf.set_font('DejaVuSansCondensed', 'B', 13)
+        pdf.cell(0, 7, f'({service["id"]:03}) {service["service_name"]}', new_x='LMARGIN', new_y='NEXT', align='L')
+        
+        # Zaglavlje tabele
+        pdf.set_fill_color(220, 220, 220)
+        pdf.set_font('DejaVuSansCondensed', 'B', 9)
+        pdf.cell(24, 6, 'Datum', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+        pdf.cell(88, 6, 'Opis usluge', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+        pdf.cell(25, 6, 'Zaduženje', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+        pdf.cell(25, 6, 'Uplate', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+        pdf.cell(23, 6, 'Saldo', border=1, new_x='LMARGIN', new_y='NEXT', align='C', fill=True)
+        
+        # Redovi tabele
         pdf.set_fill_color(255, 255, 255)
         for record in data:
             if record['service_item_id'] == service['id']:
-                pdf.set_font('DejaVuSansCondensed', '', 12)
-                pdf.cell(25, 8, f'{record["date"].strftime("%d.%m.%Y.")}', 1, 0, 'C', 1)
-                pdf.cell(85, 8, f'{record["description"]} {"(izvod: " + str(record["student_payment_id"]) + ")" if record.get("payment_amount") else ""}', 1, 0, 'L', 1)
-                pdf.cell(25, 8, f'{record["debt_amount"]:,.2f}', 1, 0, 'R', 1)
-                pdf.cell(25, 8, f'{record["payment_amount"]:,.2f}', 1, 0, 'R', 1)
-                pdf.cell(25, 8, f'{record["saldo"]:,.2f}', 1, 1, 'R', 1)
+                pdf.set_font('DejaVuSansCondensed', '', 9)
+                
+                # Priprema teksta za opis usluge
+                opis_text = record["description"]
+                if record.get("payment_amount"):
+                    opis_text += f' #{record["student_payment_id"]}'
+                
+                # Računanje broja linija za visinu reda
+                temp_lines = pdf.multi_cell(88, 4, opis_text, split_only=True)
+                num_lines = len(temp_lines)
+                row_height = num_lines * 4
+                
+                # Pamćenje početne pozicije
+                y_start = pdf.get_y()
+                x_start = pdf.get_x()
+                
+                # Datum kolona
+                pdf.rect(x_start, y_start, 24, row_height)
+                pdf.set_xy(x_start, y_start + (row_height - 4) / 2)
+                pdf.cell(24, 4, f'{record["date"].strftime("%d.%m.%Y.")}', border=0, new_x='RIGHT', new_y='TOP', align='C')
+                
+                # Opis usluge kolona sa multi_cell
+                pdf.set_xy(x_start + 24, y_start)
+                pdf.multi_cell(88, 4, opis_text, border=1, align='L')
+                
+                # Zaduženje kolona
+                pdf.set_xy(x_start + 112, y_start)
+                pdf.rect(x_start + 112, y_start, 25, row_height)
+                pdf.set_xy(x_start + 112, y_start + (row_height - 4) / 2)
+                pdf.cell(25, 4, f'{record["debt_amount"]:.2f}', border=0, new_x='RIGHT', new_y='TOP', align='R')
+                
+                # Uplate kolona
+                pdf.set_xy(x_start + 137, y_start)
+                pdf.rect(x_start + 137, y_start, 25, row_height)
+                pdf.set_xy(x_start + 137, y_start + (row_height - 4) / 2)
+                pdf.cell(25, 4, f'{record["payment_amount"]:.2f}', border=0, new_x='RIGHT', new_y='TOP', align='R')
+                
+                # Saldo kolona
+                pdf.set_xy(x_start + 162, y_start)
+                pdf.rect(x_start + 162, y_start, 23, row_height)
+                pdf.set_xy(x_start + 162, y_start + (row_height - 4) / 2)
+                pdf.cell(23, 4, f'{record["saldo"]:.2f}', border=0, new_x='LMARGIN', new_y='TOP', align='R')
+                
+                # Postavljanje pozicije na početak sledećeg reda
+                pdf.set_xy(x_start, y_start + row_height)
+                
                 zaduzenje += record['debt_amount']
                 uplate += record['payment_amount']
-        pdf.cell(40, 8, '', 0, 1, 'R')
+        
+        pdf.ln(5)
     saldo = zaduzenje - uplate
-    pdf.set_font('DejaVuSansCondensed', 'B', 16)
-    pdf.cell(40, 8, '', 0, 1, 'R')  # Uklonili smo border postavljanjem poslednjeg argumenta na 0
-    pdf.cell(40, 8, 'Zaduženje:', 0, 0, 'R')
-    pdf.cell(40, 8, f'{zaduzenje:,.2f}', 0, 1, 'R')
-    pdf.cell(40, 8, 'Uplate:', 0, 0, 'R')
-    pdf.cell(40, 8, f'{uplate:,.2f}', 0, 1, 'R')
-    pdf.cell(40, 8, 'Saldo:', 0, 0, 'R')
-    pdf.cell(40, 8, f'{saldo:,.2f}', 0, 1, 'R')
+    
+    # Završni saldo - ulepšan prikaz
+    pdf.ln(3)
+    pdf.set_fill_color(240, 240, 240)
+    pdf.set_font('DejaVuSansCondensed', 'B', 11)
+    
+    # Tabela za saldo
+    x_start = 120
+    pdf.set_x(x_start)
+    pdf.cell(35, 7, 'Zaduženje:', border=1, new_x='RIGHT', new_y='TOP', align='L', fill=True)
+    pdf.cell(30, 7, f'{zaduzenje:.2f}', border=1, new_x='LMARGIN', new_y='NEXT', align='R')
+    
+    pdf.set_x(x_start)
+    pdf.cell(35, 7, 'Uplate:', border=1, new_x='RIGHT', new_y='TOP', align='L', fill=True)
+    pdf.cell(30, 7, f'{uplate:.2f}', border=1, new_x='LMARGIN', new_y='NEXT', align='R')
+    
+    pdf.set_x(x_start)
+    pdf.set_fill_color(200, 220, 240)
+    pdf.set_font('DejaVuSansCondensed', 'B', 12)
+    pdf.cell(35, 8, 'Saldo:', border=1, new_x='RIGHT', new_y='TOP', align='L', fill=True)
+    pdf.cell(30, 8, f'{saldo:.2f}', border=1, new_x='LMARGIN', new_y='NEXT', align='R', fill=True)
 
     logger.debug(f'{zaduzenje=} {uplate=} {saldo=}')
     file_name = 'report_student.pdf'
