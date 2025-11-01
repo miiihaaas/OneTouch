@@ -767,7 +767,7 @@ def overview_debts():
                     if record.student_debt_id:
                         student_data[student_id]['student_debt'] += record.student_debt_total
                         services_by_student[student_id][service_id]['student_debt'] += record.student_debt_total
-                    elif record.student_payment_id:
+                    elif record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id:
                         student_data[student_id]['student_payment'] += record.student_debt_total
                         services_by_student[student_id][service_id]['student_payment'] += record.student_debt_total
                     
