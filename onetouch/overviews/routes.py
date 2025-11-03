@@ -51,32 +51,31 @@ def overview_students():
             current_year = request.args.get('current_year')
             use_school_year = current_year == 'true'
             
-            # Provera da li je current_year promenjen iz true u false (switch isključen)
-            current_year_changed = request.args.get('current_year') is not None
-            
-            if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
-                # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+            if start_date is None or end_date is None:
+                # Ako datumi nisu poslati, postavi podrazumevane vrednosti
                 if use_school_year:
+                    # Ako je zahtevana tekuća školska godina
                     if danas.month >= 9:  # Septembar ili kasnije
                         start_date = danas.replace(month=9, day=1)
                         end_date = danas.replace(month=8, day=31, year=danas.year+1)
                     else:  # Pre septembra
                         start_date = danas.replace(month=9, day=1, year=danas.year-1)
                         end_date = danas.replace(month=8, day=31)
-                # Ako je switch isključen, vrati na podrazumevane vrednosti
-                elif current_year_changed and not use_school_year:
-                    start_date = danas.replace(month=9, day=1, year=2020)
-                    if danas.month < 9:
-                        end_date = danas.replace(month=8, day=31)
-                    else:
-                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
-                # Podrazumevane vrednosti ako nije ništa od gore navedenog
                 else:
+                    # Podrazumevane vrednosti
                     start_date = danas.replace(month=9, day=1, year=2020)
                     if danas.month < 9:
                         end_date = danas.replace(month=8, day=31)
                     else:
                         end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            elif use_school_year:
+                # Ako je checkbox "Tekuća školska godina" uključen, pregazi datume
+                if danas.month >= 9:  # Septembar ili kasnije
+                    start_date = danas.replace(month=9, day=1)
+                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                else:  # Pre septembra
+                    start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                    end_date = danas.replace(month=8, day=31)
             
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -271,32 +270,31 @@ def overview_student(student_id):
             # Provera da li je zahtevana tekuća školska godina
             use_school_year = current_year == 'true'
             
-            # Provera da li je current_year promenjen iz true u false (switch isključen)
-            current_year_changed = request.args.get('current_year') is not None
-            
-            if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
-                # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+            if start_date is None or end_date is None:
+                # Ako datumi nisu poslati, postavi podrazumevane vrednosti
                 if use_school_year:
+                    # Ako je zahtevana tekuća školska godina
                     if danas.month >= 9:  # Septembar ili kasnije
                         start_date = danas.replace(month=9, day=1)
                         end_date = danas.replace(month=8, day=31, year=danas.year+1)
                     else:  # Pre septembra
                         start_date = danas.replace(month=9, day=1, year=danas.year-1)
                         end_date = danas.replace(month=8, day=31)
-                # Ako je switch isključen, vrati na podrazumevane vrednosti
-                elif current_year_changed and not use_school_year:
-                    start_date = danas.replace(month=9, day=1, year=2020)
-                    if danas.month < 9:
-                        end_date = danas.replace(month=8, day=31)
-                    else:
-                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
-                # Podrazumevane vrednosti ako nije ništa od gore navedenog
                 else:
+                    # Podrazumevane vrednosti
                     start_date = danas.replace(month=9, day=1, year=2020)
                     if danas.month < 9:
                         end_date = danas.replace(month=8, day=31)
                     else:
                         end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            elif use_school_year:
+                # Ako je checkbox "Tekuća školska godina" uključen, pregazi datume
+                if danas.month >= 9:  # Septembar ili kasnije
+                    start_date = danas.replace(month=9, day=1)
+                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                else:  # Pre septembra
+                    start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                    end_date = danas.replace(month=8, day=31)
             
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -512,32 +510,31 @@ def overview_sections():
     current_year = request.args.get('current_year')
     use_school_year = current_year == 'true'
     
-    # Provera da li je current_year promenjen iz true u false (switch isključen)
-    current_year_changed = request.args.get('current_year') is not None
-            
-    if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
-        # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+    if start_date is None or end_date is None:
+        # Ako datumi nisu poslati, postavi podrazumevane vrednosti
         if use_school_year:
+            # Ako je zahtevana tekuća školska godina
             if danas.month >= 9:  # Septembar ili kasnije
                 start_date = danas.replace(month=9, day=1)
                 end_date = danas.replace(month=8, day=31, year=danas.year+1)
             else:  # Pre septembra
                 start_date = danas.replace(month=9, day=1, year=danas.year-1)
                 end_date = danas.replace(month=8, day=31)
-        # Ako je switch isključen, vrati na podrazumevane vrednosti
-        elif current_year_changed and not use_school_year:
-            start_date = danas.replace(month=9, day=1, year=2020)
-            if danas.month < 9:
-                end_date = danas.replace(month=8, day=31)
-            else:
-                end_date = danas.replace(month=8, day=31, year=danas.year+1)
-        # Podrazumevane vrednosti ako nije ništa od gore navedenog
         else:
+            # Podrazumevane vrednosti
             start_date = danas.replace(month=9, day=1, year=2020)
             if danas.month < 9:
                 end_date = danas.replace(month=8, day=31)
             else:
                 end_date = danas.replace(month=8, day=31, year=danas.year+1)
+    elif use_school_year:
+        # Ako je checkbox "Tekuća školska godina" uključen, pregazi datume
+        if danas.month >= 9:  # Septembar ili kasnije
+            start_date = danas.replace(month=9, day=1)
+            end_date = danas.replace(month=8, day=31, year=danas.year+1)
+        else:  # Pre septembra
+            start_date = danas.replace(month=9, day=1, year=danas.year-1)
+            end_date = danas.replace(month=8, day=31)
     
     logging.debug(f'posle if bloka: {start_date=} {end_date=} {use_school_year=}')
     if type(start_date) is str:
@@ -1465,32 +1462,31 @@ def export_overview_students_excel():
             current_year = request.args.get('current_year')
             use_school_year = current_year == 'true'
             
-            # Provera da li je current_year promenjen iz true u false (switch isključen)
-            current_year_changed = request.args.get('current_year') is not None
-            
-            if start_date is None or end_date is None or use_school_year or (current_year_changed and not use_school_year):
-                # Ako je zahtevana tekuća školska godina, postavi odgovarajuće datume
+            if start_date is None or end_date is None:
+                # Ako datumi nisu poslati, postavi podrazumevane vrednosti
                 if use_school_year:
+                    # Ako je zahtevana tekuća školska godina
                     if danas.month >= 9:  # Septembar ili kasnije
                         start_date = danas.replace(month=9, day=1)
                         end_date = danas.replace(month=8, day=31, year=danas.year+1)
                     else:  # Pre septembra
                         start_date = danas.replace(month=9, day=1, year=danas.year-1)
                         end_date = danas.replace(month=8, day=31)
-                # Ako je switch isključen, vrati na podrazumevane vrednosti
-                elif current_year_changed and not use_school_year:
-                    start_date = danas.replace(month=9, day=1, year=2020)
-                    if danas.month < 9:
-                        end_date = danas.replace(month=8, day=31)
-                    else:
-                        end_date = danas.replace(month=8, day=31, year=danas.year+1)
-                # Podrazumevane vrednosti ako nije ništa od gore navedenog
                 else:
+                    # Podrazumevane vrednosti
                     start_date = danas.replace(month=9, day=1, year=2020)
                     if danas.month < 9:
                         end_date = danas.replace(month=8, day=31)
                     else:
                         end_date = danas.replace(month=8, day=31, year=danas.year+1)
+            elif use_school_year:
+                # Ako je checkbox "Tekuća školska godina" uključen, pregazi datume
+                if danas.month >= 9:  # Septembar ili kasnije
+                    start_date = danas.replace(month=9, day=1)
+                    end_date = danas.replace(month=8, day=31, year=danas.year+1)
+                else:  # Pre septembra
+                    start_date = danas.replace(month=9, day=1, year=danas.year-1)
+                    end_date = danas.replace(month=8, day=31)
             
             if isinstance(start_date, str):
                 start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
