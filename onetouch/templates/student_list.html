@@ -381,7 +381,7 @@
 
         function isValidEmail(email) {
             // Regularni izraz za validaciju email adrese
-            var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+            var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
             return emailRegex.test(email);
         }
         // Funkcija koja se izvršava prilikom promene u polju 'parent_email'
