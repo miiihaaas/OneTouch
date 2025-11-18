@@ -476,9 +476,15 @@
                 {% else %}
                 <select name="classes" id="classes" class="js-example-basic-multiple" name="states[]" multiple="multiple" style="width: 100%;">
                     {% if school %}
-                        {% for i in range(school.broj_razreda + 1) %}
-                            <option value="{{i|string}}">{{i|string}}</option>
-                        {% endfor %}
+                        {% if school.has_preschool %}
+                            {% for i in range(school.broj_razreda + 1) %}
+                                <option value="{{i|string}}">{{i|string}}</option>
+                            {% endfor %}
+                        {% else %}
+                            {% for i in range(1, school.broj_razreda + 1) %}
+                                <option value="{{i|string}}">{{i|string}}</option>
+                            {% endfor %}
+                        {% endif %}
                     {% else %}
                         {% for i in range(0,9) %}
                             <option value="{{i|string}}">{{i|string}}</option>
@@ -845,12 +851,19 @@
                 let options = [];
                 
                 {% if school %}
+                    {% if school.has_preschool %}
                 const maxClasses = {{ school.broj_razreda + 1 }};
+                const startClass = 0;
+                    {% else %}
+                const maxClasses = {{ school.broj_razreda + 1 }};
+                const startClass = 1;
+                    {% endif %}
                 {% else %}
                 const maxClasses = 9;
+                const startClass = 0;
                 {% endif %}
 
-                for (let i = 0; i < maxClasses; i++) {
+                for (let i = startClass; i < maxClasses; i++) {
                     let isSelected = serviceItemClassesOptions.includes(i.toString()); // Provera da li je i selektovan
                     console.log(`debugging - ${i}: selected: ${isSelected}`); // Debugging, da vidiš koji su selektovani
 
