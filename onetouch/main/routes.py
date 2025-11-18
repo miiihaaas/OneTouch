@@ -69,6 +69,7 @@ def school_license():
             school.school_municipality = request.form.get('school_municipality', school.school_municipality)
             school.broj_razreda = request.form.get('broj_razreda', school.broj_razreda)
             school.broj_odeljenja = request.form.get('broj_odeljenja', school.broj_odeljenja)
+            school.has_preschool = 'has_preschool' in request.form
             
             # Ažuriranje finansijskih informacija
             if request.form.get('class_plus_one'):

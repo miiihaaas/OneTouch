@@ -20,7 +20,12 @@ class RegisterStudentModalForm(FlaskForm):
         school = School.query.first()
         if school:
             # Generisanje choices za razrede
-            self.student_class.choices = [("0", "Predškolsko")] + [(str(i), str(i)) for i in range(1, school.broj_razreda + 1)]
+            if school.has_preschool:
+                # Ako škola ima predškolsko odeljenje, prikaži razrede od 0 do broj_razreda
+                self.student_class.choices = [("0", "Predškolsko")] + [(str(i), str(i)) for i in range(1, school.broj_razreda + 1)]
+            else:
+                # Ako škola nema predškolsko odeljenje, prikaži razrede od 1 do broj_razreda
+                self.student_class.choices = [(str(i), str(i)) for i in range(1, school.broj_razreda + 1)]
             # Generisanje choices za odeljenja
             self.student_section.choices = [(i, str(i)) for i in range(school.broj_odeljenja + 1)]
         else:
@@ -44,7 +49,12 @@ class EditStudentModalForm(FlaskForm):
         school = School.query.first()
         if school:
             # Generisanje choices za razrede
-            self.student_class.choices = [("0", "Predškolsko")] + [(str(i), str(i)) for i in range(1, school.broj_razreda + 1)]
+            if school.has_preschool:
+                # Ako škola ima predškolsko odeljenje, prikaži razrede od 0 do broj_razreda
+                self.student_class.choices = [("0", "Predškolsko")] + [(str(i), str(i)) for i in range(1, school.broj_razreda + 1)]
+            else:
+                # Ako škola nema predškolsko odeljenje, prikaži razrede od 1 do broj_razreda
+                self.student_class.choices = [(str(i), str(i)) for i in range(1, school.broj_razreda + 1)]
             # Generisanje choices za odeljenja
             self.student_section.choices = [(i, str(i)) for i in range(school.broj_odeljenja + 1)]
         else:

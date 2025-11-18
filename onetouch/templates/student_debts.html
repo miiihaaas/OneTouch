@@ -53,9 +53,15 @@
     <select name="classes" id="classes" class="form-select">
         <option value="s">Selektujte razred</option>
         {% if school %}
-            {% for i in range(school.broj_razreda + 1) %}
-            <option value="{{i}}">{{i}}</option>
-            {% endfor %}
+            {% if school.has_preschool %}
+                {% for i in range(school.broj_razreda + 1) %}
+                <option value="{{i}}">{{i}}</option>
+                {% endfor %}
+            {% else %}
+                {% for i in range(1, school.broj_razreda + 1) %}
+                <option value="{{i}}">{{i}}</option>
+                {% endfor %}
+            {% endif %}
         {% else %}
             {% for i in range(0,9) %}
             <option value="{{i}}">{{i}}</option>
