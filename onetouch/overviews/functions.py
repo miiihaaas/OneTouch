@@ -52,7 +52,13 @@ def get_filtered_transactions_data(student_id, selected_services=None, min_debt_
         if record.student_debt_id:
             services_data[service_id]['debt_amount'] += record.student_debt_total
         elif record.student_payment_id:
+            services_data[service_id]['payment_amount'] += abs(record.student_debt_total)
+        elif record.fund_transfer_id:
+            # Preknjižavanje - tretirati kao uplatu
             services_data[service_id]['payment_amount'] += record.student_debt_total
+        elif record.debt_writeoff_id:
+            # Rasknjižavanje dugovanja - smanjuje dug
+            services_data[service_id]['payment_amount'] += abs(record.student_debt_total)
     
     # Računanje salda za svaku uslugu
     services_with_positive_saldo = []
