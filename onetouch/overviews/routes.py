@@ -177,20 +177,41 @@ def overview_students():
                 if service_id == '0' or int(service_id) == record.service_item_id:
                     if record.student_id in [student['student_id'] for student in export_data]:
                         existing_record = next((item for item in export_data if item["student_id"] == record.student_id), None)
-                        existing_record['student_debt'] += record.student_debt_total if record.student_debt_id else 0
-                        existing_record['student_payment'] += record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0
+                        
+                        if record.student_debt_id:
+                            existing_record['student_debt'] += record.student_debt_total
+                        elif record.student_payment_id:
+                            existing_record['student_payment'] += abs(record.student_debt_total)
+                        elif record.fund_transfer_id:
+                            existing_record['student_payment'] += record.student_debt_total
+                        elif record.debt_writeoff_id:
+                            existing_record['student_payment'] += abs(record.student_debt_total)
+                        
                         existing_record['saldo'] = existing_record['student_debt'] - existing_record['student_payment']
 
                     else:
                         logging.debug(f'{record=}')
+                        
+                        debt_amount = 0
+                        payment_amount = 0
+                        
+                        if record.student_debt_id:
+                            debt_amount = record.student_debt_total
+                        elif record.student_payment_id:
+                            payment_amount = abs(record.student_debt_total)
+                        elif record.fund_transfer_id:
+                            payment_amount = record.student_debt_total
+                        elif record.debt_writeoff_id:
+                            payment_amount = abs(record.student_debt_total)
+                        
                         new_record = {
                             'student_id': record.student_id,
                             'student_name': record.transaction_record_student.student_name,
                             'student_surname': record.transaction_record_student.student_surname,
                             'student_class': record.transaction_record_student.student_class,
                             'student_section': record.transaction_record_student.student_section,
-                            'student_debt': record.student_debt_total if record.student_debt_id else 0,
-                            'student_payment': record.student_debt_total if record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id else 0,
+                            'student_debt': debt_amount,
+                            'student_payment': payment_amount,
                         }
                         new_record['saldo'] = new_record['student_debt'] - new_record['student_payment']
                         logging.debug(f'{new_record=}')
@@ -764,9 +785,17 @@ def overview_debts():
                     if record.student_debt_id:
                         student_data[student_id]['student_debt'] += record.student_debt_total
                         services_by_student[student_id][service_id]['student_debt'] += record.student_debt_total
-                    elif record.student_payment_id or record.fund_transfer_id or record.debt_writeoff_id:
+                    elif record.student_payment_id:
+                        student_data[student_id]['student_payment'] += abs(record.student_debt_total)
+                        services_by_student[student_id][service_id]['student_payment'] += abs(record.student_debt_total)
+                    elif record.fund_transfer_id:
+                        # Preknjižavanje - tretirati kao uplatu
                         student_data[student_id]['student_payment'] += record.student_debt_total
                         services_by_student[student_id][service_id]['student_payment'] += record.student_debt_total
+                    elif record.debt_writeoff_id:
+                        # Rasknjižavanje dugovanja - smanjuje dug
+                        student_data[student_id]['student_payment'] += abs(record.student_debt_total)
+                        services_by_student[student_id][service_id]['student_payment'] += abs(record.student_debt_total)
                     
                     # Ažuriranje salda po učeniku
                     student_data[student_id]['saldo'] = round(student_data[student_id]['student_debt'] - student_data[student_id]['student_payment'], 2)
