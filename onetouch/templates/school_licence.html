@@ -124,9 +124,28 @@
                                 {% endif %}
                             </div>
                         </div>
+
+                        <!-- Opšta podešavanja -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-implicit-deepblue text-white">
+                                <h4 class="mb-0">Opšta podešavanja</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="supplier_billing_options" name="supplier_billing_options" {% if school.supplier_billing_options %}checked{% endif %}>
+                                        <label class="form-check-label" for="supplier_billing_options">
+                                            Opcije fakturisanje dobavljača
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Omogućava dodatne opcije za fakturisanje dobavljača.</small>
+                                </div>
+                                <!-- Prostor za buduće funkcionalnosti -->
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
+
                 <!-- Dugme za slanje -->
                 <div class="row">
                     <div class="col-12 mt-4 text-center">
