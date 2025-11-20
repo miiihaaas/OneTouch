@@ -10,9 +10,9 @@ class RegisterStudentModalForm(FlaskForm):
     student_surname = StringField('Prezime', validators=[DataRequired()])
     student_class = SelectField('Razred', coerce=str)
     student_section = SelectField('Odeljenje', coerce=int)
-    parent_email = StringField('e-mail roditelja', validators={Optional()})
-    send_mail = BooleanField('Slanje uplatnice roditelju na mejl', validators={Optional()})
-    print_payment = BooleanField('Štampa uplatnice', validators={Optional()})
+    parent_email = StringField('e-mail roditelja', validators=[Optional()])
+    send_mail = BooleanField('Slanje uplatnice roditelju na mejl', validators=[Optional()])
+    print_payment = BooleanField('Štampa uplatnice', validators=[Optional()])
     submit_register = SubmitField('Registrujte učenika')
     
     def __init__(self, *args, **kwargs):
@@ -39,9 +39,9 @@ class EditStudentModalForm(FlaskForm):
     student_surname = StringField('Prezime', validators=[DataRequired()])
     student_class = SelectField('Razred', coerce=str)
     student_section = SelectField('Odeljenje', coerce=int)
-    parent_email = StringField('e-mail roditelja', validators={Optional()})
-    send_mail = BooleanField('Slanje uplatnice roditelju na mejl', validators={Optional()})
-    print_payment = BooleanField('Štampa uplatnice', validators={Optional()})
+    parent_email = StringField('e-mail roditelja', validators=[Optional()])
+    send_mail = BooleanField('Slanje uplatnice roditelju na mejl', validators=[Optional()])
+    print_payment = BooleanField('Štampa uplatnice', validators=[Optional()])
     submit_edit = SubmitField('Sačuvajte')
     
     def __init__(self, *args, **kwargs):

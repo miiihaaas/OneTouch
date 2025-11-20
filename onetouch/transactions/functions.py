@@ -150,8 +150,8 @@ def send_mail(uplatnica, user_folder, file_name):
     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
     
     message = Message(subject, 
-                        sender=sender_email,
-                        recipients=[parent_email])
+                        sender=sender_email)
+    message.recipients = [parent_email]
     
     message.html = render_template('message_html_send_mail.html',
                                     school=school,

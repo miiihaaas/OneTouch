@@ -1012,8 +1012,8 @@ def send_student_report_email(student_id):
             subject = f"{school.school_name} | Izveštaj za učenika: {student_name} ({student.student_class}/{student.student_section})" 
             
             message = Message(subject, 
-                            sender=sender,
-                            recipients=[parent_email])
+                            sender=sender)
+            message.recipients = [parent_email]
             
             # Telo mejla
             message.html = render_template(
