@@ -1,5 +1,5 @@
-import dns.resolver
-import smtplib
+# import dns.resolver
+# import smtplib
 import re
 import requests, os, io, time, logging
 from datetime import datetime
@@ -80,26 +80,91 @@ def add_fonts(pdf):
     pdf.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
 
 
-def verify_email(email):
-    """Verify if email address is valid and reachable."""
-    try:
-        # Check email format
-        _, domain = parseaddr(email)[1].split('@')
+# def verify_email(email):
+#     """Verify if email address is valid and reachable."""
+#     try:
+#         # Check email format
+#         _, domain = parseaddr(email)[1].split('@')
         
-        # Get MX records
-        mx_records = dns.resolver.resolve(domain, 'MX')
-        if not mx_records:
-            return False, "No MX records found for domain"
+#         # Get MX records
+#         mx_records = dns.resolver.resolve(domain, 'MX')
+#         if not mx_records:
+#             return False, "No MX records found for domain"
         
-        # Try connecting to mail server
-        mx_record = str(mx_records[0].exchange)
-        with smtplib.SMTP(timeout=10) as server:
-            server.connect(mx_record)
-            server.helo()
-            return True, None
+#         # Try connecting to mail server
+#         mx_record = str(mx_records[0].exchange)
+#         with smtplib.SMTP(timeout=10) as server:
+#             server.connect(mx_record)
+#             server.helo()
+#             return True, None
             
-    except Exception as e:
-        return False, str(e)
+#     except Exception as e:
+#         return False, str(e)
+
+import re
+from onetouch import logger
+
+
+def verify_email(email):
+    """
+    Verify if email address is valid (FORMAT ONLY, no DNS/SMTP checks).
+    
+    Ova funkcija proverava samo format email adrese bez DNS ili SMTP provera,
+    što omogućava da radi sa domenima koji imaju privatne ili nedostupne MX zapise.
+    
+    Args:
+        email: Email adresa za validaciju
+    
+    Returns:
+        tuple: (is_valid: bool, error_message: str|None)
+    """
+    if not email or not isinstance(email, str):
+        return False, "Email adresa je prazna"
+    
+    email = email.strip().lower()
+    
+    # Osnovna provera dužine
+    if len(email) > 320:  # RFC 5321
+        return False, "Email adresa je predugačka"
+    
+    # Provera da li ima @ znak
+    if email.count('@') != 1:
+        return False, "Email adresa mora imati tačno jedan @ znak"
+    
+    try:
+        local, domain = email.split('@')
+    except ValueError:
+        return False, "Nevažeći format email adrese"
+    
+    # Validacija local dela (pre @)
+    if not local or len(local) > 64:
+        return False, "Nevažeći deo pre @ znaka"
+    
+    local_pattern = r'^[a-zA-Z0-9._%+-]+$'
+    if not re.match(local_pattern, local):
+        return False, "Nevažeći karakteri pre @ znaka"
+    
+    # Validacija domena (posle @)
+    if not domain or len(domain) > 255:
+        return False, "Nevažeći domen"
+    
+    # Fleksibilna validacija domena - podržava više subdomena
+    # Prihvata: ni.os.jt.rs, school.edu.rs, example.com, itd.
+    domain_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$'
+    if not re.match(domain_pattern, domain):
+        return False, f"Nevažeći format domena: {domain}"
+    
+    # Specijalna provera za .rs domene - uvek su validni bez obzira na broj subdomena
+    if domain.endswith('.rs'):
+        logger.debug(f"Email {email} prihvaćen kao .rs domen")
+        return True, None
+    
+    # Za ostale domene, proveri broj subdomena (opciono)
+    if domain.count('.') > 4:  # Limit na 4 tačke
+        return False, f"Previše subdomena u domenu: {domain}"
+    
+    logger.debug(f"Email {email} je validan")
+    return True, None
 
 def send_error_notification(school, student, parent_email, error_message):
     """Send notification about email delivery failure."""
