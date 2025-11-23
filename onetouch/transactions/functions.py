@@ -1,5 +1,5 @@
-import dns.resolver
-import smtplib
+# import dns.resolver
+# import smtplib
 import re
 import requests, os, io, time, logging
 from datetime import datetime
@@ -21,31 +21,78 @@ def provera_validnosti_poziva_na_broj(podaci, all_reference_numbers):
     pripada nekom od brojeva u all_reference_numbers
 
     Args:
-        podaci (dict): Dicionar koji sadrži informacije o korisniku
-        all_reference_numbers (list): Lista svih brojeva koji se mogu
-            pojaviti u aplikaciji
+        podaci (dict): Dictionary koji sadrži informacije o transakciji
+        all_reference_numbers (list): Lista svih validnih poziva na broj učenika
 
     Returns:
-        dict: Izmenjeni dicionar sa dodatim ključem 'Validnost' koji
-            označava da li je poziv na broj validan ili ne
+        dict: Izmenjeni dictionary sa dodatim ključem 'Validnost'
     """
-    if len(podaci['PozivNaBrojApp']) == 7:
-        # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-        formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
-        if formated_poziv_odobrenja in all_reference_numbers:
-            podaci['Validnost'] = True
-        else:
-            podaci['Validnost'] = False
-    elif len(podaci['PozivNaBrojApp']) == 8:
-        # proverava da li je forma '0001-001'
-        if podaci['PozivNaBrojApp'] in all_reference_numbers:
-            podaci['Validnost'] = True
-        else:
-            podaci['Validnost'] = False
+    
+    # Odabir ispravnog polja na osnovu tipa transakcije
+    izvor_informacije = podaci.get('IzvorInformacije')
+    
+    if izvor_informacije in ['2', '20']:
+        # UPLATA - proveravamo PozivNaBrojApp (iz svrhe uplate)
+        poziv_za_proveru = podaci.get('PozivNaBrojApp', '')
+    elif izvor_informacije == '1':
+        # ISPLATA - proveravamo PozivOdobrenja (onome kome se vraća novac)
+        poziv_za_proveru = podaci.get('PozivOdobrenja', '')
     else:
-        # nije dobar poziv na broj
+        # Nepoznat tip ili interni transfer
         podaci['Validnost'] = False
+        return podaci
+    
+    # Čišćenje poziva na broj
+    poziv_za_proveru = poziv_za_proveru.strip()
+    
+    if not poziv_za_proveru or poziv_za_proveru == '-':
+        podaci['Validnost'] = False
+        return podaci
+    
+    # Provera dužine i formata
+    if len(poziv_za_proveru) == 7:
+        # Forma '0001001' - dodaj crticu
+        formatirani_poziv = f"{poziv_za_proveru[:4]}-{poziv_za_proveru[4:]}"
+        podaci['Validnost'] = formatirani_poziv in all_reference_numbers
+    elif len(poziv_za_proveru) == 8 and '-' in poziv_za_proveru:
+        # Forma '0001-001' - već ima crticu
+        podaci['Validnost'] = poziv_za_proveru in all_reference_numbers
+    else:
+        # Nevalidan format (npr. "52/25" kod isplate dobavljaču)
+        podaci['Validnost'] = False
+    
     return podaci
+# def provera_validnosti_poziva_na_broj(podaci, all_reference_numbers):
+#     """
+#     Provera da li poziv na broj koji se nalazi u podacima
+#     pripada nekom od brojeva u all_reference_numbers
+
+#     Args:
+#         podaci (dict): Dicionar koji sadrži informacije o korisniku
+#         all_reference_numbers (list): Lista svih brojeva koji se mogu
+#             pojaviti u aplikaciji
+
+#     Returns:
+#         dict: Izmenjeni dicionar sa dodatim ključem 'Validnost' koji
+#             označava da li je poziv na broj validan ili ne
+#     """
+#     if len(podaci['PozivNaBrojApp']) == 7:
+#         # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+#         formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
+#         if formated_poziv_odobrenja in all_reference_numbers:
+#             podaci['Validnost'] = True
+#         else:
+#             podaci['Validnost'] = False
+#     elif len(podaci['PozivNaBrojApp']) == 8:
+#         # proverava da li je forma '0001-001'
+#         if podaci['PozivNaBrojApp'] in all_reference_numbers:
+#             podaci['Validnost'] = True
+#         else:
+#             podaci['Validnost'] = False
+#     else:
+#         # nije dobar poziv na broj
+#         podaci['Validnost'] = False
+#     return podaci
 
 
 def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
@@ -80,26 +127,91 @@ def add_fonts(pdf):
     pdf.add_font('DejaVuSansCondensed', 'B', font_path_B, uni=True)
 
 
-def verify_email(email):
-    """Verify if email address is valid and reachable."""
-    try:
-        # Check email format
-        _, domain = parseaddr(email)[1].split('@')
+# def verify_email(email):
+#     """Verify if email address is valid and reachable."""
+#     try:
+#         # Check email format
+#         _, domain = parseaddr(email)[1].split('@')
         
-        # Get MX records
-        mx_records = dns.resolver.resolve(domain, 'MX')
-        if not mx_records:
-            return False, "No MX records found for domain"
+#         # Get MX records
+#         mx_records = dns.resolver.resolve(domain, 'MX')
+#         if not mx_records:
+#             return False, "No MX records found for domain"
         
-        # Try connecting to mail server
-        mx_record = str(mx_records[0].exchange)
-        with smtplib.SMTP(timeout=10) as server:
-            server.connect(mx_record)
-            server.helo()
-            return True, None
+#         # Try connecting to mail server
+#         mx_record = str(mx_records[0].exchange)
+#         with smtplib.SMTP(timeout=10) as server:
+#             server.connect(mx_record)
+#             server.helo()
+#             return True, None
             
-    except Exception as e:
-        return False, str(e)
+#     except Exception as e:
+#         return False, str(e)
+
+import re
+from onetouch import logger
+
+
+def verify_email(email):
+    """
+    Verify if email address is valid (FORMAT ONLY, no DNS/SMTP checks).
+    
+    Ova funkcija proverava samo format email adrese bez DNS ili SMTP provera,
+    što omogućava da radi sa domenima koji imaju privatne ili nedostupne MX zapise.
+    
+    Args:
+        email: Email adresa za validaciju
+    
+    Returns:
+        tuple: (is_valid: bool, error_message: str|None)
+    """
+    if not email or not isinstance(email, str):
+        return False, "Email adresa je prazna"
+    
+    email = email.strip().lower()
+    
+    # Osnovna provera dužine
+    if len(email) > 320:  # RFC 5321
+        return False, "Email adresa je predugačka"
+    
+    # Provera da li ima @ znak
+    if email.count('@') != 1:
+        return False, "Email adresa mora imati tačno jedan @ znak"
+    
+    try:
+        local, domain = email.split('@')
+    except ValueError:
+        return False, "Nevažeći format email adrese"
+    
+    # Validacija local dela (pre @)
+    if not local or len(local) > 64:
+        return False, "Nevažeći deo pre @ znaka"
+    
+    local_pattern = r'^[a-zA-Z0-9._%+-]+$'
+    if not re.match(local_pattern, local):
+        return False, "Nevažeći karakteri pre @ znaka"
+    
+    # Validacija domena (posle @)
+    if not domain or len(domain) > 255:
+        return False, "Nevažeći domen"
+    
+    # Fleksibilna validacija domena - podržava više subdomena
+    # Prihvata: ni.os.jt.rs, school.edu.rs, example.com, itd.
+    domain_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$'
+    if not re.match(domain_pattern, domain):
+        return False, f"Nevažeći format domena: {domain}"
+    
+    # Specijalna provera za .rs domene - uvek su validni bez obzira na broj subdomena
+    if domain.endswith('.rs'):
+        logger.debug(f"Email {email} prihvaćen kao .rs domen")
+        return True, None
+    
+    # Za ostale domene, proveri broj subdomena (opciono)
+    if domain.count('.') > 4:  # Limit na 4 tačke
+        return False, f"Previše subdomena u domenu: {domain}"
+    
+    logger.debug(f"Email {email} je validan")
+    return True, None
 
 def send_error_notification(school, student, parent_email, error_message):
     """Send notification about email delivery failure."""
@@ -150,8 +262,8 @@ def send_mail(uplatnica, user_folder, file_name):
     subject = f"{school.school_name} / Uplatnica: {uplatnica['uplatilac']} - Svrha uplate: {uplatnica['svrha_uplate']}"
     
     message = Message(subject, 
-                        sender=sender_email,
-                        recipients=[parent_email])
+                        sender=sender_email)
+    message.recipients = [parent_email]
     
     message.html = render_template('message_html_send_mail.html',
                                     school=school,
