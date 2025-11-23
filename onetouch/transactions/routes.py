@@ -1283,8 +1283,8 @@ def posting_payment():
                     podaci['ModelPozivaZaduzenja'] = stavka.find('ModelPozivaZaduzenja').text
                     podaci['PozivZaduzenja'] = stavka.find('PozivZaduzenja').text
                     podaci['SifraPlacanja'] = stavka.find('SifraPlacanja').text
-                    if stavka.find('TipPlacanja'):
-                        podaci['Iznos'] = stavka.find('Iznos').text if stavka.find('TipPlacanja').text != '13' else "-" + stavka.find('Iznos').text #! ako je tip placanja 13 onda je iznos negativan
+                    if stavka.find('IzvorInformacije'):
+                        podaci['Iznos'] = stavka.find('Iznos').text if stavka.find('IzvorInformacije').text in ['2', '20'] else "-" + stavka.find('Iznos').text #! ako je tip placanja 13 ili 14 onda je iznos negativan
                     else:
                         podaci['Iznos'] = stavka.find('Iznos').text
                     podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! onom kome se plaća
