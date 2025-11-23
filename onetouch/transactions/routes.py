@@ -1279,14 +1279,30 @@ def posting_payment():
                     podaci['RacunZaduzenja'] = stavka.find('RacunZaduzenja').text #! onaj ko plaća
                     podaci['NazivZaduzenja'] = stavka.find('NazivZaduzenja').text
                     podaci['MestoZaduzenja'] = stavka.find('MestoZaduzenja').text
-                    podaci['IzvorInformacije'] = stavka.find('IzvorInformacije').text
+                    podaci['IzvorInformacije'] = stavka.find('IzvorInformacije').text if stavka.find('IzvorInformacije') is not None else None
                     podaci['ModelPozivaZaduzenja'] = stavka.find('ModelPozivaZaduzenja').text
                     podaci['PozivZaduzenja'] = stavka.find('PozivZaduzenja').text
                     podaci['SifraPlacanja'] = stavka.find('SifraPlacanja').text
-                    if stavka.find('IzvorInformacije'):
-                        podaci['Iznos'] = stavka.find('Iznos').text if stavka.find('IzvorInformacije').text in ['2', '20'] else "-" + stavka.find('Iznos').text #! ako je tip placanja 13 ili 14 onda je iznos negativan
+                    
+                    izvor_informacije = podaci['IzvorInformacije']
+                    iznos_text = stavka.find('Iznos').text
+                    
+                    if izvor_informacije in ['2', '20']:
+                        # UPLATA - pozitivan iznos
+                        podaci['Iznos'] = float(iznos_text)
+                    elif izvor_informacije == '1':
+                        # ISPLATA - negativan iznos
+                        podaci['Iznos'] = -float(iznos_text)
+                    elif izvor_informacije == '13': #! videti da li da se interni transfer vodi kao pozitivan iznos ili da bude negativan (verovatno negativan)?
+                        # INTERNI TRANSFER - pozitivan iznos
+                        podaci['Iznos'] = float(iznos_text)
                     else:
-                        podaci['Iznos'] = stavka.find('Iznos').text
+                        # Nepoznat tip - default pozitivan
+                        podaci['Iznos'] = float(iznos_text)
+                    # if stavka.find('IzvorInformacije'):
+                    #     podaci['Iznos'] = stavka.find('Iznos').text if stavka.find('IzvorInformacije').text in ['2', '20'] else "-" + stavka.find('Iznos').text #! ako je tip placanja 13 ili 14 onda je iznos negativan
+                    # else:
+                    #     podaci['Iznos'] = stavka.find('Iznos').text
                     podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! onom kome se plaća
                     podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
                     podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
@@ -1306,25 +1322,28 @@ def posting_payment():
 
                     #! provera da li je poziv na broj validan
                     provera_validnosti_poziva_na_broj(podaci, all_reference_numbers)
-                    if podaci['RacunZaduzenja'] in school.school_bank_accounts:
-                        logging.info('Ovo je isplata')
-                        podaci['Iznos'] = -float(podaci['Iznos'])
-                        # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
-                        # if len(podaci['PozivOdobrenja']) == 7:
-                        #     # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-                        #     formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
-                        #     if formated_poziv_odobrenja in all_reference_numbers:
-                        #         podaci['Validnost'] = True
-                        # elif len(podaci['PozivOdobrenja']) == 8:
-                        #     # proverava da li je forma '0001-001'
-                        #     if podaci['PozivOdobrenja'] in all_reference_numbers:
-                        #         podaci['Validnost'] = True
-                        # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
-                        # else:
-                        #     continue
-                    logging.debug(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
-
                     logging.debug(f'pre appenda: {podaci=}')
+                    logging.debug(f'Iznos: {podaci["Iznos"]}, Tip: {izvor_informacije}, Validnost: {podaci.get("Validnost")}')
+    
+                    # if podaci['RacunZaduzenja'] in school.school_bank_accounts:
+                    #     logging.info('Ovo je isplata')
+                    #     podaci['Iznos'] = -float(podaci['Iznos'])
+                    #     # #! ako poziv na broj odgovara postojećim pozivima na broj to je povraćaj novca
+                    #     # if len(podaci['PozivOdobrenja']) == 7:
+                    #     #     # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+                    #     #     formated_poziv_odobrenja = f"{podaci['PozivOdobrenja'][:4]}-{podaci['PozivOdobrenja'][4:]}"
+                    #     #     if formated_poziv_odobrenja in all_reference_numbers:
+                    #     #         podaci['Validnost'] = True
+                    #     # elif len(podaci['PozivOdobrenja']) == 8:
+                    #     #     # proverava da li je forma '0001-001'
+                    #     #     if podaci['PozivOdobrenja'] in all_reference_numbers:
+                    #     #         podaci['Validnost'] = True
+                    #     # #! ako nije dobar poziv na broj onda ignoriši tu stavku jer je to neka druga isplata
+                    #     # else:
+                    #     #     continue
+                    # logging.debug(f'poređenje: {podaci["RacunOdobrenja"]=} sa {school.school_bank_accounts=}')
+
+                    # logging.debug(f'pre appenda: {podaci=}')
                     stavke.append(podaci)
                 logging.debug(f'{stavke=}')
                 

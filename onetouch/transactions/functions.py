@@ -21,31 +21,78 @@ def provera_validnosti_poziva_na_broj(podaci, all_reference_numbers):
     pripada nekom od brojeva u all_reference_numbers
 
     Args:
-        podaci (dict): Dicionar koji sadrži informacije o korisniku
-        all_reference_numbers (list): Lista svih brojeva koji se mogu
-            pojaviti u aplikaciji
+        podaci (dict): Dictionary koji sadrži informacije o transakciji
+        all_reference_numbers (list): Lista svih validnih poziva na broj učenika
 
     Returns:
-        dict: Izmenjeni dicionar sa dodatim ključem 'Validnost' koji
-            označava da li je poziv na broj validan ili ne
+        dict: Izmenjeni dictionary sa dodatim ključem 'Validnost'
     """
-    if len(podaci['PozivNaBrojApp']) == 7:
-        # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
-        formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
-        if formated_poziv_odobrenja in all_reference_numbers:
-            podaci['Validnost'] = True
-        else:
-            podaci['Validnost'] = False
-    elif len(podaci['PozivNaBrojApp']) == 8:
-        # proverava da li je forma '0001-001'
-        if podaci['PozivNaBrojApp'] in all_reference_numbers:
-            podaci['Validnost'] = True
-        else:
-            podaci['Validnost'] = False
+    
+    # Odabir ispravnog polja na osnovu tipa transakcije
+    izvor_informacije = podaci.get('IzvorInformacije')
+    
+    if izvor_informacije in ['2', '20']:
+        # UPLATA - proveravamo PozivNaBrojApp (iz svrhe uplate)
+        poziv_za_proveru = podaci.get('PozivNaBrojApp', '')
+    elif izvor_informacije == '1':
+        # ISPLATA - proveravamo PozivOdobrenja (onome kome se vraća novac)
+        poziv_za_proveru = podaci.get('PozivOdobrenja', '')
     else:
-        # nije dobar poziv na broj
+        # Nepoznat tip ili interni transfer
         podaci['Validnost'] = False
+        return podaci
+    
+    # Čišćenje poziva na broj
+    poziv_za_proveru = poziv_za_proveru.strip()
+    
+    if not poziv_za_proveru or poziv_za_proveru == '-':
+        podaci['Validnost'] = False
+        return podaci
+    
+    # Provera dužine i formata
+    if len(poziv_za_proveru) == 7:
+        # Forma '0001001' - dodaj crticu
+        formatirani_poziv = f"{poziv_za_proveru[:4]}-{poziv_za_proveru[4:]}"
+        podaci['Validnost'] = formatirani_poziv in all_reference_numbers
+    elif len(poziv_za_proveru) == 8 and '-' in poziv_za_proveru:
+        # Forma '0001-001' - već ima crticu
+        podaci['Validnost'] = poziv_za_proveru in all_reference_numbers
+    else:
+        # Nevalidan format (npr. "52/25" kod isplate dobavljaču)
+        podaci['Validnost'] = False
+    
     return podaci
+# def provera_validnosti_poziva_na_broj(podaci, all_reference_numbers):
+#     """
+#     Provera da li poziv na broj koji se nalazi u podacima
+#     pripada nekom od brojeva u all_reference_numbers
+
+#     Args:
+#         podaci (dict): Dicionar koji sadrži informacije o korisniku
+#         all_reference_numbers (list): Lista svih brojeva koji se mogu
+#             pojaviti u aplikaciji
+
+#     Returns:
+#         dict: Izmenjeni dicionar sa dodatim ključem 'Validnost' koji
+#             označava da li je poziv na broj validan ili ne
+#     """
+#     if len(podaci['PozivNaBrojApp']) == 7:
+#         # proverava da li je forma '0001001' i dodaje crtu tako da bude 0001-001
+#         formated_poziv_odobrenja = f"{podaci['PozivNaBrojApp'][:4]}-{podaci['PozivNaBrojApp'][4:]}"
+#         if formated_poziv_odobrenja in all_reference_numbers:
+#             podaci['Validnost'] = True
+#         else:
+#             podaci['Validnost'] = False
+#     elif len(podaci['PozivNaBrojApp']) == 8:
+#         # proverava da li je forma '0001-001'
+#         if podaci['PozivNaBrojApp'] in all_reference_numbers:
+#             podaci['Validnost'] = True
+#         else:
+#             podaci['Validnost'] = False
+#     else:
+#         # nije dobar poziv na broj
+#         podaci['Validnost'] = False
+#     return podaci
 
 
 def izvuci_poziv_na_broj_iz_svrhe_uplate(input_string): #! funkcija koja iz svrhe uplate prepoznaje poziv na broj
