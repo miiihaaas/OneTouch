@@ -1296,10 +1296,6 @@ def posting_payment():
                     else:
                         # Nepoznat tip - default pozitivan
                         podaci['Iznos'] = float(iznos_text)
-                    # if stavka.find('IzvorInformacije'):
-                    #     podaci['Iznos'] = stavka.find('Iznos').text if stavka.find('IzvorInformacije').text in ['2', '20'] else "-" + stavka.find('Iznos').text #! ako je tip placanja 13 ili 14 onda je iznos negativan
-                    # else:
-                    #     podaci['Iznos'] = stavka.find('Iznos').text
                     podaci['RacunOdobrenja'] = stavka.find('RacunOdobrenja').text #! onom kome se plaća
                     podaci['NazivOdobrenja'] = stavka.find('NazivOdobrenja').text
                     podaci['MestoOdobrenja'] = stavka.find('MestoOdobrenja').text
