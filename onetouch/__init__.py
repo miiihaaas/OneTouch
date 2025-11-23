@@ -122,6 +122,7 @@ scheduler = None
 @app.context_processor
 def check_license_expiry():
     warning_shown = {}
+    school = None
     if current_user.is_authenticated:
         school = current_user.user_school
         if school and school.license_expiry_date:
@@ -134,7 +135,7 @@ def check_license_expiry():
                 elif days_left <= 0:
                     flash(f'Upozorenje: Licenca za korišćenje softvera je istekla. Kako bismo osigurali nesmetano korićenje usluga, molimo Vas da nas kontaktirate radi produženja licence. Do tada ćete moći da koristite funkcionalnosti vezane za preglede.', 'danger')
                 warning_shown['shown'] = True
-    return warning_shown
+    return {'warning_shown': warning_shown, 'school': school}
 
 
 from onetouch.errors.routes import errors
@@ -144,6 +145,7 @@ from onetouch.overviews.routes import overviews
 from onetouch.schools.routes import schools
 from onetouch.students.routes import students
 from onetouch.suppliers.routes import suppliers
+from onetouch.supplier_invoices import supplier_invoices
 from onetouch.teachers.routes import teachers
 from onetouch.transactions.routes import transactions
 from onetouch.users.routes import users
@@ -156,6 +158,7 @@ app.register_blueprint(overviews)
 app.register_blueprint(schools)
 app.register_blueprint(students)
 app.register_blueprint(suppliers)
+app.register_blueprint(supplier_invoices, url_prefix='/supplier_invoices')
 app.register_blueprint(teachers)
 app.register_blueprint(transactions)
 app.register_blueprint(users)
