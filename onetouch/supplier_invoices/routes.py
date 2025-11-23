@@ -69,3 +69,23 @@ def invoices_list():
                             dobavljaci=dobavljaci,
                             invoice_forma=invoice_forma,
                             skola=skola)
+
+@supplier_invoices.route('/supplier_saldo_list', methods=['GET', 'POST'])
+@login_required
+def supplier_saldo_list():
+    """Lista dobavljača u kojoj se prikazuju saldo dobavljača."""
+    return render_template('supplier_invoices/supplier_saldo_list.html', 
+                            title='Pregled po dobavljačima', 
+                            legend='Pregled po dobavljačima')
+
+
+@supplier_invoices.route('/supplier_saldo_detail/<int:supplier_id>', methods=['GET', 'POST'])
+@login_required
+def supplier_saldo_detail(supplier_id):
+    """Saldo za dobavljača."""
+    dobavljac = Supplier.query.get_or_404(supplier_id)
+    return render_template('supplier_invoices/supplier_saldo_detail.html', 
+                            title=f'Pregled po dobavljaču: {dobavljac.supplier_name}', 
+                            legend=f'Pregled po dobavljaču: {dobavljac.supplier_name}', 
+                            dobavljac=dobavljac)
+
