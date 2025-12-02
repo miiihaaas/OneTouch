@@ -181,7 +181,7 @@ def overview_students():
                         if record.student_debt_id:
                             existing_record['student_debt'] += record.student_debt_total
                         elif record.student_payment_id:
-                            existing_record['student_payment'] += abs(record.student_debt_total)
+                            existing_record['student_payment'] += record.student_debt_total
                         elif record.fund_transfer_id:
                             existing_record['student_payment'] += record.student_debt_total
                         elif record.debt_writeoff_id:
