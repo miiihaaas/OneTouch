@@ -956,7 +956,7 @@ def send_student_report_email(student_id):
                         debt_amount = record.student_debt_total
                     elif record.student_payment_id:
                         # Ovo je uplata - koristi apsolutnu vrednost
-                        payment_amount = abs(record.student_debt_total)
+                        payment_amount = record.student_debt_total
                     elif record.fund_transfer_id:
                         # Preknjižavanje - posebna logika zavisno od smera
                         if record.student_debt_total != None:
@@ -964,7 +964,7 @@ def send_student_report_email(student_id):
                             payment_amount = record.student_debt_total
                     elif record.debt_writeoff_id:
                         # Rasknjižavanje dugovanja - smanjuje dug
-                        payment_amount = abs(record.student_debt_total)
+                        payment_amount = record.student_debt_total
                     
                     test_data = {
                         'id': record.id,
