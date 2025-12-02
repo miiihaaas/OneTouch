@@ -398,8 +398,8 @@ def overview_student(student_id):
                             debt_amount = record.student_debt_total
                             logging.debug(f"ZADUŽENJE: {record.id}, {debt_amount}, {date_}, {description}")
                         elif record.student_payment_id:
-                            # Ovo je uplata - koristi apsolutnu vrednost
-                            payment_amount = abs(record.student_debt_total)
+                            # Ovo je uplata - koristi apsolutnu vrednost #! a može i da bude isplata (povraćaj novca), pa ću da probam bez abs()
+                            payment_amount = record.student_debt_total
                             logging.debug(f"UPLATA: {record.id}, {payment_amount}, {date_}, {description}")
                         elif record.fund_transfer_id:
                             # Preknjižavanje - posebna logika zavisno od smera
