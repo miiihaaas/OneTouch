@@ -4,6 +4,7 @@
 
 # Manualy added
 #TODO: komanda za brisanje fajlova sa gita: git rm -r --cached .\your\file\destination\file.extension
+PREDLOG_IMPLEMENTACIJE_DOBAVLJACKE_FAKTURE.md
 .claude/
 instance/
 # run.py

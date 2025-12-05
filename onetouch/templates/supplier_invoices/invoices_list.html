@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registrujFakturuModal">
+            <i class="fa fa-plus"></i> Nova faktura
+        </button>
+    </div>
+
+    <!-- DataTable -->
+    <table id="fakture-tabela" class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Broj fakture</th>
+                <th>Dobavljač</th>
+                <th>Datum fakture</th>
+                <th>Datum prometa</th>
+                <th>Iznos</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for faktura in fakture %}
+            <tr>
+                <td>{{ faktura.invoice_number }}</td>
+                <td>{{ faktura.supplier.supplier_name }}</td>
+                <td>{{ faktura.invoice_date.strftime('%d.%m.%Y') }}</td>
+                <td>{{ faktura.traffic_date.strftime('%d.%m.%Y') }}</td>
+                <td>{{ "{:,.2f}".format(faktura.total_amount) }} RSD</td>
+                <td>
+                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#izmeniFakturuModal{{ faktura.id }}">
+                        <i class="fa fa-edit"></i> Izmeni
+                    </button>
+                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#obrisiFakturuModal{{ faktura.id }}">
+                        <i class="fa fa-trash"></i> Obriši
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal za registraciju fakture -->
+<div class="modal fade" id="registrujFakturuModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST">
+                {{ invoice_forma.hidden_tag() }}
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova faktura</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ invoice_forma.invoice_number.label(class="form-label") }}
+                            {{ invoice_forma.invoice_number(class="form-control") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ invoice_forma.supplier_id.label(class="form-label") }}
+                            {{ invoice_forma.supplier_id(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            {{ invoice_forma.invoice_date.label(class="form-label") }}
+                            {{ invoice_forma.invoice_date(class="form-control", type="date") }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ invoice_forma.traffic_date.label(class="form-label") }}
+                            {{ invoice_forma.traffic_date(class="form-control", type="date") }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            {{ invoice_forma.total_amount.label(class="form-label") }}
+                            {{ invoice_forma.total_amount(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+                    <button type="submit" name="submit_register" class="btn btn-primary">Sačuvaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modali za izmenu faktura -->
+{% for faktura in fakture %}
+<div class="modal fade" id="izmeniFakturuModal{{ faktura.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST">
+                {{ invoice_forma.hidden_tag() }}
+                <input type="hidden" name="invoice_id" value="{{ faktura.id }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Izmeni fakturu: {{ faktura.invoice_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Broj fakture</label>
+                            <input type="text" name="invoice_number" class="form-control" value="{{ faktura.invoice_number }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dobavljač</label>
+                            <select name="supplier_id" class="form-select" required>
+                                {% for dobavljac in dobavljaci %}
+                                <option value="{{ dobavljac.id }}" {% if faktura.supplier_id == dobavljac.id %}selected{% endif %}>
+                                    {{ dobavljac.supplier_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Datum fakture</label>
+                            <input type="date" name="invoice_date" class="form-control" value="{{ faktura.invoice_date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Datum prometa</label>
+                            <input type="date" name="traffic_date" class="form-control" value="{{ faktura.traffic_date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Ukupan iznos (sa PDV)</label>
+                            <input type="number" step="0.01" name="total_amount" class="form-control" value="{{ faktura.total_amount }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+                    <button type="submit" name="submit_edit" class="btn btn-primary">Sačuvaj izmene</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal za brisanje -->
+<div class="modal fade" id="obrisiFakturuModal{{ faktura.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                {{ invoice_forma.hidden_tag() }}
+                <input type="hidden" name="invoice_id" value="{{ faktura.id }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Potvrda brisanja</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Da li ste sigurni da želite da obriaete fakturu <strong>{{ faktura.invoice_number }}</strong>?</p>
+                    <p class="text-muted">Ova akcija se ne može poniatiti.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkaži</button>
+                    <button type="submit" name="submit_delete" class="btn btn-danger">Obriši</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- DataTables inicijalizacija -->
+<script>
+$(document).ready(function() {
+    $('#fakture-tabela').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+        },
+        "order": [[2, "desc"]]  // Sortiraj po datumu fakture (desc)
+    });
+});
+</script>
+{% endblock %}

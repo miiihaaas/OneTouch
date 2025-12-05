@@ -190,6 +190,61 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     debt_writeoff_id = db.Column(db.Integer, db.ForeignKey('debt_write_off.id'), nullable=True)
 
 
+class SupplierTransaction(db.Model):
+    """Evidencija isplata prema dobavljačima."""
+    __tablename__ = 'supplier_transaction'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Veza sa bankovnim izvodom
+    student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=False)
+
+    # Dobavljač (KLJUČNO polje)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=True)
+
+    # Finansijski podaci
+    amount = db.Column(db.Float, nullable=False)  # Negativan iznos (isplata)
+
+    # Detalji transakcije
+    purpose_of_payment = db.Column(db.String(255), nullable=True)
+    reference_number = db.Column(db.String(100), nullable=True)
+
+    # Status i meta podaci
+    payment_error = db.Column(db.Boolean, nullable=True, default=False)
+    match_confidence = db.Column(db.Float, nullable=True)  # 0.0-1.0 za fuzzy matching
+    notes = db.Column(db.Text, nullable=True)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relacije
+    student_payment = db.relationship('StudentPayment', backref='supplier_transactions', lazy=True)
+    supplier = db.relationship('Supplier', backref='supplier_transactions', lazy=True)
+
+    def __repr__(self):
+        return f"SupplierTransaction(id={self.id}, supplier_id={self.supplier_id}, amount={self.amount})"
+
+
+class SupplierInvoice(db.Model):
+    """Evidencija faktura dobavljača - referentno praćenje obaveza."""
+    __tablename__ = 'supplier_invoice'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Osnovni podaci
+    invoice_number = db.Column(db.String(100), nullable=False, unique=True)
+    invoice_date = db.Column(db.Date, nullable=False)
+    traffic_date = db.Column(db.Date, nullable=False)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+
+    # Finansije (SAMO ukupan iznos, nema stavki)
+    total_amount = db.Column(db.Float, nullable=False)
+
+    # Relacije
+    supplier = db.relationship('Supplier', backref='invoices', lazy=True)
+
+    def __repr__(self):
+        return f"SupplierInvoice(number={self.invoice_number}, supplier_id={self.supplier_id})"
+
+
 class FundTransfer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     transfer_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -222,6 +277,7 @@ class DebtWriteOff(db.Model):
     transaction_records = db.relationship('TransactionRecord', backref='writeoff_record', lazy=True)
 
 
-with app.app_context():
-    db.create_all()
-    db.session.commit()
+# NAPOMENA: db.create_all() je zakomentarisan jer koristimo Flask-Migrate za upravljanje šemom baze
+# with app.app_context():
+#     db.create_all()
+#     db.session.commit()
