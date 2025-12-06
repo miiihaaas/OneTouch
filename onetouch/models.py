@@ -190,6 +190,22 @@ class TransactionRecord(db.Model): #! ovde će da idu zapisi zaduženja i uplata
     debt_writeoff_id = db.Column(db.Integer, db.ForeignKey('debt_write_off.id'), nullable=True)
 
 
+class SupplierPayment(db.Model):
+    """Evidencija bankovnih izvoda sa isplatama dobavljačima."""
+    __tablename__ = 'supplier_payment'
+
+    id = db.Column(db.Integer, primary_key=True)
+    payment_date = db.Column(db.DateTime, nullable=False)  # Datum izvoda
+    bank_account = db.Column(db.String(255), nullable=False)  # Račun izvoda
+    statment_nubmer = db.Column(db.Integer, nullable=False)  # Broj izvoda
+    total_payment_amount = db.Column(db.Float, nullable=False)  # IznosDuguje
+    number_of_items = db.Column(db.Integer, nullable=False)  # Broj stavki
+    number_of_errors = db.Column(db.Integer, nullable=False)  # Broj stavki bez dodeljenog dobavljača
+
+    def __repr__(self):
+        return f"SupplierPayment(id={self.id}, statment_nubmer={self.statment_nubmer}, date={self.payment_date})"
+
+
 class SupplierTransaction(db.Model):
     """Evidencija isplata prema dobavljačima."""
     __tablename__ = 'supplier_transaction'
@@ -197,7 +213,7 @@ class SupplierTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     # Veza sa bankovnim izvodom
-    student_payment_id = db.Column(db.Integer, db.ForeignKey('student_payment.id'), nullable=False)
+    supplier_payment_id = db.Column(db.Integer, db.ForeignKey('supplier_payment.id'), nullable=False)
 
     # Dobavljač (KLJUČNO polje)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=True)
@@ -208,6 +224,7 @@ class SupplierTransaction(db.Model):
     # Detalji transakcije
     purpose_of_payment = db.Column(db.String(255), nullable=True)
     reference_number = db.Column(db.String(100), nullable=True)
+    payee_name = db.Column(db.String(255), nullable=True)  # NazivOdobrenja iz XML-a
 
     # Status i meta podaci
     payment_error = db.Column(db.Boolean, nullable=True, default=False)
@@ -216,7 +233,7 @@ class SupplierTransaction(db.Model):
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relacije
-    student_payment = db.relationship('StudentPayment', backref='supplier_transactions', lazy=True)
+    supplier_payment = db.relationship('SupplierPayment', backref='supplier_transactions', lazy=True)
     supplier = db.relationship('Supplier', backref='supplier_transactions', lazy=True)
 
     def __repr__(self):

@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Dobavljač"; }
+        .mobtable td:nth-of-type(2):before { content: "Ukupno zaduženje"; }
+        .mobtable td:nth-of-type(3):before { content: "Ukupne isplate"; }
+        .mobtable td:nth-of-type(4):before { content: "Saldo"; }
+        .mobtable td:nth-of-type(5):before { content: "Akcije"; }
+    }
+
+    .positive-balance {
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+
+    .zero-balance {
+        color: #28a745 !important;
+    }
+
+    .negative-balance {
+        color: #6c757d !important;
+    }
+</style>
+
+<div class="row mb-3">
+    <div class="col">
+        <a class="btn btn-primary loading" href="{{ url_for('supplier_invoices.invoices_list') }}">
+            <i class="fa fa-file-invoice"></i> Fakture dobavljača
+        </a>
+        <a class="btn btn-success loading" href="{{ url_for('supplier_invoices.posting_supplier_payment') }}">
+            <i class="fa fa-upload"></i> Isplate dobavljačima
+        </a>
+    </div>
+</div>
+
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
+    <thead>
+        <tr>
+            <th>Dobavljač</th>
+            <th>Ukupno zaduženje</th>
+            <th>Ukupne isplate</th>
+            <th>Saldo</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in supplier_data %}
+        <tr>
+            <td>
+                <strong>{{ item.supplier.supplier_name }}</strong>
+            </td>
+            <td class="text-end">{{ "{:,.2f}".format(item.total_invoiced) }} RSD</td>
+            <td class="text-end text-success">{{ "{:,.2f}".format(item.total_paid) }} RSD</td>
+            <td class="text-end {% if item.balance > 0 %}positive-balance{% elif item.balance == 0 %}zero-balance{% else %}negative-balance{% endif %}">
+                {{ "{:,.2f}".format(item.balance) }} RSD
+            </td>
+            <td>
+                <a class="btn-x btn-primary-x loading" href="{{ url_for('supplier_invoices.supplier_saldo_detail', supplier_id=item.supplier.id) }}" title="Pregled dobavljača">
+                    <i class="fa fa-magnifying-glass awesomeedit"></i>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr style="font-weight: bold; background-color: #f8f9fa;">
+            <td>UKUPNO:</td>
+            <td class="text-end">{{ "{:,.2f}".format(supplier_data|sum(attribute='total_invoiced')) }} RSD</td>
+            <td class="text-end text-success">{{ "{:,.2f}".format(supplier_data|sum(attribute='total_paid')) }} RSD</td>
+            <td class="text-end {% if (supplier_data|sum(attribute='balance')) > 0 %}positive-balance{% elif (supplier_data|sum(attribute='balance')) == 0 %}zero-balance{% else %}negative-balance{% endif %}">
+                {{ "{:,.2f}".format(supplier_data|sum(attribute='balance')) }} RSD
+            </td>
+            <td></td>
+        </tr>
+    </tfoot>
+</table>
+
+<div class="alert alert-info mt-3">
+    <i class="fa fa-info-circle"></i> <strong>Legenda:</strong>
+    <ul class="mb-0">
+        <li><span class="positive-balance">Crveno</span> - Dugujemo dobavljaču (pozitivan saldo)</li>
+        <li><span class="zero-balance">Zeleno</span> - Sve isplaćeno (nula)</li>
+        <li><span class="negative-balance">Sivo</span> - Preplata (negativan saldo)</li>
+    </ul>
+</div>
+
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#data').DataTable({
+            "stateSave": true,
+            "stateDuration": 900, // 15 minuta
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            },
+            order: [[3, 'desc']], // Sortiraj po saldu (najveće dugovanje prvo)
+            columnDefs: [
+                { targets: [1, 2, 3], className: 'text-end' }
+            ]
+        });
+    });
+</script>
+{% endblock %}

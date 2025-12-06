@@ -81,6 +81,7 @@
                     <a class="dropdown-item loading" href="{{ url_for('transactions.transfer_funds') }}">Preknjižavanje</a>
                     {% if school and school.supplier_billing_options %}
                     <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.invoices_list') }}">Fakture dobavljača</a>
+                    <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.posting_supplier_payment') }}">Isplate dobavljačima</a>
                     {% endif %}
                   </div>
                 </li>
@@ -91,7 +92,7 @@
                     <a class="dropdown-item loading" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
                     <a class="dropdown-item loading" href="{{ url_for('overviews.overview_debts') }}">Dugovanja učenika</a>
                     {% if school and school.supplier_billing_options %}
-                    <a class="dropdown-item loading" href="#">Dobavljači</a>
+                    <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.supplier_saldo_list') }}">Dobavljači</a>
                     {% endif %}
                   </div>
                 </li>
@@ -101,6 +102,9 @@
                     <a class="dropdown-item loading" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
                     <a class="dropdown-item loading" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
                     <a class="dropdown-item loading" href="{{ url_for('transactions.transfers_list') }}">Arhiva preknjižavanja</a>
+                    {% if school and school.supplier_billing_options %}
+                    <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.supplier_payments_archive_list') }}">Arhiva isplata dobavljačima</a>
+                    {% endif %}
                   </div>
                 </li>
                 {% if current_user.user_role == 'admin' %}
@@ -189,6 +193,7 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.transfer_funds') }}" id="transfer_funds">Preknjižavanje</a>
                   {% if school and school.supplier_billing_options %}
                   <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.invoices_list') }}" id="invoices_list">Fakture dobavljača</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.posting_supplier_payment') }}" id="posting_supplier_payment">Isplate dobavljačima</a>
                   {% endif %}
                 </div>
               </div>
@@ -205,7 +210,7 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('overviews.overview_sections') }}" id="overview_sections">Škola</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('overviews.overview_debts') }}" id="overview_debts">Dugovanja učenika</a>
                   {% if school and school.supplier_billing_options %}
-                  <a class="nav-item nav-link loading" href="#" id="invoices_list">Dobavljači</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.supplier_saldo_list') }}" id="supplier_saldo_list">Dobavljači</a>
                   {% endif %}
                 </div>
               </div>
@@ -221,6 +226,9 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.debts_archive_list') }}" id="debts_archive_list">Arhiva naloga</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.payments_archive_list') }}" id="payments_archive_list">Arhiva izvoda</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.transfers_list') }}" id="transfers_list">Arhiva preknjižavanja</a>
+                  {% if school and school.supplier_billing_options %}
+                  <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.supplier_payments_archive_list') }}" id="supplier_payments_archive_list">Arhiva isplata dobavljačima</a>
+                  {% endif %}
                 </div>
               </div>
             </div>

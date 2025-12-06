@@ -1,0 +1,191 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Dobavljač"; }
+        .mobtable td:nth-of-type(2):before { content: "Naziv dobavljača"; }
+        .mobtable td:nth-of-type(3):before { content: "Poziv na broj"; }
+        .mobtable td:nth-of-type(4):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(5):before { content: "Svrha isplate"; }
+    }
+
+    .bg-danger {
+        background-color: #f8d7da !important;
+    }
+
+    .bg-success {
+        background-color: #d4edda !important;
+    }
+</style>
+
+<div class="container-fluid">
+    <h2><i class="fa fa-upload"></i> Isplate dobavljačima - Učitavanje izvoda</h2>
+    <p class="text-muted">Učitajte XML bankovni izvod sa isplatama prema dobavljačima (poziv na broj format: <strong>D####</strong>)</p>
+    <hr>
+
+    <form method="POST" action="{{url_for('supplier_invoices.posting_supplier_payment')}}" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="fileInput"><i class="fa fa-file"></i> Izaberite XML fajl:</label>
+                    <input type="file" class="form-control-file" id="fileInput" name="fileInput" accept=".xml">
+                    <small class="form-text text-muted">Samo dobavljačke transakcije sa pozivom na broj <strong>D####</strong> će biti učitane.</small>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary" name="submitBtnImportData" id="submitBtnImportData" disabled>
+                        <i class="fa fa-upload"></i> Uvezite izvod
+                    </button>
+                    <button type="submit" class="btn btn-primary loading" name="submitBtnSaveData" id="submitBtnSaveData" disabled>
+                        <i class="fa fa-save"></i> Sačuvajte isplate
+                    </button>
+                </div>
+            </div>
+
+            {% if show_preview %}
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Podaci izvoda</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Broj izvoda</label>
+                                <input class="form-control mb-2" type="text" value="{{ izvod_broj }}" readonly>
+                                <input type="hidden" name="izvod_broj" value="{{ izvod_broj }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Datum izvoda</label>
+                                <input class="form-control mb-2" type="text" value="{{ izvod_datum.strftime('%d.%m.%Y.') }}" readonly>
+                                <input type="hidden" name="izvod_datum" value="{{ izvod_datum }}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Račun</label>
+                                <input class="form-control mb-2" type="text" value="{{ racun_izvoda }}" readonly>
+                                <input type="hidden" name="racun_izvoda" value="{{ racun_izvoda }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Iznos duguje</label>
+                                <input class="form-control mb-2" type="text" value="{{ '{:,.2f}'.format(iznos_duguje) }} RSD" readonly>
+                                <input type="hidden" name="iznos_duguje" value="{{ iznos_duguje }}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Broj stavki</label>
+                                <input class="form-control" type="text" value="{{ stavke|length }}" readonly>
+                                <input type="hidden" name="broj_stavki" value="{{ stavke|length }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Ukupan iznos</label>
+                                <input class="form-control" type="text" value="{{ '{:,.2f}'.format(stavke|sum(attribute='iznos')|abs) }} RSD" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if show_preview and stavke %}
+        <hr>
+        <h4>Pregled stavki - Dobavljačke isplate</h4>
+        <p class="text-muted">Proverite podatke i izaberite dobavljače pre čuvanja.</p>
+
+        <table id="data" class="table table-striped dataTable no-footer mobtable" role="grid">
+            <thead>
+                <tr>
+                    <th style="width: 250px;">Dobavljač</th>
+                    <th style="width: 200px;">Naziv dobavljača</th>
+                    <th style="width: 120px;">Poziv na broj</th>
+                    <th style="width: 120px;">Iznos</th>
+                    <th>Svrha isplate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in stavke %}
+                <tr class="{% if not item.is_valid %}bg-danger{% else %}bg-success{% endif %}">
+                    <td>
+                        {% if item.is_valid %}
+                            <!-- Dobavljač pronađen -->
+                            <strong>{{ item.supplier_name }}</strong>
+                            <input type="hidden" name="supplier_id[]" value="{{ item.supplier_id }}">
+                        {% else %}
+                            <!-- Dobavljač ne postoji - omogući izbor -->
+                            <select name="supplier_id[]" class="form-select">
+                                <option value="">-- Izaberite dobavljača --</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}">{{ supplier.supplier_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-danger d-block mt-1">{{ item.error_message }}</small>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <input type="text" class="form-control" value="{{ item.naziv_odobrenja }}" readonly>
+                        <input type="hidden" name="payee_name[]" value="{{ item.naziv_odobrenja }}">
+                    </td>
+
+                    <td>
+                        <input type="text" class="form-control" value="{{ item.poziv_odobrenja }}" readonly>
+                        <input type="hidden" name="reference[]" value="{{ item.poziv_odobrenja }}">
+                    </td>
+
+                    <td>
+                        <input type="text" class="form-control text-danger text-end" value="{{ '{:,.2f}'.format(item.iznos|abs) }}" readonly>
+                        <input type="hidden" name="amount[]" value="{{ item.iznos }}">
+                    </td>
+
+                    <td>
+                        <textarea class="form-control" rows="2" readonly>{{ item.svrha_doznake }}</textarea>
+                        <input type="hidden" name="purpose[]" value="{{ item.svrha_doznake }}">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i> <strong>Napomena:</strong>
+            Crvene stavke označavaju transakcije gde dobavljač nije pronađen u bazi. Morate ih ručno dodeliti dobavljaču.
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        var fileInput = $('#fileInput');
+        var submitBtnImportData = $('#submitBtnImportData');
+        var submitBtnSaveData = $('#submitBtnSaveData');
+
+        // Omogući dugme za import kad je fajl izabran
+        fileInput.on('change', function() {
+            if (fileInput.get(0).files.length > 0) {
+                submitBtnImportData.prop('disabled', false);
+            } else {
+                submitBtnImportData.prop('disabled', true);
+            }
+        });
+
+        // Omogući dugme za čuvanje ako postoji tabela
+        if ($('#data').length) {
+            submitBtnSaveData.prop('disabled', false);
+
+            // DataTable initialization
+            $('#data').DataTable({
+                language: {
+                    url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+                },
+                "paging": false,
+                "ordering": false,
+                "searching": false
+            });
+        }
+    });
+</script>
+{% endblock %}
