@@ -273,7 +273,10 @@ def overview_student(student_id):
     try:
         route_name = request.endpoint
         danas = date.today()
-        
+
+        # Dohvatanje škole
+        school = School.query.first()
+
         # Dohvatanje i provera studenta
         try:
             student = Student.query.get_or_404(student_id)
@@ -492,6 +495,7 @@ def overview_student(student_id):
                                 title='Pregled učenika',
                                 legend=f'Pregled učenika: {student.student_name} {student.student_surname} ({student.student_class}/{student.student_section})',
                                 student=student,
+                                school=school,
                                 data=data,
                                 unique_services_list=unique_services_list,
                                 start_date=start_date,
@@ -709,6 +713,10 @@ def overview_sections():
 def overview_debts():
     try:
         route_name = request.endpoint
+
+        # Dohvatanje škole
+        school = School.query.first()
+
         # Dobavljanje liste svih usluga za multiselect
         services = []
         try:
@@ -847,6 +855,7 @@ def overview_debts():
                         title='Pregled dugovanja učenika',
                         legend='Pregled dugovanja učenika',
                         route_name=route_name,
+                        school=school,
                         services=services,
                         min_debt_amount=min_debt_amount,
                         selected_services=selected_services_int,
@@ -863,6 +872,12 @@ def overview_debts():
 @login_required
 def send_student_report_email(student_id):
     try:
+        # SERVER-SIDE VALIDACIJA - provera da li je slanje mejlova omogućeno
+        school = School.query.first()
+        if not school or not school.sending_email:
+            flash('Slanje mejlova roditeljima je trenutno onemogućeno u podešavanjima škole.', 'warning')
+            return redirect(url_for('overviews.overview_student', student_id=student_id))
+
         # Dobavljanje podataka o učeniku
         student = Student.query.get_or_404(student_id)
         
@@ -1241,6 +1256,12 @@ def send_debt_emails(student_id):
     Šalje e-mail sa izveštajem o dugovanjima za sve usluge sa pozitivnim saldom.
     """
     try:
+        # SERVER-SIDE VALIDACIJA - provera da li je slanje mejlova omogućeno
+        school = School.query.first()
+        if not school or not school.sending_email:
+            flash('Slanje mejlova roditeljima je trenutno onemogućeno u podešavanjima škole.', 'warning')
+            return redirect(url_for('overviews.overview_debts'))
+
         # Dobavljanje parametara iz URL-a
         min_debt_amount_str = request.args.get('min_debt_amount', '0')
         min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0

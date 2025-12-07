@@ -827,12 +827,13 @@ def debt_archive(debt_id):
         if not gen_debt_report(records):
             raise ValueError("Greška pri generisanju izveštaja")
 
-        return render_template('debt_archive.html', 
-                                records=records, 
-                                debt=debt, 
+        return render_template('debt_archive.html',
+                                records=records,
+                                debt=debt,
                                 teacher=teacher,
                                 new_students=new_students,
                                 purpose_of_payment=purpose_of_payment,
+                                school=school,
                                 legend=f"Pregled zaduženja: {debt.id}",
                                 title="Pregled zaduženja",
                                 route_name=route_name)
@@ -858,18 +859,20 @@ def debt_archive(debt_id):
 @transactions.route('/send_payment_slips/<int:debt_id>', methods=['get', 'post'])
 def send_payment_slips(debt_id):
     try:
+        # SERVER-SIDE VALIDACIJA - provera da li je slanje mejlova omogućeno
+        school = School.query.first()
+        if not school or not school.sending_email:
+            flash('Slanje mejlova roditeljima je trenutno onemogućeno u podešavanjima škole.', 'warning')
+            return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
         # Provera zaduženja
         debt = StudentDebt.query.get_or_404(debt_id)
         if not debt:
             raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
-            
+
         purpose_of_payment = debt.purpose_of_payment
-        
-        # Provera škole
-        school = School.query.first()
-        if not school:
-            raise ValueError("Podaci o školi nisu pronađeni")
-            
+
+        # Kreiranje school_info (school već dohvaćen u SERVER-SIDE validaciji)
         school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
 
         # Pronalaženje transakcija
@@ -973,6 +976,18 @@ def print_selected_slips(debt_id):
 @transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
 def send_single_payment_slip(record_id):
     try:
+        # SERVER-SIDE VALIDACIJA - provera da li je slanje mejlova omogućeno
+        school = School.query.first()
+        if not school or not school.sending_email:
+            flash('Slanje mejlova roditeljima je trenutno onemogućeno u podešavanjima škole.', 'warning')
+            # Pokušaj da dobije debt_id za redirekciju
+            record = TransactionRecord.query.get(record_id)
+            debt_id = record.student_debt_id if record else None
+            if debt_id:
+                return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+            else:
+                return redirect(url_for('transactions.debts_archive_list'))
+
         # Pronalaženje transakcije i zaduženja
         record = TransactionRecord.query.get_or_404(record_id)
         if not record:
@@ -982,16 +997,12 @@ def send_single_payment_slip(record_id):
         debt = StudentDebt.query.get_or_404(debt_id)
         if not debt:
             raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
-            
+
         purpose_of_payment = debt.purpose_of_payment
-        
-        # Provera škole
-        school = School.query.first()
-        if not school:
-            raise ValueError("Podaci o školi nisu pronađeni")
-            
+
+        # Kreiranje school_info (school već dohvaćen u SERVER-SIDE validaciji)
         school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
-        
+
         # Priprema liste sa jednom transakcijom
         records = [record]
         
@@ -1025,6 +1036,75 @@ def send_single_payment_slip(record_id):
         logging.error(f"Neočekivana greška: {str(e)}")
         flash("Došlo je do greške pri obradi zahteva", "danger")
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id if 'debt_id' in locals() else None))
+
+
+@transactions.route('/send_selected_payment_slips/<int:debt_id>', methods=['GET'])
+@login_required
+def send_selected_payment_slips(debt_id):
+    """Šalje uplatnice mejlom roditeljima selektovanih učenika."""
+    try:
+        # SERVER-SIDE VALIDACIJA - provera da li je slanje mejlova omogućeno
+        school = School.query.first()
+        if not school or not school.sending_email:
+            flash('Slanje mejlova roditeljima je trenutno onemogućeno u podešavanjima škole.', 'warning')
+            return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+        # Dobavljanje ID-jeva selektovanih učenika iz URL parametra
+        record_ids = request.args.get('ids', '')
+        if not record_ids:
+            flash('Niste izabrali nijednog učenika za slanje uplatnica.', 'warning')
+            return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+        record_id_list = [int(id) for id in record_ids.split(',')]
+        logging.debug(f'Slanje uplatnica mejlom za sledeće zapise: {record_id_list}')
+
+        # Provera zaduženja
+        debt = StudentDebt.query.get_or_404(debt_id)
+        if not debt:
+            raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
+
+        purpose_of_payment = debt.purpose_of_payment
+
+        # Kreiranje school_info (school već dohvaćen u SERVER-SIDE validaciji)
+        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+
+        # Pronalaženje transakcija po ID-jevima
+        records = TransactionRecord.query.filter(TransactionRecord.id.in_(record_id_list)).all()
+
+        if not records:
+            raise ValueError(f"Nisu pronađene transakcije sa zadatim ID-jevima")
+
+        # Generisanje i slanje uplatnica samo za selektovane učenike
+        single = True
+        send = True
+        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
+
+        if not file_name:
+            raise ValueError("Greška pri generisanju i slanju uplatnica")
+
+        flash(f'Uspešno ste poslali uplatnice roditeljima {len(records)} učenika.', 'success')
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+
+    except ValueError as e:
+        logging.error(f"Greška sa podacima: {str(e)}")
+        flash(str(e), "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except SQLAlchemyError as e:
+        logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
+        flash("Greška pri učitavanju podataka iz baze", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except FileNotFoundError as e:
+        logging.error(f"Fajl nije pronađen: {str(e)}")
+        flash("Greška pri generisanju uplatnica", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except smtplib.SMTPException as e:
+        logging.error(f"Greška pri slanju mejla: {str(e)}")
+        flash("Greška pri slanju mejlova roditeljima", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
+    except Exception as e:
+        logging.error(f"Neočekivana greška: {str(e)}")
+        flash("Došlo je do greške pri obradi zahteva", "danger")
+        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 
 @transactions.route('/debt_archive_delete/<int:debt_id>', methods=['get', 'post'])
