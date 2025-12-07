@@ -6,7 +6,7 @@ h2 { font-size: 1.4rem; }
 h3 { font-size: 1.2rem; }
 body.Dodavanje fieldset.form-group { max-width: 100% !important;}
 .invalid-input { border-color: red !important; }
-.alert { display: flex; padding: 20px !important; margin: auto; width: fit-content; left: 40px; }
+.alert { display: flex; padding: 20px !important; margin: auto; width: fit-content; left: 40px; align-items: center; justify-content: space-between; gap: 15px; }
 .alert-success { color: #11a84f; background-color: #fff;  border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020;}
 .alert-success:before { position: absolute; content: '\f058'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
 .alert-danger { color: #eb2127; background-color: #fff; border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020;}
@@ -15,6 +15,9 @@ body.Dodavanje fieldset.form-group { max-width: 100% !important;}
 .alert-message:before { position: absolute; content: '\f06a'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
 .alert-info { color: #24aae0; background-color: #fff; border: none; font-weight: 700; font-size: 16px; text-align: left; border-radius: 6px; box-shadow: 0 0 8px #00000020; }
 .alert-info:before { position: absolute; content: '\f05a'; font-family: "Font Awesome 6 Free"; left: -40px; top: 8px; font-size: 32px; }
+.alert-close { background: none; border: none; outline: none; box-shadow: none; padding: 0; margin: 0; font-size: 24px; line-height: 1; cursor: pointer; color: #999; transition: color 0.2s ease; }
+.alert-close:hover { color: #333; }
+.alert-close:focus, .alert-close:active { outline: none; box-shadow: none; }
 .btn-check:focus+.btn-danger, .btn-danger:focus { box-shadow: none !important; }
 .btn-check:focus+.btn-secondary, .btn-secondary:focus { box-shadow: none !important; }
 .btn-outline-info:not(:disabled):not(.disabled).active:focus, .btn-outline-info:not(:disabled):not(.disabled):active:focus, .show>.btn-outline-info.dropdown-toggle:focus { box-shadow: none !important; }
@@ -240,7 +243,9 @@ body.main\.instructions nav#sidebar { display: none !important; }
 	.content-section { padding-top: 50px; background-color: #f5f5f5; }
 	.content-section li { background-color: #f5f5f5; }
 	.dis-flex { flex-wrap: wrap; justify-content: space-between; }
-	.alert-success, .alert-danger, .alert-message, .alert-info  { display: block; border: 0; }
+	.alert-success, .alert-danger, .alert-message, .alert-info  { display: flex; border: 0; flex-wrap: wrap; }
+	.alert .alert-text { flex: 1; min-width: 200px; }
+	.alert .alert-close { flex-shrink: 0; }
 	.mobtable, .mobtable thead, .mobtable tbody, .mobtable th, .mobtable td, .mobtable tr { display: block; }
 	.mobtable thead tr { position: absolute; top: -9999px; left: -9999px; }
 	.mobtable td { border: none; border-bottom: 1px solid #fff !important; position: relative; padding-left: 50% !important; min-height: 24px; }
