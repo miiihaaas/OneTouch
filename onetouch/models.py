@@ -60,6 +60,7 @@ class School(db.Model):
     broj_odeljenja = db.Column(db.Integer, nullable=False, default=15) #! maksimalan broj odeljenja
     has_preschool = db.Column(db.Boolean, nullable=False, default=True) #! da li škola ima predškolsko odeljenje (razred 0)
     supplier_billing_options = db.Column(db.Boolean, nullable=False, default=False) #! opcije za fakturisanje dobavljača
+    sending_email = db.Column(db.Boolean, nullable=False, default=True) #! opcije za slanje mejla roditeljima
     class_plus_one = db.Column(db.Date, nullable=False)
     license_expiry_date = db.Column(db.Date, nullable=True)
     last_license_email_date = db.Column(db.Date, nullable=True)
