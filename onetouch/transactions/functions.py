@@ -1281,3 +1281,68 @@ def gen_debt_report(records):
     except Exception as e:
         logger.error(f'Greska u generisanju izveštaja: {e}')
         return False
+
+
+def parse_supplier_reference_number(poziv_na_broj):
+    """
+    Parsira poziv na broj i proverava da li je dobavljačka transakcija.
+
+    Args:
+        poziv_na_broj (str): Poziv na broj iz XML-a
+
+    Returns:
+        dict: {
+            'is_supplier': bool,  # Da li je dobavljačka transakcija
+            'supplier_id': int | None,  # ID dobavljača
+            'is_valid': bool,  # Da li dobavljač postoji u bazi
+            'error_message': str | None
+        }
+
+    Primeri:
+        'D0005'  → supplier_id=5, is_supplier=True, is_valid=True
+        'Stavka #1 test: D0001'  → supplier_id=1, is_supplier=True, is_valid=True
+        'D9999'  → supplier_id=9999, is_supplier=True, is_valid=False (ne postoji)
+        'X'      → is_supplier=False
+        '0001-003' → is_supplier=False (učenička transakcija)
+    """
+    from onetouch.models import Supplier
+
+    poziv = poziv_na_broj.strip().upper()
+
+    # 1. Ignorisano
+    if poziv in ['X', '0000', '']:
+        return {
+            'is_supplier': False,
+            'supplier_id': None,
+            'is_valid': True,
+            'error_message': None
+        }
+
+    # 2. Isplata dobavljaču: D#### (traži pattern bilo gde u stringu)
+    match = re.search(r'D(\d{1,4})', poziv)
+    if match:
+        supplier_id = int(match.group(1))
+        supplier = Supplier.query.get(supplier_id)
+
+        if supplier:
+            return {
+                'is_supplier': True,
+                'supplier_id': supplier_id,
+                'is_valid': True,
+                'error_message': None
+            }
+        else:
+            return {
+                'is_supplier': True,
+                'supplier_id': supplier_id,
+                'is_valid': False,
+                'error_message': f'Dobavljač sa ID {supplier_id} ne postoji u bazi'
+            }
+
+    # 3. Nije dobavljačka transakcija (verovatno učenička ili nepoznata)
+    return {
+        'is_supplier': False,
+        'supplier_id': None,
+        'is_valid': False,
+        'error_message': 'Poziv na broj nije dobavljačke forme (D####)'
+    }

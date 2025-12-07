@@ -81,6 +81,7 @@
                     <a class="dropdown-item loading" href="{{ url_for('transactions.transfer_funds') }}">Preknjižavanje</a>
                     {% if school and school.supplier_billing_options %}
                     <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.invoices_list') }}">Fakture dobavljača</a>
+                    <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.posting_supplier_payment') }}">Isplate dobavljačima</a>
                     {% endif %}
                   </div>
                 </li>
@@ -91,7 +92,7 @@
                     <a class="dropdown-item loading" href="{{ url_for('overviews.overview_sections') }}">Škola</a>
                     <a class="dropdown-item loading" href="{{ url_for('overviews.overview_debts') }}">Dugovanja učenika</a>
                     {% if school and school.supplier_billing_options %}
-                    <a class="dropdown-item loading" href="#">Dobavljači</a>
+                    <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.supplier_saldo_list') }}">Dobavljači</a>
                     {% endif %}
                   </div>
                 </li>
@@ -101,6 +102,9 @@
                     <a class="dropdown-item loading" href="{{ url_for('transactions.debts_archive_list') }}">Arhiva naloga</a>
                     <a class="dropdown-item loading" href="{{ url_for('transactions.payments_archive_list') }}">Arhiva izvoda</a>
                     <a class="dropdown-item loading" href="{{ url_for('transactions.transfers_list') }}">Arhiva preknjižavanja</a>
+                    {% if school and school.supplier_billing_options %}
+                    <a class="dropdown-item loading" href="{{ url_for('supplier_invoices.supplier_payments_archive_list') }}">Arhiva isplata dobavljačima</a>
+                    {% endif %}
                   </div>
                 </li>
                 {% if current_user.user_role == 'admin' %}
@@ -189,6 +193,7 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.transfer_funds') }}" id="transfer_funds">Preknjižavanje</a>
                   {% if school and school.supplier_billing_options %}
                   <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.invoices_list') }}" id="invoices_list">Fakture dobavljača</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.posting_supplier_payment') }}" id="posting_supplier_payment">Isplate dobavljačima</a>
                   {% endif %}
                 </div>
               </div>
@@ -205,7 +210,7 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('overviews.overview_sections') }}" id="overview_sections">Škola</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('overviews.overview_debts') }}" id="overview_debts">Dugovanja učenika</a>
                   {% if school and school.supplier_billing_options %}
-                  <a class="nav-item nav-link loading" href="#" id="invoices_list">Dobavljači</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.supplier_saldo_list') }}" id="supplier_saldo_list">Dobavljači</a>
                   {% endif %}
                 </div>
               </div>
@@ -221,6 +226,9 @@
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.debts_archive_list') }}" id="debts_archive_list">Arhiva naloga</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.payments_archive_list') }}" id="payments_archive_list">Arhiva izvoda</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('transactions.transfers_list') }}" id="transfers_list">Arhiva preknjižavanja</a>
+                  {% if school and school.supplier_billing_options %}
+                  <a class="nav-item nav-link loading" href="{{ url_for('supplier_invoices.supplier_payments_archive_list') }}" id="supplier_payments_archive_list">Arhiva isplata dobavljačima</a>
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -252,7 +260,8 @@
               {% if messages %}
                 {% for category, message in messages %}
                   <div class="alert alert-{{ category }}">
-                    {{ message }}
+                    <span class="alert-text">{{ message }}</span>
+                    <button class="alert-close" aria-label="Zatvori poruku">&times;</button>
                   </div>
                 {% endfor %}
               {% endif %}
@@ -332,7 +341,15 @@
           }
   
           // Add a click event listener to the button
-          sidebarToggle.addEventListener("click", toggleSidebar);
+          sidebarToggle.addEventListener("click", function() {
+              toggleSidebar();
+              
+              // Pozovi updateSidebarPosition ako postoji (za news.html stranicu)
+              if (typeof updateSidebarPosition === 'function') {
+                  // Dodaj mali delay da se završi CSS tranzicija pre ažuriranja pozicije
+                  setTimeout(updateSidebarPosition, 350);
+              }
+          });
       });
     </script>
 
@@ -381,15 +398,18 @@
         "posting_payment": { section: '#collapseTwo', link: '#posting_payment' },
         "transfer_funds": { section: '#collapseTwo', link: '#transfer_funds' },
         "invoices_list": { section: '#collapseTwo', link: '#invoices_list' },
+        "posting_supplier_payment": { section: '#collapseTwo', link: '#posting_supplier_payment' },
 				"overview_students": { section: '#collapseThree', link: '#overview_students' },
         "overview_sections": { section: '#collapseThree', link: '#overview_sections' },
         "overview_student": { section: '#collapseThree', link: '#overview_student' },
         "overview_debts": { section: '#collapseThree', link: '#overview_debts' },
+        "supplier_saldo_list": { section: '#collapseThree', link: '#supplier_saldo_list' },
         "debts_archive_list": { section: '#collapseFour', link: '#debts_archive_list' },
         "payments_archive_list": { section: '#collapseFour', link: '#payments_archive_list' },
         "payment_archive": { section: '#collapseFour', link: '#payment_archive' },
         "debt_archive": { section: '#collapseFour', link: '#debt_archive' },
         "transfers_list": { section: '#collapseFour', link: '#transfers_list' },
+        "supplier_payments_archive_list": { section: '#collapseFour', link: '#supplier_payments_archive_list' },
         "users": { section: '#collapseFive', link: '#users' },
         "school_license": { section: '#collapseFive', link: '#school_license' },
 			};
@@ -648,5 +668,49 @@
         });
         </script>
     {% endif %}
+
+    <script>
+      // Automatsko uklanjanje flash poruka
+      document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        
+        // Funkcija za uklanjanje poruke sa animacijom
+        function removeAlert(alert) {
+          alert.style.transition = 'opacity 0.5s ease';
+          alert.style.opacity = '0';
+          setTimeout(function() {
+            alert.remove();
+          }, 500);
+        }
+        
+        alerts.forEach(function(alert) {
+          let timeout = 0;
+          
+          // Odredi vreme trajanja na osnovu kategorije
+          if (alert.classList.contains('alert-success')) {
+            timeout = 7000; // 7 sekundi
+          } else if (alert.classList.contains('alert-warning') || alert.classList.contains('alert-info')) {
+            timeout = 14000; // 14 sekundi
+          } else if (alert.classList.contains('alert-danger')) {
+            timeout = 20000; // 20 sekundi
+          }
+          
+          // Postavi timeout za automatsko uklanjanje poruke
+          if (timeout > 0) {
+            setTimeout(function() {
+              removeAlert(alert);
+            }, timeout);
+          }
+          
+          // Dodaj event listener za x dugme
+          const closeBtn = alert.querySelector('.alert-close');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+              removeAlert(alert);
+            });
+          }
+        });
+      });
+    </script>
   </body>
 </html>

@@ -1,0 +1,258 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "ID"; }
+        .mobtable td:nth-of-type(2):before { content: "Dobavljač"; }
+        .mobtable td:nth-of-type(3):before { content: "Naziv dobavljača"; }
+        .mobtable td:nth-of-type(4):before { content: "Poziv na broj"; }
+        .mobtable td:nth-of-type(5):before { content: "Iznos"; }
+        .mobtable td:nth-of-type(6):before { content: "Svrha isplate"; }
+    }
+
+    .bg-danger {
+        background-color: #f8d7da !important;
+    }
+
+    .bg-success {
+        background-color: #d4edda !important;
+    }
+</style>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Informacije o izvodu</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Datum izvoda:</label>
+                        <input class="form-control" type="text" value="{{ payment.payment_date.strftime('%d.%m.%Y.') }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Broj izvoda:</label>
+                        <input class="form-control" type="text" value="{{ payment.statment_nubmer }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Račun:</label>
+                        <input class="form-control" type="text" value="{{ payment.bank_account }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Ukupan iznos duguje:</label>
+                        <input class="form-control text-danger" type="text" value="{{ '{:,.2f}'.format(payment.total_payment_amount) }} RSD" readonly>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <label>Broj stavki:</label>
+                        <input class="form-control" type="text" value="{{ payment.number_of_items }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Broj grešaka:</label>
+                        <input class="form-control {% if payment.number_of_errors > 0 %}text-danger{% endif %}" type="text" value="{{ payment.number_of_errors }}" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Stavke isplata</h4>
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
+    <thead>
+        <tr>
+            <th style="width: 50px;">ID</th>
+            <th style="width: 200px;">Dobavljač</th>
+            <th style="width: 200px;">Naziv dobavljača</th>
+            <th style="width: 120px;">Poziv na broj</th>
+            <th style="width: 120px;">Iznos</th>
+            <th>Svrha isplate</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tx in transactions %}
+        <tr class="{% if tx.payment_error %}bg-danger{% else %}bg-success{% endif %}">
+            <td>{{ tx.id }}</td>
+            <td class="supplier-cell" data-tx-id="{{ tx.id }}">
+                {% if tx.supplier_id %}
+                    {% if tx.supplier %}
+                        <a class="btn btn-sm btn-primary" href="{{ url_for('supplier_invoices.supplier_saldo_detail', supplier_id=tx.supplier.id) }}">
+                            {{ tx.supplier.supplier_name }}
+                        </a>
+                        <input type="hidden" class="supplier-id-hidden" data-tx-id="{{ tx.id }}" value="{{ tx.supplier_id }}">
+                    {% else %}
+                        <span class="text-danger">Dobavljač ID {{ tx.supplier_id }} ne postoji</span>
+                    {% endif %}
+                {% else %}
+                    <span class="text-muted">-- NEDODELJENO --</span>
+                    <input type="hidden" class="supplier-id-hidden" data-tx-id="{{ tx.id }}" value="">
+                {% endif %}
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm supplier-name-display"
+                       data-tx-id="{{ tx.id }}"
+                       value="{{ tx.payee_name or '' }}"
+                       readonly
+                       placeholder="Naziv dobavljača">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm reference-input"
+                       data-tx-id="{{ tx.id }}"
+                       data-original-reference="{{ tx.reference_number or '' }}"
+                       value="{{ tx.reference_number or '' }}"
+                       placeholder="Poziv na broj">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm text-danger text-end" value="{{ '{:,.2f}'.format(tx.amount|abs) }}" readonly>
+            </td>
+            <td>
+                <textarea class="form-control form-control-sm" rows="2" readonly>{{ tx.purpose_of_payment or '' }}</textarea>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="alert alert-info mt-3">
+    <i class="fa fa-info-circle"></i> <strong>Napomena:</strong>
+    <ul class="mb-0">
+        <li>Crvene stavke označavaju transakcije gde dobavljač nije dodeljen (greške).</li>
+        <li>Zelene stavke označavaju pravilno dodeljene transakcije.</li>
+        <li>Možete dodeliti dobavljača stavkama sa greškom korišćenjem dropdown menija.</li>
+    </ul>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('supplier_invoices.supplier_payments_archive_list') }}" class="btn btn-secondary">
+        <i class="fa fa-arrow-left"></i> Nazad na listu
+    </a>
+    <button id="save_button" class="btn btn-success">
+        <i class="fa fa-save"></i> Sačuvajte izmene
+    </button>
+</div>
+
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    // Mapa dobavljača (ID -> Ime)
+    const suppliersMap = {
+        {% for supplier in suppliers %}
+        {{ supplier.id }}: "{{ supplier.supplier_name }}",
+        {% endfor %}
+    };
+
+    $(document).ready(function () {
+        $('#data').DataTable({
+            "paging": false,
+            "ordering": false,
+            "searching": false,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+
+        // Real-time parsiranje poziva na broj (samo ID)
+        $('.reference-input').on('input', function() {
+            const $input = $(this);
+            const txId = $input.data('tx-id');
+            const reference = $input.val().trim();
+
+            // Pronađi polje "Naziv dobavljača" i skriveno polje za supplier_id u istom redu
+            const $row = $input.closest('tr');
+            const $supplierNameDisplay = $row.find('.supplier-name-display');
+            const $supplierIdHidden = $row.find('.supplier-id-hidden');
+
+            // Parsiranje samo broja (npr: 1, 25, 100)
+            const supplierId = parseInt(reference);
+
+            if (!isNaN(supplierId) && supplierId > 0) {
+                // Proveri da li dobavljač sa tim ID-om postoji
+                if (suppliersMap[supplierId]) {
+                    // Automatski popuni "Naziv dobavljača"
+                    $supplierNameDisplay.val(suppliersMap[supplierId]);
+
+                    // Sačuvaj supplier_id u skriveno polje
+                    $supplierIdHidden.val(supplierId);
+
+                    // Promeni stil reda u zeleno
+                    $row.removeClass('bg-danger').addClass('bg-success');
+                } else {
+                    // Dobavljač ne postoji
+                    $supplierNameDisplay.val('Dobavljač sa ID ' + supplierId + ' ne postoji');
+                    $supplierIdHidden.val('');
+                    $row.removeClass('bg-success').addClass('bg-danger');
+                }
+            } else {
+                // Nije validan broj
+                $supplierNameDisplay.val('');
+                $supplierIdHidden.val('');
+
+                // Ako je polje prazno, ostavi u crvenom (greška)
+                if (reference === '') {
+                    $row.removeClass('bg-success').addClass('bg-danger');
+                }
+            }
+        });
+
+        // Čuvanje izmena
+        $('#save_button').on('click', function() {
+            const changesMap = {}; // Koristimo objekat da izbegnemo duplikate
+
+            // Sakupi sve izmene (i za nedodeljene i za dodeljene transakcije)
+            $('.reference-input').each(function() {
+                const $input = $(this);
+                const txId = $input.data('tx-id');
+                const $row = $input.closest('tr');
+                const $supplierIdHidden = $row.find('.supplier-id-hidden');
+
+                const referenceNumber = $input.val();
+                const originalReference = $input.data('original-reference');
+                const supplierId = $supplierIdHidden.val();
+
+                // Inicijalizuj change objekat za ovaj tx_id
+                if (!changesMap[txId]) {
+                    changesMap[txId] = {
+                        tx_id: txId
+                    };
+                }
+
+                // Dodaj supplier_id ako postoji vrednost
+                if (supplierId) {
+                    changesMap[txId].supplier_id = supplierId;
+                }
+
+                // Dodaj reference_number ako se promenio
+                if (referenceNumber !== originalReference) {
+                    changesMap[txId].reference_number = referenceNumber;
+                }
+            });
+
+            // Pretvori objekat u niz i filtriraj prazne izmene
+            const changes = Object.values(changesMap).filter(change =>
+                change.supplier_id || change.reference_number !== undefined
+            );
+
+            if (changes.length === 0) {
+                alert('Nema izmena za čuvanje.');
+                return;
+            }
+
+            // AJAX zahtev za čuvanje izmena
+            $.ajax({
+                url: '{{ url_for("supplier_invoices.supplier_payment_archive", payment_id=payment.id) }}',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ changes: changes }),
+                success: function(response) {
+                    alert('Izmene uspešno sačuvane!');
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    alert('Greška prilikom čuvanja: ' + error);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

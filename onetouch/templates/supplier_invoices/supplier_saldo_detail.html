@@ -1,0 +1,153 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    @media (max-width: 991px)  {
+        .mobtable td:nth-of-type(1):before { content: "Datum"; }
+        .mobtable td:nth-of-type(2):before { content: "Tip"; }
+        .mobtable td:nth-of-type(3):before { content: "Opis"; }
+        .mobtable td:nth-of-type(4):before { content: "Referenca"; }
+        .mobtable td:nth-of-type(5):before { content: "Zaduženje"; }
+        .mobtable td:nth-of-type(6):before { content: "Isplata"; }
+        .mobtable td:nth-of-type(7):before { content: "Saldo"; }
+    }
+
+    .invoice-row {
+        background-color: #fff3cd !important;
+    }
+
+    .payment-row {
+        background-color: #d4edda !important;
+    }
+
+    .positive-balance {
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+
+    .zero-balance {
+        color: #28a745 !important;
+    }
+
+    .negative-balance {
+        color: #6c757d !important;
+    }
+</style>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Informacije o dobavljaču</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Naziv dobavljača:</label>
+                        <input class="form-control" type="text" value="{{ supplier.supplier_name }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Ukupno zaduženje:</label>
+                        <input class="form-control text-danger" type="text" value="{{ '{:,.2f}'.format(total_invoiced) }} RSD" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Ukupne isplate:</label>
+                        <input class="form-control text-success" type="text" value="{{ '{:,.2f}'.format(total_paid) }} RSD" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Finalno stanje:</label>
+                        <input class="form-control {% if final_balance > 0 %}text-danger{% elif final_balance == 0 %}text-success{% else %}text-muted{% endif %}"
+                               type="text"
+                               value="{{ '{:,.2f}'.format(final_balance) }} RSD"
+                               readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Istorija transakcija</h4>
+<p class="text-muted">Sve fakture i isplate prikazane hronološkim redom sa tekućim saldom.</p>
+
+<table id="data" class="table table-striped dataTable no-footer invoices mobtable" role="grid">
+    <thead>
+        <tr>
+            <th style="width: 120px;">Datum</th>
+            <th style="width: 100px;">Tip</th>
+            <th>Opis</th>
+            <th style="width: 150px;">Referenca</th>
+            <th style="width: 120px;" class="text-end">Zaduženje</th>
+            <th style="width: 120px;" class="text-end">Isplata</th>
+            <th style="width: 120px;" class="text-end">Saldo</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr class="{% if entry.type == 'invoice' %}invoice-row{% else %}payment-row{% endif %}">
+            <td data-order="{{ entry.date.strftime('%Y%m%d') }}">{{ entry.date.strftime('%d.%m.%Y.') }}</td>
+            <td>
+                {% if entry.type == 'invoice' %}
+                    <span class="badge bg-warning text-dark">Faktura</span>
+                {% else %}
+                    <span class="badge bg-success">Isplata</span>
+                {% endif %}
+            </td>
+            <td>{{ entry.description }}</td>
+            <td>{{ entry.reference or '-' }}</td>
+            <td class="text-end">
+                {% if entry.type == 'invoice' %}
+                    <span class="text-danger">{{ "{:,.2f}".format(entry.amount) }}</span>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td class="text-end">
+                {% if entry.type == 'payment' %}
+                    <span class="text-success">{{ "{:,.2f}".format(entry.amount|abs) }}</span>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td class="text-end {% if entry.balance > 0 %}positive-balance{% elif entry.balance == 0 %}zero-balance{% else %}negative-balance{% endif %}">
+                {{ "{:,.2f}".format(entry.balance) }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="alert alert-info mt-3">
+    <i class="fa fa-info-circle"></i> <strong>Legenda:</strong>
+    <ul class="mb-0">
+        <li><span class="badge bg-warning text-dark">Faktura</span> - Zaduženje dobavljača (žuti red)</li>
+        <li><span class="badge bg-success">Isplata</span> - Isplata prema dobavljaču (zeleni red)</li>
+        <li><strong>Saldo</strong> - Tekuće stanje nakon svake transakcije</li>
+    </ul>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('supplier_invoices.supplier_saldo_list') }}" class="btn btn-secondary">
+        <i class="fa fa-arrow-left"></i> Nazad na listu
+    </a>
+    <a href="{{ url_for('supplier_invoices.invoices_list') }}" class="btn btn-primary">
+        <i class="fa fa-file-invoice"></i> Fakture dobavljača
+    </a>
+    <a href="{{ url_for('supplier_invoices.posting_supplier_payment') }}" class="btn btn-success">
+        <i class="fa fa-upload"></i> Učitaj isplate
+    </a>
+</div>
+
+{% endblock content%}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        $('#data').DataTable({
+            "paging": false,
+            "ordering": false,  // Onemogućeno sortiranje jer running balance zavisi od hronološkog redosleda
+            "searching": false,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.12.1/i18n/sr-SP.json"
+            }
+        });
+    });
+</script>
+{% endblock %}
