@@ -8,9 +8,12 @@ from flask import Blueprint
 from flask_login import login_required, current_user
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer, DebtWriteOff
-from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected
+from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected, prepare_payment_data, prepare_qr_data, generate_qr_code, setup_pdf_page, add_payment_slip_content, PDF, add_fonts, cleanup_qr_codes, project_folder
 from onetouch.overviews.functions import get_filtered_transactions_data
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
+from onetouch.tasks.email_tasks import send_email_task
+import smtplib
 
 transactions = Blueprint('transactions', __name__)
 
@@ -858,8 +861,14 @@ def debt_archive(debt_id):
 
 @transactions.route('/send_payment_slips/<int:debt_id>', methods=['get', 'post'])
 def send_payment_slips(debt_id):
+    """
+    Pokreće asinhrono slanje mejlova za sve učenike zaduženja.
+
+    VAŽNO: Ova funkcija više NE šalje mejlove sinhrono!
+    Umesto toga, kreira Celery task-ove koji se izvršavaju u pozadini.
+    """
     try:
-        # SERVER-SIDE VALIDACIJA - provera da li je slanje mejlova omogućeno
+        # SERVER-SIDE VALIDACIJA
         school = School.query.first()
         if not school or not school.sending_email:
             flash('Slanje mejlova roditeljima je trenutno onemogućeno u podešavanjima škole.', 'warning')
@@ -871,25 +880,103 @@ def send_payment_slips(debt_id):
             raise ValueError(f"Zaduženje sa ID {debt_id} nije pronađeno")
 
         purpose_of_payment = debt.purpose_of_payment
+        school_info = f'{school.school_name}, {school.school_address}, {school.school_zip_code} {school.school_city}'
 
-        # Kreiranje school_info (school već dohvaćen u SERVER-SIDE validaciji)
-        school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        # UČITAJ RECORDS SA EAGER LOADING (izbegni N+1 problem)
+        records = (TransactionRecord.query
+                   .filter_by(student_debt_id=debt_id)
+                   .options(joinedload(TransactionRecord.transaction_record_student))
+                   .options(joinedload(TransactionRecord.transaction_record_student_debt))
+                   .all())
 
-        # Pronalaženje transakcija
-        records = TransactionRecord.query.filter_by(student_debt_id=debt_id).all()
         if not records:
             raise ValueError("Nema pronađenih transakcija za ovo zaduženje")
-            
-        # Generisanje i slanje uplatnica
-        single = True
-        send = True
-        file_name = uplatnice_gen(records, purpose_of_payment, school_info, school, single, send)
-        if not file_name:
-            raise ValueError("Greška pri generisanju i slanju uplatnica")
-            
-        flash('Uspešno ste poslali mejlove roditeljima.', 'success')
+
+        # Kreiraj user folder za PDF-ove
+        user_folder = os.path.join(project_folder, 'static', 'payment_slips', f'user_{current_user.id}')
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+            logging.info(f'Created user folder: {user_folder}')
+
+        # GENERIŠI PDF-OVE I QUEUE-UJ EMAIL TASK-OVE
+        queued_count = 0
+        skipped_count = 0
+
+        for record in records:
+            # Preskoči učenike sa nulom dugovanja
+            if record.student_debt_total <= 0:
+                continue
+
+            student = record.transaction_record_student
+
+            # Preskoči učenike bez email-a ili sa isključenim slanjem
+            if not student.parent_email or not student.send_mail:
+                logging.info(f'Skipping student {student.id}: no email or send_mail=False')
+                skipped_count += 1
+                continue
+
+            # Preskoči već poslate
+            if record.debt_sent:
+                logging.info(f'Skipping record {record.id}: already sent')
+                skipped_count += 1
+                continue
+
+            # GENERIŠI PDF ZA OVOG UČENIKA
+            # VAŽNO: PDF mora biti generisan SINHRONO pre nego što task krene
+            # jer task treba postojeći fajl da priloži u mejl
+            try:
+                # Pripremi podatke
+                payment_data = prepare_payment_data(record, purpose_of_payment, school_info)
+
+                # Generiši QR kod
+                qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
+                qr_code_filename = generate_qr_code(
+                    qr_data,
+                    payment_data['student_id'],
+                    project_folder,
+                    current_user.id
+                )
+
+                # Generiši PDF
+                pdf = PDF()
+                add_fonts(pdf)
+                y, y_qr = setup_pdf_page(pdf, 1)
+                add_payment_slip_content(pdf, payment_data, y, y_qr, project_folder, current_user)
+
+                # Sačuvaj PDF sa unique imenom
+                file_name = f'uplatnica_{record.id}.pdf'
+                pdf_path = os.path.join(user_folder, file_name)
+                pdf.output(pdf_path)
+
+                logging.info(f'Generated PDF: {pdf_path}')
+
+                # QUEUE-UJ ASINHRONI EMAIL TASK
+                send_email_task.delay(record.id, user_folder, file_name)
+                queued_count += 1
+
+                student_full_name = f"{student.student_name} {student.student_surname}"
+                logging.info(f'Queued email task for record {record.id} (student: {student_full_name})')
+
+            except Exception as e:
+                logging.error(f'Error generating PDF for record {record.id}: {str(e)}')
+                student_full_name = f"{student.student_name} {student.student_surname}"
+                flash(f'Greška pri generisanju uplatnice za učenika {student_full_name}', 'warning')
+                continue
+
+        # Cleanup QR codes
+        cleanup_qr_codes(project_folder, current_user.id)
+
+        # Flash poruka
+        if queued_count > 0:
+            flash(f'Pokrenuto slanje mejlova za {queued_count} učenika. Mejlovi se šalju u pozadini i stižu u narednih nekoliko minuta.', 'success')
+        else:
+            flash('Nema učenika za koje treba poslati mejlove.', 'info')
+
+        if skipped_count > 0:
+            flash(f'Preskočeno {skipped_count} učenika (već poslato ili nema email adrese).', 'info')
+
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-        
+
     except ValueError as e:
         logging.error(f"Greška sa podacima: {str(e)}")
         flash(str(e), "danger")
@@ -898,17 +985,9 @@ def send_payment_slips(debt_id):
         logging.error(f"Greška pri pristupu bazi podataka: {str(e)}")
         flash("Greška pri učitavanju podataka iz baze", "danger")
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-    except FileNotFoundError as e:
-        logging.error(f"Fajl nije pronađen: {str(e)}")
-        flash("Greška pri generisanju uplatnica", "danger")
-        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-    except smtplib.SMTPException as e:
-        logging.error(f"Greška pri slanju mejla: {str(e)}")
-        flash("Greška pri slanju mejlova roditeljima", "danger")
-        return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
     except Exception as e:
         logging.error(f"Neočekivana greška: {str(e)}")
-        flash("Došlo je do greške pri obradi zahteva", "danger")
+        flash("Došlo je do greške pri slanju mejlova", "danger")
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 
