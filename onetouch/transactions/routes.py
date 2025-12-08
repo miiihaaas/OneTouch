@@ -916,7 +916,9 @@ def send_payment_slips(debt_id):
                 continue
 
             # Preskoči već poslate
-            if record.debt_sent:
+            # Tretiramo samo eksplicitno True kao "poslato"
+            # NULL, None, False, 0 se tretiraju kao "nije poslato"
+            if record.debt_sent is True:
                 logging.info(f'Skipping record {record.id}: already sent')
                 skipped_count += 1
                 continue

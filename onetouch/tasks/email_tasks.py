@@ -4,7 +4,7 @@ Celery task-ovi za slanje email-ova.
 import smtplib
 import socket
 from onetouch import celery, mail, db, logger
-from onetouch.models import TransactionRecord, Student, School
+from onetouch.models import TransactionRecord, Student, School, SMTPErrorLog
 from flask_mail import Message
 from flask import render_template
 from sqlalchemy import update
@@ -70,7 +70,9 @@ def send_email_task(self, record_id, user_folder, file_name):
             }
 
         # 2. PROVERI DA LI JE VEĆ POSLATO (pre atomic update-a)
-        if record.debt_sent:
+        # Tretiramo samo eksplicitno True kao "poslato"
+        # NULL, None, False, 0 se tretiraju kao "nije poslato"
+        if record.debt_sent is True:
             logger.info(f'[Task {self.request.id}] Record {record_id} already sent, skipping')
             return {
                 'status': 'skipped',
@@ -79,10 +81,12 @@ def send_email_task(self, record_id, user_folder, file_name):
             }
 
         # 3. ATOMIČKI POSTAVI FLAG (RACE CONDITION ZAŠTITA)
+        # VAŽNO: debt_sent može biti NULL, False, ili 0 u bazi
+        # Koristimo is_not(True) da matchujemo sve osim eksplicitno True
         result = db.session.execute(
             update(TransactionRecord)
             .where(TransactionRecord.id == record_id)
-            .where(TransactionRecord.debt_sent == False)
+            .where(TransactionRecord.debt_sent.isnot(True))
             .values(debt_sent=True)
         )
         db.session.commit()
@@ -187,6 +191,16 @@ def send_email_task(self, record_id, user_folder, file_name):
 
             logger.error(f'[Task {self.request.id}] ❌ SMTP error {error_code}: {error_msg}')
 
+            # LOGIRAJ GREŠKU
+            SMTPErrorLog.log_error(
+                error_type=f'SMTP_{error_code}',
+                recipient=parent_email,
+                error_msg=error_msg,
+                record_id=record_id,
+                task_id=self.request.id,
+                retry_count=self.request.retries
+            )
+
             # Rollback debt_sent flag
             record.debt_sent = False
             db.session.commit()
@@ -207,6 +221,16 @@ def send_email_task(self, record_id, user_folder, file_name):
         except Exception as e:
             logger.error(f'[Task {self.request.id}] ❌ Unexpected error: {type(e).__name__}: {str(e)}')
 
+            # LOGIRAJ GREŠKU
+            SMTPErrorLog.log_error(
+                error_type=type(e).__name__,
+                recipient=parent_email if 'parent_email' in locals() else 'unknown',
+                error_msg=str(e),
+                record_id=record_id,
+                task_id=self.request.id,
+                retry_count=self.request.retries
+            )
+
             # Rollback debt_sent flag
             record.debt_sent = False
             db.session.commit()
@@ -218,6 +242,19 @@ def send_email_task(self, record_id, user_folder, file_name):
         # Ovo se izvršava ako svi retry-i ne uspeju
         logger.error(f'[Task {self.request.id}] ❌ Failed to send email for record {record_id} after {self.max_retries} attempts')
         logger.error(f'[Task {self.request.id}] Final error: {type(e).__name__}: {str(e)}')
+
+        # LOGIRAJ FINALNU GREŠKU
+        try:
+            SMTPErrorLog.log_error(
+                error_type=f'FINAL_{type(e).__name__}',
+                recipient='unknown',
+                error_msg=f'Failed after {self.max_retries} attempts: {str(e)}',
+                record_id=record_id,
+                task_id=self.request.id,
+                retry_count=self.max_retries
+            )
+        except Exception as log_error:
+            logger.error(f'[Task {self.request.id}] Failed to log error: {str(log_error)}')
 
         # TODO: Pošalji notifikaciju adminu
         # send_admin_notification(...)

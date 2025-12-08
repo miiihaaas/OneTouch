@@ -2,6 +2,7 @@
 Celery konfiguracija za OneTouch aplikaciju.
 """
 from celery import Celery
+from celery.schedules import crontab
 import os
 
 
@@ -57,4 +58,29 @@ def make_celery(app):
                 return self.run(*args, **kwargs)
 
     celery.Task = ContextTask
+
+    # Konfiguriši beat schedule
+    configure_celery_beat(celery)
+
     return celery
+
+
+def configure_celery_beat(celery_app):
+    """
+    Konfiguriše periodične task-ove (Celery Beat).
+    """
+    celery_app.conf.beat_schedule = {
+        # SMTP healthcheck - svakih 5 minuta
+        'smtp-healthcheck': {
+            'task': 'onetouch.tasks.smtp_healthcheck',
+            'schedule': crontab(minute='*/5'),
+        },
+
+        # Retry failed emails - svakih 6 sati
+        'retry-failed-emails': {
+            'task': 'onetouch.tasks.retry_failed_emails',
+            'schedule': crontab(hour='*/6', minute=0),
+        },
+    }
+
+    return celery_app
