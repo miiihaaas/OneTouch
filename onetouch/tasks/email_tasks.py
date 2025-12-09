@@ -264,3 +264,139 @@ def send_email_task(self, record_id, user_folder, file_name):
             'record_id': record_id,
             'message': f'Failed after {self.max_retries} attempts: {str(e)}'
         }
+
+
+@celery.task(base=EmailTask, bind=True, name='onetouch.tasks.send_report_email')
+def send_report_email_task(self, student_id, report_type, user_folder, file_name, start_date=None, end_date=None):
+    """
+    Asinhroni task za slanje izveštaja mejlom.
+
+    Args:
+        self: Task instanca
+        student_id: ID učenika
+        report_type: 'student_report' ili 'debt_report'
+        user_folder: Putanja do foldera sa PDF-om
+        file_name: Ime PDF fajla
+        start_date: Početni datum (opciono)
+        end_date: Krajnji datum (opciono)
+
+    Returns:
+        Dict sa statusom slanja
+    """
+    try:
+        logger.info(f'[Task {self.request.id}] Starting report email task for student {student_id}')
+
+        # 1. UČITAJ PODATKE
+        student = Student.query.get(student_id)
+        school = School.query.first()
+
+        if not student:
+            logger.error(f'[Task {self.request.id}] Student {student_id} not found')
+            return {'status': 'error', 'message': 'Student not found'}
+
+        # 2. VALIDACIJA EMAIL ADRESE
+        if not student.parent_email:
+            logger.info(f'[Task {self.request.id}] Student {student_id} has no email')
+            return {'status': 'skipped', 'message': 'No email'}
+
+        parent_email = student.parent_email
+        student_name = f'{student.student_name} {student.student_surname}'
+
+        # 3. PRIPREMA EMAIL-A
+        if report_type == 'student_report':
+            subject = f"{school.school_name} | Izveštaj za učenika: {student_name}"
+            template_name = 'message_html_send_report.html'
+
+            # Konvertuj stringove nazad u date objekte za template
+            from datetime import datetime
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date() if start_date and isinstance(start_date, str) else start_date
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date() if end_date and isinstance(end_date, str) else end_date
+
+            template_data = {
+                'student': student,
+                'school': school,
+                'start_date': start_date_obj,
+                'end_date': end_date_obj
+            }
+        elif report_type == 'debt_report':
+            subject = f'{school.school_name} | Izveštaj o dugovanju za učenika {student_name}'
+            template_name = 'message_html_debt_report.html'
+            template_data = {
+                'student': student,
+                'school': school
+            }
+        else:
+            raise ValueError(f'Unknown report type: {report_type}')
+
+        message = Message(subject, sender=(school.school_name, 'noreply@uplatnice.online'))
+        message.recipients = [parent_email]
+
+        # 4. RENDERUJ HTML TEMPLATE
+        try:
+            message.html = render_template(template_name, **template_data)
+        except Exception as e:
+            logger.error(f'[Task {self.request.id}] Template rendering failed: {str(e)}')
+            raise
+
+        # 5. PRILOŽI PDF
+        try:
+            import os
+            full_path = os.path.join(user_folder, file_name)
+
+            if not os.path.exists(full_path):
+                logger.error(f'[Task {self.request.id}] PDF file not found: {full_path}')
+                raise FileNotFoundError(f'PDF file not found: {full_path}')
+
+            with open(full_path, 'rb') as f:
+                pdf_content = f.read()
+                message.attach(file_name, 'application/pdf', pdf_content)
+
+            logger.info(f'[Task {self.request.id}] PDF attached: {file_name} ({len(pdf_content)} bytes)')
+        except Exception as e:
+            logger.error(f'[Task {self.request.id}] PDF attachment failed: {str(e)}')
+            raise
+
+        # 6. POŠALJI EMAIL
+        try:
+            mail.send(message)
+            logger.info(f'[Task {self.request.id}] ✅ Report email sent successfully to {parent_email}')
+
+            return {
+                'status': 'success',
+                'student_id': student_id,
+                'email': parent_email,
+                'report_type': report_type,
+                'attempt': self.request.retries + 1
+            }
+
+        except smtplib.SMTPResponseException as e:
+            error_code = e.smtp_code
+            error_msg = e.smtp_error.decode('utf-8') if isinstance(e.smtp_error, bytes) else str(e.smtp_error)
+            logger.error(f'[Task {self.request.id}] ❌ SMTP error {error_code}: {error_msg}')
+
+            # Logiraj grešku
+            SMTPErrorLog.log_error(
+                error_type=f'SMTP_{error_code}',
+                recipient=parent_email,
+                error_msg=error_msg,
+                task_id=self.request.id,
+                retry_count=self.request.retries
+            )
+
+            # Retry za određene greške
+            if error_code != 550:
+                raise self.retry(exc=e)
+
+            return {'status': 'error', 'message': f'SMTP {error_code}'}
+
+        except Exception as e:
+            logger.error(f'[Task {self.request.id}] ❌ Unexpected error: {type(e).__name__}: {str(e)}')
+            raise self.retry(exc=e)
+
+    except Exception as e:
+        logger.error(f'[Task {self.request.id}] ❌ Failed to send report email after {self.max_retries} attempts')
+        return {
+            'status': 'error',
+            'student_id': student_id,
+            'message': f'Failed after {self.max_retries} attempts: {str(e)}'
+        }

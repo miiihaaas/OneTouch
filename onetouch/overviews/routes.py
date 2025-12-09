@@ -1014,43 +1014,33 @@ def send_student_report_email(student_id):
         # Putanja do generisanog izveštaja
         project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
         user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
-        file_path = f'{user_folder}/report_student.pdf'
         file_name = 'report_student.pdf'
-        
-        # Slanje mejla
-        school = School.query.first()
-        student_name = f'{student.student_name} {student.student_surname}'
-        parent_email = student.parent_email
-        
+
+        # QUEUE-UJ ASINHRONI EMAIL TASK
+        from onetouch.tasks.email_tasks import send_report_email_task
+
         try:
-            sender = (f'{school.school_name}', f'{current_app.config["MAIL_USERNAME"]}')
-            subject = f"{school.school_name} | Izveštaj za učenika: {student_name} ({student.student_class}/{student.student_section})" 
-            
-            message = Message(subject, 
-                            sender=sender)
-            message.recipients = [parent_email]
-            
-            # Telo mejla
-            message.html = render_template(
-                'message_html_send_report.html',
-                student=student,
-                school=school,
-                start_date=start_date,
-                end_date=end_date
+            # Konvertuj datume u string format za task
+            start_date_str = start_date.strftime('%Y-%m-%d') if isinstance(start_date, date) else start_date
+            end_date_str = end_date.strftime('%Y-%m-%d') if isinstance(end_date, date) else end_date
+
+            send_report_email_task.delay(
+                student_id=student_id,
+                report_type='student_report',
+                user_folder=user_folder,
+                file_name=file_name,
+                start_date=start_date_str,
+                end_date=end_date_str
             )
-            
-            # Prilaganje PDF izveštaja
-            with app.open_resource(file_path) as attachment:
-                message.attach(file_name, 'application/pdf', attachment.read())
-                
-            mail.send(message)
-            flash('Izveštaj je uspešno poslat na mejl roditelja.', 'success')
-            logging.info(f'Izveštaj poslat na mejl: {parent_email} za učenika: {student_name}')
-            
+
+            student_name = f'{student.student_name} {student.student_surname}'
+            flash('Izveštaj se šalje u pozadini. Roditeljima će stići u narednih nekoliko minuta.', 'success')
+            logging.info(f'Queued report email task for student: {student_name}')
+
         except Exception as e:
             flash(f'Došlo je do greške prilikom slanja izveštaja: {str(e)}', 'danger')
-            logging.error(f'Greška pri slanju izveštaja na mejl: {str(e)}')
-            
+            logging.error(f'Greška pri queue-ovanju izveštaja: {str(e)}')
+
         return redirect(url_for('overviews.overview_student', student_id=student_id))
         
     except Exception as e:
