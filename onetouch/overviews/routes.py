@@ -1053,186 +1053,64 @@ def send_student_report_email(student_id):
 @login_required
 def generate_pdf_reports(student_id):
     """
-    Generiše dva PDF izveštaja za učenika:
-    1. Listu usluga sa pozitivnim saldom
-    2. Uplatnice za usluge sa pozitivnim saldom
+    Pokreće asinhrono generisanje PDF izveštaja za učenika.
+
+    NAPOMENA: Sve operacije (QR + PDF generacija) se izvršavaju u pozadini!
+    Request završava za < 1 sekundu! 🚀
     """
     try:
-        # Kreiranje PDF-a sa listom usluga
-        project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
-        user_folder = f'{project_folder}/static/reports/user_{current_user.id}'
-        if not os.path.exists(user_folder):
-            os.makedirs(user_folder)
-            
         # Dobavljanje parametara iz URL-a
         min_debt_amount_str = request.args.get('min_debt_amount', '0')
         min_debt_amount = float(min_debt_amount_str) if min_debt_amount_str.strip() else 0
-        
+
         selected_services_param = request.args.get('selected_services', '')
         selected_services = selected_services_param.split(',') if selected_services_param else []
-        
-        # Dobavljanje filtriranih podataka o transakcijama korišćenjem pomoćne funkcije
+
+        # Brza validacija - da li učenik ima dugovanja
         services_with_positive_saldo, selected_service_names, student = get_filtered_transactions_data(
             student_id, selected_services, min_debt_amount)
-        
+
         if not services_with_positive_saldo:
             flash('Učenik nema dugovanja ni za jednu uslugu.', 'info')
             return redirect(url_for('overviews.overview_debts'))
-        
-        # Generisanje PDF-a sa listom usluga koje imaju pozitivan saldo
-        from fpdf import FPDF
-        from onetouch.transactions.functions import add_fonts
-        
-        pdf = FPDF()
-        add_fonts(pdf)
-        pdf.add_page()
-        
-        # Dodavanje informacija o filtriranju korišćenjem pomoćne funkcije
-        add_filter_info_to_pdf(pdf, student, min_debt_amount, selected_service_names)
-        
-        # Tabela usluga
-        pdf.set_fill_color(200, 220, 255)
-        pdf.set_font('DejaVuSansCondensed', 'B', 11)
-        pdf.cell(80, 10, "Usluga", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
-        pdf.cell(30, 10, "Zaduženje", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
-        pdf.cell(30, 10, "Uplate", 1, new_x="RIGHT", new_y="LAST", align="C", fill=True)
-        pdf.cell(30, 10, "Saldo", 1, new_x="LMARGIN", new_y="NEXT", align="C", fill=True)
-        
-        # Podaci u tabeli
-        pdf.set_font('DejaVuSansCondensed', '', 10)
-        
-        # Ukupni iznosi
-        total_debt = 0
-        total_payment = 0
-        total_saldo = 0
-        
-        for service_data in services_with_positive_saldo:
-            service_item = service_data['service_item']
-            service_name = f"{service_item.service_item_service.service_name} - {service_item.service_item_name}"
-            debt = service_data['debt_amount']
-            payment = service_data['payment_amount']
-            saldo = service_data['saldo']
-            
-            # Dodavanje u ukupni iznos
-            total_debt += debt
-            total_payment += payment
-            total_saldo += saldo
-            
-            # Prikaz u tabeli
-            pdf.cell(80, 8, service_name, 1, new_x="RIGHT", new_y="LAST")
-            pdf.cell(30, 8, f"{debt:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(30, 8, f"{payment:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
-            pdf.cell(30, 8, f"{saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
-        
-        # Ukupno
-        pdf.set_font('DejaVuSansCondensed', 'B', 10)
-        pdf.cell(80, 10, "UKUPNO:", 1, new_x="RIGHT", new_y="LAST", align="R")
-        pdf.cell(30, 10, f"{total_debt:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
-        pdf.cell(30, 10, f"{total_payment:.2f}", 1, new_x="RIGHT", new_y="LAST", align="R")
-        pdf.cell(30, 10, f"{total_saldo:.2f}", 1, new_x="LMARGIN", new_y="NEXT", align="R")
-        
-        # Čuvanje prvog PDF-a (lista usluga)
-        services_list_path = os.path.join(user_folder, f'services_list_{student_id}.pdf')
-        pdf.output(services_list_path)
-        
-        # Drugi PDF - uplatnice za sve usluge sa pozitivnim saldom
-        from onetouch.transactions.functions import prepare_qr_data, generate_qr_code, add_payment_slip_content, PDF, cleanup_qr_codes, setup_pdf_page
-        
-        # Generisanje podataka o školi
-        school = School.query.first()
-        
-        # Kreiranje PDF-a za uplatnice
-        payment_slips_pdf = PDF()
-        add_fonts(payment_slips_pdf)
-        
-        # Generisanje uplatnica za svaku uslugu sa pozitivnim saldom - po 3 na stranici
-        payment_slips_count = 0
-        for service_data in services_with_positive_saldo:
-            service_item = service_data['service_item']
-            saldo = service_data['saldo']
-            
-            if saldo <= 0:
-                continue  # Preskačemo usluge bez dugovanja
-                
-            # Koristimo postojeću funkciju za pozicioniranje uplatnica (3 po stranici)
-            counter = payment_slips_count + 1  # Brojanje od 1
-            y, y_qr = setup_pdf_page(payment_slips_pdf, counter)
-            
-            payment_slips_count += 1
-            
-            # Priprema svrhe plaćanja
-            purpose_of_payment = f"{service_item.service_item_service.service_name} - {service_item.service_item_name}"
-            
-            # Određivanje primaoca
-            bank_account_number = service_item.bank_account
-            recipient_name = ""
-            recipient_address = ""
-            
-            for account in school.school_bank_accounts.get('bank_accounts', []):
-                if account.get('bank_account_number') == bank_account_number:
-                    recipient_name = account.get('recipient_name', "")
-                    recipient_address = account.get('recipient_address', "")
-                    break
-            
-            # Određivanje primaoca
-            if not recipient_name and not recipient_address:
-                primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
-            elif recipient_name and not recipient_address:
-                primalac = recipient_name
-            elif not recipient_name and recipient_address:
-                primalac = f"{school.school_name}\r\n{school.school_address}, {school.school_zip_code} {school.school_city}"
-            else:
-                primalac = f"{recipient_name}\r\n{recipient_address}"
-            
-            # Podaci za uplatnicu
-            payment_data = {
-                'student_id': student_id,
-                'uplatilac': student.student_name + ' ' + student.student_surname,
-                'svrha_uplate': f"{student_id:04d}-{service_data['service_id']:03d} {purpose_of_payment}",
-                'primalac': primalac,
-                'sifra_placanja': 253 if service_item.reference_number_spiri else 221,
-                'valuta': 'RSD',
-                'iznos': f'{saldo:.2f}',
-                'racun_primaoca': bank_account_number,
-                'model': '97' if service_item.reference_number_spiri else '',
-                'poziv_na_broj': service_item.reference_number_spiri if service_item.reference_number_spiri else '',
-            }
-            
-            # Koordinate su već postavljene kroz setup_pdf_page funkciju
-            
-            # Generisanje QR koda
-            qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
-            qr_code_filename = generate_qr_code(qr_data, payment_data['student_id'], project_folder, current_user.id)
-            
-            # Dodavanje sadržaja uplatnice
-            add_payment_slip_content(payment_slips_pdf, payment_data, y, y_qr, project_folder, current_user)
-        
-        # Čišćenje privremenih QR kodova
-        cleanup_qr_codes(project_folder, current_user.id)
-        
-        # Čuvanje drugog PDF-a (uplatnice)
-        payment_slips_path = os.path.join(user_folder, f'payment_slips_{student_id}.pdf')
-        payment_slips_pdf.output(payment_slips_path)
-        
-        # Priprema linkova za PDF fajlove za prikazivanje u HTML šablonu
+
+        # Kreiraj user folder
+        project_folder = os.path.dirname(os.path.dirname((os.path.abspath(__file__))))
+        user_folder = f'{project_folder}/static/reports/user_{student_id}'
+        os.makedirs(user_folder, exist_ok=True)
+
+        # QUEUE-UJ ASINHRONI TASK ZA GENERISANJE PDF-OVA! 🚀
+        from onetouch.tasks.report_tasks import generate_pdf_reports_task
+
+        generate_pdf_reports_task.delay(
+            student_id=student_id,
+            min_debt_amount=min_debt_amount,
+            selected_services=selected_services,
+            user_folder=user_folder
+        )
+
+        logging.info(f'Queued PDF report generation task for student {student_id}')
+
+        # Priprema linkova za PDF fajlove (biće dostupni kada task završi)
         pdf_links = [
             {
                 'name': 'Lista dugovanja',
-                'url': url_for('static', filename=f'reports/user_{current_user.id}/services_list_{student_id}.pdf')
+                'url': url_for('static', filename=f'reports/user_{student_id}/services_list_{student_id}.pdf')
             },
             {
                 'name': 'Uplatnice',
-                'url': url_for('static', filename=f'reports/user_{current_user.id}/payment_slips_{student_id}.pdf')
+                'url': url_for('static', filename=f'reports/user_{student_id}/payment_slips_{student_id}.pdf')
             }
         ]
-        
-        # Prikazivanje HTML stranice sa porukom o uspešno generisanim PDF-ovima
+
+        # REQUEST ZAVRŠAVA ZA < 1 SEKUNDU! 🚀🚀🚀
+        # PDF-ovi se generišu u pozadini
         return render_template('operation_success.html',
-                            title='PDF izveštaji su uspešno generisani',
-                            message='PDF izveštaji su uspešno generisani i otvoreni u novim tabovima.',
+                            title='PDF izveštaji se generišu',
+                            message='PDF izveštaji se generišu u pozadini. Fajlovi će biti dostupni za download za nekoliko sekundi. Možete kliknuti na linkove ispod.',
                             pdf_links=pdf_links,
-                            auto_close=True)
-        
+                            auto_close=False)
+
     except Exception as e:
         logging.error(f'Greška pri generisanju PDF izveštaja: {str(e)}')
         flash(f'Došlo je do greške pri generisanju PDF-a: {str(e)}', 'danger')
