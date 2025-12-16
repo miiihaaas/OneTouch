@@ -1,11 +1,13 @@
 import json, logging
 import requests, os, io, re
 import xml.etree.ElementTree as ET
+import smtplib
 from PIL import Image
 from datetime import datetime, date, timedelta
 from flask import  render_template, url_for, flash, redirect, request, send_file, jsonify, send_from_directory
 from flask import Blueprint
 from flask_login import login_required, current_user
+
 from onetouch import db, bcrypt
 from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer, DebtWriteOff
 from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected, prepare_payment_data, prepare_qr_data, generate_qr_code, setup_pdf_page, add_payment_slip_content, PDF, add_fonts, cleanup_qr_codes, project_folder
@@ -549,6 +551,7 @@ def single_payment_slip(record_id):
             raise ValueError("Podaci o školi nisu pronađeni")
             
         school_info = school.school_name + ', ' + school.school_address + ', ' + str(school.school_zip_code) + ' ' + school.school_city
+        
         records.append(record)
         logging.debug(f'{records=}')
         
@@ -683,6 +686,7 @@ def service_total_payment_slip(service_id, student_id):
         # Potrebni podaci za generisanje uplatnice
         current_file_path = os.path.abspath(__file__)
         project_folder = os.path.dirname(os.path.dirname((current_file_path)))
+        
         user_folder = f'{project_folder}/static/payment_slips/user_{current_user.id}'
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
@@ -1011,7 +1015,8 @@ def print_selected_slips(debt_id):
         return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
 
-@transactions.route('/send_single_payment_slip/<int:record_id>', methods=['get', 'post'])
+@transactions.route('/send_single_payment_slip/<int:record_id>', methods=['post'])
+@login_required
 def send_single_payment_slip(record_id):
     """
     Pokreće asinhrono slanje mejla za pojedinačnu uplatnicu.
