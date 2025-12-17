@@ -1049,13 +1049,9 @@ def send_single_payment_slip(record_id):
 
         student = record.transaction_record_student
 
-        # Validacija
+        # Validacija - proveri da li učenik ima mejl roditelja i da li je slanje omogućeno
         if not student.parent_email or not student.send_mail:
             flash('Učenik nema definisan mejl roditelja ili je slanje onemogućeno.', 'warning')
-            return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
-
-        if record.debt_sent is True:
-            flash('Mejl je već poslat za ovog učenika.', 'info')
             return redirect(url_for('transactions.debt_archive', debt_id=debt_id))
 
         # Kreiraj user folder

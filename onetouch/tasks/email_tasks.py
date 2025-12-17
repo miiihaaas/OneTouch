@@ -69,35 +69,10 @@ def send_email_task(self, record_id, user_folder, file_name):
                 'message': 'Record not found'
             }
 
-        # 2. PROVERI DA LI JE VEĆ POSLATO (pre atomic update-a)
-        # Tretiramo samo eksplicitno True kao "poslato"
-        # NULL, None, False, 0 se tretiraju kao "nije poslato"
-        if record.debt_sent is True:
-            logger.info(f'[Task {self.request.id}] Record {record_id} already sent, skipping')
-            return {
-                'status': 'skipped',
-                'record_id': record_id,
-                'message': 'Already sent'
-            }
-
-        # 3. ATOMIČKI POSTAVI FLAG (RACE CONDITION ZAŠTITA)
-        # VAŽNO: debt_sent može biti NULL, False, ili 0 u bazi
-        # Koristimo is_not(True) da matchujemo sve osim eksplicitno True
-        result = db.session.execute(
-            update(TransactionRecord)
-            .where(TransactionRecord.id == record_id)
-            .where(TransactionRecord.debt_sent.isnot(True))
-            .values(debt_sent=True)
-        )
+        # 2. POSTAVI FLAG DA JE POSLATO
+        # Omogućeno ponovno slanje - korisnik potvrđuje kroz modal
+        record.debt_sent = True
         db.session.commit()
-
-        if result.rowcount == 0:
-            logger.info(f'[Task {self.request.id}] Record {record_id} already processed by another task')
-            return {
-                'status': 'skipped',
-                'record_id': record_id,
-                'message': 'Already sent by another task'
-            }
 
         # 4. UČITAJ POTREBNE PODATKE
         student = Student.query.get(record.student_id)
