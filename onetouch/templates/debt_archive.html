@@ -126,22 +126,59 @@
     </tbody>
 </table>
 
+<!-- send all modal -->
+<div class="modal fade" id="SendAllModal" tabindex="-1" role="dialog" aria-labelledby="SendAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="SendAllModalLabel">Potvrda slanja svim roditeljima</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Da li ste sigurni da želite da pošaljete uplatnice <strong>svim roditeljima</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                <a id="sendAllConfirmBtn" class="btn btn-primary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}">Pošaljite</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- send selected modal -->
+<div class="modal fade" id="SendSelectedModal" tabindex="-1" role="dialog" aria-labelledby="SendSelectedModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="SendSelectedModalLabel">Potvrda slanja selektovanim roditeljima</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Da li ste sigurni da želite da pošaljete uplatnice <strong>selektovanim roditeljima</strong>?</p>
+                <p class="mt-2 mb-0">Broj selektovanih učenika: <strong id="selectedCountText">0</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                <a id="sendSelectedConfirmBtn" class="btn btn-primary loading" href="#">Pošaljite</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- send slip modal -->
 <div class="modal fade" id="SendSlipModal" tabindex="-1" role="dialog" aria-labelledby="SendSlipModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header" id="SendSlipModalHeader">
                 <h5 class="modal-title" id="SendSlipModalLabel">Potvrda slanja</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="SendSlipModalForm" action="" method="post">
                 <div class="modal-body">
                     <p id="SendSlipModalText" class="mb-0">Učitavanje detalja...</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Otkažite</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
                     <button type="submit" id="SendSlipModalSubmit" class="btn btn-primary loading">Pošaljite</button>
                 </div>
             </form>
@@ -186,7 +223,7 @@
         <!-- Grupa 3: Email slanje -->
         {% if school.sending_email %}
         <div class="btn-group" role="group" aria-label="Email slanje">
-            <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="" title="Pošaljite mejlove svim roditeljima">
+            <a id="sendAllBtn" class="btn btn-secondary" href="#" title="Pošaljite mejlove svim roditeljima">
                 <i class="fa-solid fa-envelope"></i> Svim roditeljima
             </a>
             <a id="sendSelectedBtn" class="btn btn-secondary" href="#" title="Pošaljite mejlove samo selektovanim roditeljima">
@@ -311,7 +348,13 @@ $(document).ready(function() {
             window.open(url, '_blank');
         });
 
-        // Slanje selektovanih uplatnica roditeljima
+        // Slanje uplatnica svim roditeljima - otvori modal
+        $('#sendAllBtn').on('click', function(e) {
+            e.preventDefault();
+            $('#SendAllModal').modal('show');
+        });
+
+        // Slanje selektovanih uplatnica roditeljima - otvori modal
         $('#sendSelectedBtn').on('click', function(e) {
             e.preventDefault();
 
@@ -325,10 +368,14 @@ $(document).ready(function() {
                 return;
             }
 
-            if (confirm('Da li ste sigurni da želite da pošaljete uplatnice roditeljima selektovanih učenika?')) {
-                const url = '{{ url_for("transactions.send_selected_payment_slips", debt_id=request.view_args["debt_id"]) }}' + '?ids=' + selectedIds.join(',');
-                window.location.href = url;
-            }
+            // Ažuriraj broj selektovanih učenika u modalu
+            $('#selectedCountText').text(selectedIds.length);
+
+            // Postavi URL za potvrdu
+            const url = '{{ url_for("transactions.send_selected_payment_slips", debt_id=request.view_args["debt_id"]) }}' + '?ids=' + selectedIds.join(',');
+            $('#sendSelectedConfirmBtn').attr('href', url);
+
+            $('#SendSelectedModal').modal('show');
         });
 
         // Kreiranje tabele

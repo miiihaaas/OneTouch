@@ -51,7 +51,12 @@
         <!-- <a class="btn btn-primary mt-4" id="print-report" name="print-report" href="{{ url_for('static', filename='reports/report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a> -->
         <a class="btn btn-primary mt-4" id="print-report" name="print-report" title="Generiši izveštaj u PDF formatu" href="{{ url_for('transactions.get_report', filename='report_student.pdf') }}" target="_blank"><i class="fa-solid fa-print big-print"></i></a>
         {% if student.parent_email and school.sending_email %}
-        <a class="btn btn-primary mt-4 ms-2" id="email-report" name="email-report" title="Pošaljite izveštaj na mejl roditelja: {{ student.parent_email }}" href="{{ url_for('overviews.send_student_report_email', student_id=student.id, start_date=start_date, end_date=end_date) }}"><i class="fa-solid fa-envelope big-print"></i></a>
+        <a class="btn btn-primary mt-4 ms-2" id="email-report" name="email-report" title="Pošaljite izveštaj na mejl roditelja: {{ student.parent_email }}" href="#"
+            data-student-name="{{ student.student_name }} {{ student.student_surname }}"
+            data-parent-email="{{ student.parent_email }}"
+            data-action-url="{{ url_for('overviews.send_student_report_email', student_id=student.id, start_date=start_date, end_date=end_date) }}">
+            <i class="fa-solid fa-envelope big-print"></i>
+        </a>
         {% endif %}
     </div>
 </div>
@@ -185,6 +190,25 @@
     </div>
 </div>
 
+<!-- send report modal -->
+<div class="modal fade" id="SendReportModal" tabindex="-1" role="dialog" aria-labelledby="SendReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="SendReportModalLabel">Potvrda slanja izveštaja</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Da li ste sigurni da želite da pošaljete izveštaj za učenika <strong id="reportStudentName"></strong> na mejl <strong id="reportParentEmail"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                <a id="sendReportConfirmBtn" class="btn btn-primary loading" href="#">Pošaljite</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock content%}
 {% block scripts %}
 <script>
@@ -271,5 +295,24 @@
     
     // Dodavanje osluškivača događaja za školsku godinu
     document.getElementById("current-year").addEventListener("change", handleDateChange);
+
+    // Slanje izveštaja na mejl - otvori modal
+    var emailReportBtn = document.getElementById('email-report');
+    if (emailReportBtn) {
+        emailReportBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            var studentName = this.getAttribute('data-student-name');
+            var parentEmail = this.getAttribute('data-parent-email');
+            var actionUrl = this.getAttribute('data-action-url');
+            
+            document.getElementById('reportStudentName').textContent = studentName;
+            document.getElementById('reportParentEmail').textContent = parentEmail;
+            document.getElementById('sendReportConfirmBtn').setAttribute('href', actionUrl);
+            
+            var modal = new bootstrap.Modal(document.getElementById('SendReportModal'));
+            modal.show();
+        });
+    }
 </script>
 {% endblock %}

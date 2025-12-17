@@ -94,7 +94,13 @@
                     
                     {% if student.has_debts and not student.has_overpayments and school.sending_email %}
                     <!-- Standardne opcije za učenike koji imaju dugovanja, ali nemaju preplate -->
-                    <a href="{{url_for('overviews.send_debt_emails', student_id=student['student_id'])}}?min_debt_amount={{ min_debt_amount }}&selected_services={{ selected_services|join(',') }}" class="btn-x btn-primary-x send-email" data-student-id="{{ student['student_id'] }}" title="Pošalji e-mail" target="_blank">
+                    <a href="#" class="btn-x btn-primary-x send-email-btn"
+                        data-student-id="{{ student['student_id'] }}"
+                        data-student-name="{{ student['student_name'] }} {{ student['student_surname'] }}"
+                        data-parent-email="{{ student['parent_email'] or 'nije unet' }}"
+                        data-saldo="{{ '{:.2f}'.format(student['saldo']) }}"
+                        data-action-url="{{url_for('overviews.send_debt_emails', student_id=student['student_id'])}}?min_debt_amount={{ min_debt_amount }}&selected_services={{ selected_services|join(',') }}"
+                        title="Pošalji e-mail">
                         <i class="fa fa-envelope awesomeedit"></i>
                     </a>
                     {% endif %}
@@ -133,6 +139,30 @@
     </table>
 </div>
 {% endif %}
+
+<!-- send email modal -->
+<div class="modal fade" id="SendEmailModal" tabindex="-1" role="dialog" aria-labelledby="SendEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="SendEmailModalLabel">Potvrda slanja mejla</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2">Da li ste sigurni da želite da pošaljete obaveštenje o dugovanju sa priloženim uplatnicama za sve usluge?</p>
+                <ul class="mb-0">
+                    <li>Učenik: <strong id="emailStudentName"></strong></li>
+                    <li>Mejl roditelja: <strong id="emailParentEmail"></strong></li>
+                    <li>Saldo: <strong id="emailSaldo"></strong> RSD</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                <a id="sendEmailConfirmBtn" class="btn btn-primary loading" href="#">Pošaljite</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock content%}
 
 {% block scripts %}
@@ -179,19 +209,23 @@
             document.getElementById('saldoSum').textContent = saldoSum.toFixed(2);
         }
         
-        // // Event handler za generisanje PDF izveštaja
-        // $('.generate-pdf-reports').on('click', function(e) {
-        //     e.preventDefault();
-        //     var studentId = $(this).data('student-id');
-        //     window.open('/generate_pdf_reports/' + studentId, '_blank');
-        // });
-        
-        // // Event handler za slanje e-maila
-        // $('.send-email').on('click', function(e) {
-        //     e.preventDefault();
-        //     var studentId = $(this).data('student-id');
-        //     window.open('/send_debt_emails/' + studentId, '_blank');
-        // });
+        // Event handler za slanje e-maila - otvori modal
+        $(document).on('click', '.send-email-btn', function(e) {
+            e.preventDefault();
+            
+            var studentName = $(this).data('student-name');
+            var parentEmail = $(this).data('parent-email');
+            var saldo = $(this).data('saldo');
+            var actionUrl = $(this).data('action-url');
+            
+            $('#emailStudentName').text(studentName);
+            $('#emailParentEmail').text(parentEmail);
+            $('#emailSaldo').text(saldo);
+            $('#sendEmailConfirmBtn').attr('href', actionUrl);
+            
+            var modal = new bootstrap.Modal(document.getElementById('SendEmailModal'));
+            modal.show();
+        });
     });
 </script>
 {% endblock %}

@@ -772,6 +772,7 @@ def overview_debts():
                             'student_surname': record.transaction_record_student.student_surname,
                             'student_class': record.transaction_record_student.student_class,
                             'student_section': record.transaction_record_student.student_section,
+                            'parent_email': record.transaction_record_student.parent_email,
                             'student_debt': 0,
                             'student_payment': 0,
                             'saldo': 0
