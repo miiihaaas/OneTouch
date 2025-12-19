@@ -7,6 +7,7 @@ import logging
 import smtplib
 from onetouch import celery, mail, db, logger
 from onetouch.models import TransactionRecord, Student, School, SMTPErrorLog
+from onetouch.tasks.database import create_task_session
 from flask_mail import Message
 from flask import render_template
 from sqlalchemy import update
@@ -30,7 +31,7 @@ class PaymentTask(celery.Task):
 
 
 @celery.task(base=PaymentTask, bind=True, name='onetouch.tasks.generate_and_send_payment')
-def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_info, user_folder):
+def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_info, user_folder, database_uri):
     """
     Kompletna async generacija uplatnice i slanje mejla.
 
@@ -45,21 +46,25 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
         purpose_of_payment: Svrha uplate
         school_info: Informacije o školi
         user_folder: Putanja do foldera za PDF
+        database_uri: URI za konekciju na bazu podatke škole (SQLALCHEMY_DATABASE_URI)
 
     Returns:
         Dict sa statusom
     """
+    # Kreiraj sesiju za ovaj task
+    session = create_task_session(database_uri)
+
     try:
         logger.info(f'[Payment Task {self.request.id}] Starting for record {record_id}')
 
         # 1. UČITAJ PODATKE
-        record = TransactionRecord.query.get(record_id)
+        record = session.query(TransactionRecord).get(record_id)
         if not record:
             logger.error(f'[Payment Task {self.request.id}] Record {record_id} not found')
             return {'status': 'error', 'message': 'Record not found'}
 
         student = record.transaction_record_student
-        school = School.query.first()
+        school = session.query(School).first()
 
         # 2. VALIDACIJA
         if not student.parent_email or not student.send_mail:
@@ -72,13 +77,13 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
             return {'status': 'skipped', 'record_id': record_id, 'message': 'Already sent'}
 
         # 4. ATOMIČKI POSTAVI FLAG (RACE CONDITION ZAŠTITA)
-        result = db.session.execute(
+        result = session.execute(
             update(TransactionRecord)
             .where(TransactionRecord.id == record_id)
             .where(TransactionRecord.debt_sent.isnot(True))
             .values(debt_sent=True)
         )
-        db.session.commit()
+        session.commit()
 
         if result.rowcount == 0:
             logger.info(f'[Payment Task {self.request.id}] Record {record_id} already processed by another task')
@@ -111,7 +116,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
             logger.error(f'[Payment Task {self.request.id}] QR generation error: {str(e)}')
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
             raise
 
         # 6. GENERIŠI PDF
@@ -148,7 +153,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
             logger.error(f'[Payment Task {self.request.id}] PDF generation error: {str(e)}')
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
             # Cleanup QR codes on error
             try:
                 cleanup_qr_codes(project_folder, student.id)
@@ -185,7 +190,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
             logger.error(f'[Payment Task {self.request.id}] Template rendering failed: {str(e)}')
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
             raise
 
         # Priloži PDF
@@ -199,7 +204,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
             logger.error(f'[Payment Task {self.request.id}] PDF attachment failed: {str(e)}')
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
             raise
 
         # Pošalji
@@ -232,7 +237,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
 
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
 
             # Retry za određene greške
             if error_code != 550:
@@ -245,7 +250,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
 
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
 
             # Retry
             raise self.retry(exc=e)
@@ -272,3 +277,6 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
             'record_id': record_id,
             'message': f'Failed after {self.max_retries} attempts: {str(e)}'
         }
+    finally:
+        # Zatvori sesiju
+        session.close()

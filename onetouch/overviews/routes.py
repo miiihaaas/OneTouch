@@ -1019,17 +1019,22 @@ def send_student_report_email(student_id):
 
         # QUEUE-UJ ASINHRONI EMAIL TASK
         from onetouch.tasks.email_tasks import send_report_email_task
+        import os
 
         try:
             # Konvertuj datume u string format za task
             start_date_str = start_date.strftime('%Y-%m-%d') if isinstance(start_date, date) else start_date
             end_date_str = end_date.strftime('%Y-%m-%d') if isinstance(end_date, date) else end_date
 
+            # Dobij database URI za ovu školu
+            database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
             send_report_email_task.delay(
                 student_id=student_id,
                 report_type='student_report',
                 user_folder=user_folder,
                 file_name=file_name,
+                database_uri=database_uri,
                 start_date=start_date_str,
                 end_date=end_date_str
             )
@@ -1083,11 +1088,15 @@ def generate_pdf_reports(student_id):
         # QUEUE-UJ ASINHRONI TASK ZA GENERISANJE PDF-OVA! 🚀
         from onetouch.tasks.report_tasks import generate_pdf_reports_task
 
+        # Dobij database URI za ovu školu
+        database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
         generate_pdf_reports_task.delay(
             student_id=student_id,
             min_debt_amount=min_debt_amount,
             selected_services=selected_services,
-            user_folder=user_folder
+            user_folder=user_folder,
+            database_uri=database_uri
         )
 
         logging.info(f'Queued PDF report generation task for student {student_id}')

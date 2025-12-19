@@ -411,7 +411,10 @@ def retry_failed_email(record_id):
         user_folder = os.path.join(project_folder, 'static', 'payment_slips', f'user_{current_user.id}')
         file_name = f'uplatnica_{record.id}.pdf'
 
-        send_email_task.delay(record.id, user_folder, file_name)
+        # Dobij database URI za ovu školu
+        database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
+        send_email_task.delay(record.id, user_folder, file_name, database_uri)
 
         flash(f'Mejl za učenika {record.transaction_record_student.student_name} je ponovo queue-ovan.', 'success')
         return redirect(url_for('main.email_monitoring'))

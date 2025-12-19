@@ -3,6 +3,7 @@ Celery task-ovi za healthcheck SMTP servera.
 """
 from onetouch import celery, mail, logger
 from onetouch.models import School
+from onetouch.tasks.database import create_task_session, get_all_school_databases
 from datetime import datetime
 import smtplib
 
@@ -65,10 +66,11 @@ def retry_failed_emails():
     i pokušava da ih ponovo pošalje.
 
     Izvršava se periodično (npr. svakih 6 sati).
+
+    MULTI-TENANT: Iterira kroz sve škole i retry-uje njihove failed emails.
     """
     from onetouch.models import TransactionRecord, SMTPErrorLog
     from onetouch.tasks.email_tasks import send_email_task
-    from onetouch import db
     from sqlalchemy import and_
     from datetime import timedelta
     import os
@@ -77,55 +79,79 @@ def retry_failed_emails():
     try:
         logger.info('[Retry Failed Emails] Starting...')
 
-        # Pronađi sve record-e koji nisu poslati ali imaju error log
-        # i greška je starija od 1 sat
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        # Dobij sve school database URI-jeve
+        all_school_uris = get_all_school_databases()
 
-        # Dobijamo distinct record IDs iz error log-a
-        failed_record_ids = (db.session.query(SMTPErrorLog.record_id)
-                             .filter(
-                                 and_(
-                                     SMTPErrorLog.resolved == False,
-                                     SMTPErrorLog.timestamp <= one_hour_ago,
-                                     SMTPErrorLog.error_type != 'SMTP_550',  # Ne retry-uj loše email adrese
-                                     SMTPErrorLog.record_id.isnot(None)
-                                 )
-                             )
-                             .distinct()
-                             .limit(50)  # Max 50 odjednom
-                             .all())
+        total_retry_count = 0
 
-        # Uzmi record-e koji nisu poslati
-        failed_records = []
-        for (record_id,) in failed_record_ids:
-            record = TransactionRecord.query.get(record_id)
-            if record and record.debt_sent == False:
-                failed_records.append(record)
+        # Iteriraj kroz sve škole
+        for database_uri in all_school_uris:
+            try:
+                # Kreiraj sesiju za ovu školu
+                session = create_task_session(database_uri)
 
-        retry_count = 0
-        for record in failed_records:
-            # Proveri da li ima studenta
-            if not record.transaction_record_student:
-                continue
+                try:
+                    # Pronađi sve record-e koji nisu poslati ali imaju error log
+                    # i greška je starija od 1 sat
+                    one_hour_ago = datetime.utcnow() - timedelta(hours=1)
 
-            # Queue-uj ponovo
-            # Pretpostavljamo da je user_id = 1 (admin) ako nema drugačijih informacija
-            user_folder = os.path.join(project_folder, 'static', 'payment_slips', f'user_1')
-            file_name = f'uplatnica_{record.id}.pdf'
+                    # Dobijamo distinct record IDs iz error log-a
+                    failed_record_ids = (session.query(SMTPErrorLog.record_id)
+                                         .filter(
+                                             and_(
+                                                 SMTPErrorLog.resolved == False,
+                                                 SMTPErrorLog.timestamp <= one_hour_ago,
+                                                 SMTPErrorLog.error_type != 'SMTP_550',  # Ne retry-uj loše email adrese
+                                                 SMTPErrorLog.record_id.isnot(None)
+                                             )
+                                         )
+                                         .distinct()
+                                         .limit(50)  # Max 50 odjednom po školi
+                                         .all())
 
-            # Proveri da li PDF postoji
-            full_path = os.path.join(user_folder, file_name)
-            if not os.path.exists(full_path):
-                logger.warning(f'[Retry Failed Emails] PDF not found for record {record.id}: {full_path}')
-                continue
+                    # Uzmi record-e koji nisu poslati
+                    failed_records = []
+                    for (record_id,) in failed_record_ids:
+                        record = session.query(TransactionRecord).get(record_id)
+                        if record and record.debt_sent == False:
+                            failed_records.append(record)
 
-            send_email_task.delay(record.id, user_folder, file_name)
-            retry_count += 1
+                    retry_count = 0
+                    for record in failed_records:
+                        # Proveri da li ima studenta
+                        if not record.transaction_record_student:
+                            continue
 
-        logger.info(f'[Retry Failed Emails] Re-queued {retry_count} emails')
+                        # Queue-uj ponovo sa database_uri
+                        # Pretpostavljamo da je user_id = 1 (admin) ako nema drugačijih informacija
+                        user_folder = os.path.join(project_folder, 'static', 'payment_slips', f'user_1')
+                        file_name = f'uplatnica_{record.id}.pdf'
+
+                        # Proveri da li PDF postoji
+                        full_path = os.path.join(user_folder, file_name)
+                        if not os.path.exists(full_path):
+                            logger.warning(f'[Retry Failed Emails] PDF not found for record {record.id}: {full_path}')
+                            continue
+
+                        # VAŽNO: Prosleđujemo database_uri da task zna na koju bazu da se konektuje
+                        send_email_task.delay(record.id, user_folder, file_name, database_uri)
+                        retry_count += 1
+
+                    total_retry_count += retry_count
+                    logger.info(f'[Retry Failed Emails] Re-queued {retry_count} emails for school: {database_uri.split("/")[-1]}')
+
+                finally:
+                    # Zatvori sesiju za ovu školu
+                    session.close()
+
+            except Exception as school_error:
+                logger.error(f'[Retry Failed Emails] Error processing school {database_uri}: {str(school_error)}')
+                continue  # Nastavi sa sledećom školom
+
+        logger.info(f'[Retry Failed Emails] Total re-queued {total_retry_count} emails across all schools')
         return {
             'status': 'success',
-            'retry_count': retry_count,
+            'retry_count': total_retry_count,
             'timestamp': datetime.utcnow().isoformat()
         }
 

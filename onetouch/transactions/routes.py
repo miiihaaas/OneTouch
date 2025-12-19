@@ -919,12 +919,16 @@ def send_payment_slips(debt_id):
                 skipped_count += 1
                 continue
 
+            # Dobij database URI za ovu školu
+            database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
             # SAMO QUEUE-UJ TASK - SVE OSTALO SE RADI U POZADINI! 🚀
             generate_and_send_payment_task.delay(
                 record_id=record.id,
                 purpose_of_payment=purpose_of_payment,
                 school_info=school_info,
-                user_folder=user_folder
+                user_folder=user_folder,
+                database_uri=database_uri
             )
             queued_count += 1
 
@@ -1086,8 +1090,11 @@ def send_single_payment_slip(record_id):
 
             logging.info(f'Generated PDF: {pdf_path}')
 
+            # Dobij database URI za ovu školu
+            database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
             # QUEUE-UJ ASINHRONI EMAIL TASK
-            send_email_task.delay(record.id, user_folder, file_name)
+            send_email_task.delay(record.id, user_folder, file_name, database_uri)
 
             # Cleanup QR codes
             cleanup_qr_codes(project_folder, current_user.id)
@@ -1213,8 +1220,11 @@ def send_selected_payment_slips(debt_id):
 
                 logging.info(f'Generated PDF: {pdf_path}')
 
+                # Dobij database URI za ovu školu
+                database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
                 # QUEUE-UJ ASINHRONI EMAIL TASK
-                send_email_task.delay(record.id, user_folder, file_name)
+                send_email_task.delay(record.id, user_folder, file_name, database_uri)
                 queued_count += 1
 
                 student_full_name = f"{student.student_name} {student.student_surname}"

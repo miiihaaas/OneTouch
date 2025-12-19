@@ -6,6 +6,7 @@ import os
 import logging
 from onetouch import celery, db, logger
 from onetouch.models import Student, School
+from onetouch.tasks.database import create_task_session
 from fpdf import FPDF
 
 
@@ -25,7 +26,7 @@ class ReportTask(celery.Task):
 
 
 @celery.task(base=ReportTask, bind=True, name='onetouch.tasks.generate_pdf_reports')
-def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_services, user_folder):
+def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_services, user_folder, database_uri):
     """
     Kompletna async generacija PDF izveštaja za učenika.
 
@@ -40,10 +41,14 @@ def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_servic
         min_debt_amount: Minimalni iznos duga za filtriranje
         selected_services: Lista ID-jeva selektovanih usluga
         user_folder: Putanja do foldera za PDF-ove
+        database_uri: URI za konekciju na bazu podatke škole (SQLALCHEMY_DATABASE_URI)
 
     Returns:
         Dict sa putanjama do generisanih PDF-ova
     """
+    # Kreiraj sesiju za ovaj task
+    session = create_task_session(database_uri)
+
     try:
         logger.info(f'[Report Task {self.request.id}] Starting for student {student_id}')
 
@@ -62,7 +67,7 @@ def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_servic
             logger.info(f'[Report Task {self.request.id}] Student {student_id} has no debts')
             return {'status': 'error', 'message': 'No debts found'}
 
-        school = School.query.first()
+        school = session.query(School).first()
 
         # Ensure user folder exists
         os.makedirs(user_folder, exist_ok=True)
@@ -247,3 +252,6 @@ def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_servic
             'student_id': student_id,
             'message': f'Failed after {self.max_retries} attempts: {str(e)}'
         }
+    finally:
+        # Zatvori sesiju
+        session.close()

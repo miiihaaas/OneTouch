@@ -5,6 +5,7 @@ import smtplib
 import socket
 from onetouch import celery, mail, db, logger
 from onetouch.models import TransactionRecord, Student, School, SMTPErrorLog
+from onetouch.tasks.database import create_task_session
 from flask_mail import Message
 from flask import render_template
 from sqlalchemy import update
@@ -36,7 +37,7 @@ class EmailTask(celery.Task):
 
 
 @celery.task(base=EmailTask, bind=True, name='onetouch.tasks.send_email')
-def send_email_task(self, record_id, user_folder, file_name):
+def send_email_task(self, record_id, user_folder, file_name, database_uri):
     """
     Asinhroni task za slanje email-a sa uplatnicom.
 
@@ -45,6 +46,7 @@ def send_email_task(self, record_id, user_folder, file_name):
         record_id: ID TransactionRecord-a
         user_folder: Putanja do foldera sa PDF-om
         file_name: Ime PDF fajla (npr. 'uplatnica_123.pdf')
+        database_uri: URI za konekciju na bazu podatke škole (SQLALCHEMY_DATABASE_URI)
 
     Returns:
         Dict sa statusom slanja:
@@ -56,11 +58,14 @@ def send_email_task(self, record_id, user_folder, file_name):
     Raises:
         Exception: Ako slanje ne uspe posle svih retry-a
     """
+    # Kreiraj sesiju za ovaj task
+    session = create_task_session(database_uri)
+
     try:
         logger.info(f'[Task {self.request.id}] Starting email task for record {record_id}')
 
         # 1. UČITAJ RECORD IZ BAZE
-        record = TransactionRecord.query.get(record_id)
+        record = session.query(TransactionRecord).get(record_id)
         if not record:
             logger.error(f'[Task {self.request.id}] Record {record_id} not found')
             return {
@@ -72,11 +77,11 @@ def send_email_task(self, record_id, user_folder, file_name):
         # 2. POSTAVI FLAG DA JE POSLATO
         # Omogućeno ponovno slanje - korisnik potvrđuje kroz modal
         record.debt_sent = True
-        db.session.commit()
+        session.commit()
 
         # 4. UČITAJ POTREBNE PODATKE
-        student = Student.query.get(record.student_id)
-        school = School.query.first()
+        student = session.query(Student).get(record.student_id)
+        school = session.query(School).first()
 
         if not student:
             logger.error(f'[Task {self.request.id}] Student not found for record {record_id}')
@@ -145,7 +150,7 @@ def send_email_task(self, record_id, user_folder, file_name):
             logger.error(f'[Task {self.request.id}] PDF attachment failed: {str(e)}')
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
             raise
 
         # 9. POŠALJI EMAIL
@@ -178,7 +183,7 @@ def send_email_task(self, record_id, user_folder, file_name):
 
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
 
             # Neki error kodovi ne treba retry-ovati
             if error_code == 550:  # Mailbox unavailable - loš email
@@ -208,7 +213,7 @@ def send_email_task(self, record_id, user_folder, file_name):
 
             # Rollback debt_sent flag
             record.debt_sent = False
-            db.session.commit()
+            session.commit()
 
             # Retry
             raise self.retry(exc=e)
@@ -239,10 +244,13 @@ def send_email_task(self, record_id, user_folder, file_name):
             'record_id': record_id,
             'message': f'Failed after {self.max_retries} attempts: {str(e)}'
         }
+    finally:
+        # Zatvori sesiju
+        session.close()
 
 
 @celery.task(base=EmailTask, bind=True, name='onetouch.tasks.send_report_email')
-def send_report_email_task(self, student_id, report_type, user_folder, file_name, start_date=None, end_date=None):
+def send_report_email_task(self, student_id, report_type, user_folder, file_name, database_uri, start_date=None, end_date=None):
     """
     Asinhroni task za slanje izveštaja mejlom.
 
@@ -252,18 +260,22 @@ def send_report_email_task(self, student_id, report_type, user_folder, file_name
         report_type: 'student_report' ili 'debt_report'
         user_folder: Putanja do foldera sa PDF-om
         file_name: Ime PDF fajla
+        database_uri: URI za konekciju na bazu podatke škole (SQLALCHEMY_DATABASE_URI)
         start_date: Početni datum (opciono)
         end_date: Krajnji datum (opciono)
 
     Returns:
         Dict sa statusom slanja
     """
+    # Kreiraj sesiju za ovaj task
+    session = create_task_session(database_uri)
+
     try:
         logger.info(f'[Task {self.request.id}] Starting report email task for student {student_id}')
 
         # 1. UČITAJ PODATKE
-        student = Student.query.get(student_id)
-        school = School.query.first()
+        student = session.query(Student).get(student_id)
+        school = session.query(School).first()
 
         if not student:
             logger.error(f'[Task {self.request.id}] Student {student_id} not found')
@@ -375,3 +387,6 @@ def send_report_email_task(self, student_id, report_type, user_folder, file_name
             'student_id': student_id,
             'message': f'Failed after {self.max_retries} attempts: {str(e)}'
         }
+    finally:
+        # Zatvori sesiju
+        session.close()
