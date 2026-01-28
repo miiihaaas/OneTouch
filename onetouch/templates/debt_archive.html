@@ -101,7 +101,21 @@
                 {% if (record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount) > 0 %}
                     {% if record.transaction_record_student.send_mail and school.sending_email %}
                     <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
-                    <a class="btn-x btn-primary-x loading" href="{{url_for('transactions.send_single_payment_slip', record_id = record.id)}}" title="{% if record.debt_sent %}Ponovo generišite i pošaljite uplatnicu roditelju{% else %}Generišite i pošaljite uplaticu roditelju{% endif %}">{% if record.debt_sent %}<i class="fa-solid fa-envelope awesomedelete"></i>{% else %}<i class="fa-regular fa-envelope awesomedelete"></i>{% endif %}</a>
+                    <a
+                        href="#"
+                        class="btn-x btn-primary-x"
+                        data-send-slip="1"
+                        data-action-url="{{ url_for('transactions.send_single_payment_slip', record_id=record.id) }}"
+                        data-parent-email="{{ record.transaction_record_student.parent_email or '' }}"
+                        data-student-name="{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}"
+                        data-already-sent="{% if record.debt_sent %}1{% else %}0{% endif %}"
+                        title="{% if record.debt_sent %}Ponovo pošaljite uplatnicu roditelju{% else %}Pošaljite uplatnicu roditelju{% endif %}">
+                        {% if record.debt_sent %}
+                            <i class="fa-solid fa-envelope awesomedelete"></i>
+                        {% else %}
+                            <i class="fa-regular fa-envelope awesomedelete"></i>
+                        {% endif %}
+                    </a>
                     {% else %}
                     <a class="btn-x btn-primary-x" href="{{url_for('transactions.single_payment_slip', record_id = record.id)}}" target="_blank" title="Generišite uplaticu"><i class="fa-solid fa-print awesomeedit"></i></a>
                     {% endif %}
@@ -111,6 +125,67 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- send all modal -->
+<div class="modal fade" id="SendAllModal" tabindex="-1" role="dialog" aria-labelledby="SendAllModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="SendAllModalLabel">Potvrda slanja svim roditeljima</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Da li ste sigurni da želite da pošaljete uplatnice <strong>svim roditeljima</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                <a id="sendAllConfirmBtn" class="btn btn-primary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}">Pošaljite</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- send selected modal -->
+<div class="modal fade" id="SendSelectedModal" tabindex="-1" role="dialog" aria-labelledby="SendSelectedModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="SendSelectedModalLabel">Potvrda slanja selektovanim roditeljima</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Da li ste sigurni da želite da pošaljete uplatnice <strong>selektovanim roditeljima</strong>?</p>
+                <p class="mt-2 mb-0">Broj selektovanih učenika: <strong id="selectedCountText">0</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                <a id="sendSelectedConfirmBtn" class="btn btn-primary loading" href="#">Pošaljite</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- send slip modal -->
+<div class="modal fade" id="SendSlipModal" tabindex="-1" role="dialog" aria-labelledby="SendSlipModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" id="SendSlipModalHeader">
+                <h5 class="modal-title" id="SendSlipModalLabel">Potvrda slanja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="SendSlipModalForm" action="" method="post">
+                <div class="modal-body">
+                    <p id="SendSlipModalText" class="mb-0">Učitavanje detalja...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Otkažite</button>
+                    <button type="submit" id="SendSlipModalSubmit" class="btn btn-primary loading">Pošaljite</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-9">
         <div class="form-group">
@@ -148,7 +223,7 @@
         <!-- Grupa 3: Email slanje -->
         {% if school.sending_email %}
         <div class="btn-group" role="group" aria-label="Email slanje">
-            <a class="btn btn-secondary loading" href="{{ url_for('transactions.send_payment_slips', debt_id=request.view_args['debt_id']) }}" target="" title="Pošaljite mejlove svim roditeljima">
+            <a id="sendAllBtn" class="btn btn-secondary" href="#" title="Pošaljite mejlove svim roditeljima">
                 <i class="fa-solid fa-envelope"></i> Svim roditeljima
             </a>
             <a id="sendSelectedBtn" class="btn btn-secondary" href="#" title="Pošaljite mejlove samo selektovanim roditeljima">
@@ -206,6 +281,50 @@
         }
         
 $(document).ready(function() {
+        // Linkovi za slanje uplatnice: popuni modal i prikaži ga
+        $(document).on('click', 'a[data-send-slip="1"]', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const link = $(this);
+            const actionUrl = link.data('action-url');
+            const parentEmail = link.data('parent-email') || '';
+            const studentName = link.data('student-name') || '';
+            const alreadySent = String(link.data('already-sent')) === '1';
+
+            const modal = $('#SendSlipModal');
+            modal.find('#SendSlipModalForm').attr('action', actionUrl);
+
+            const safeEmail = parentEmail ? parentEmail : 'nije unet';
+            const safeStudent = studentName ? studentName : 'nije izabran';
+
+            const header = modal.find('#SendSlipModalHeader');
+            const submitBtn = modal.find('#SendSlipModalSubmit');
+
+            header.removeClass('bg-primary bg-warning bg-danger text-white text-dark');
+            submitBtn.removeClass('btn-warning');
+            submitBtn.addClass('btn-primary');
+
+            if (alreadySent) {
+                modal.find('#SendSlipModalLabel').text('Potvrda ponovnog slanja');
+                header.addClass('bg-danger text-dark');
+                submitBtn.text('Ponovo pošaljite');
+                modal.find('#SendSlipModalText').html(
+                    'Da li ste sigurni da želite <strong>ponovo</strong> da generišete i pošaljete uplatnicu roditelju na mejl <strong>' + safeEmail + '</strong> za učenika <strong>' + safeStudent + '</strong>?' 
+                );
+            } else {
+                modal.find('#SendSlipModalLabel').text('Potvrda slanja');
+                header.addClass('bg-primary text-white');
+                submitBtn.text('Pošaljite');
+                modal.find('#SendSlipModalText').html(
+                    'Da li ste sigurni da želite da generišete i pošaljete uplatnicu roditelju na mejl <strong>' + safeEmail + '</strong> za učenika <strong>' + safeStudent + '</strong>?' 
+                );
+            }
+
+            modal.modal('show');
+        });
+
         // Selektovanje/deselektovanje svih učenika
         $('#selectAll').on('change', function() {
             $('.student-select').prop('checked', $(this).prop('checked'));
@@ -229,7 +348,13 @@ $(document).ready(function() {
             window.open(url, '_blank');
         });
 
-        // Slanje selektovanih uplatnica roditeljima
+        // Slanje uplatnica svim roditeljima - otvori modal
+        $('#sendAllBtn').on('click', function(e) {
+            e.preventDefault();
+            $('#SendAllModal').modal('show');
+        });
+
+        // Slanje selektovanih uplatnica roditeljima - otvori modal
         $('#sendSelectedBtn').on('click', function(e) {
             e.preventDefault();
 
@@ -243,10 +368,14 @@ $(document).ready(function() {
                 return;
             }
 
-            if (confirm('Da li ste sigurni da želite da pošaljete uplatnice roditeljima selektovanih učenika?')) {
-                const url = '{{ url_for("transactions.send_selected_payment_slips", debt_id=request.view_args["debt_id"]) }}' + '?ids=' + selectedIds.join(',');
-                window.location.href = url;
-            }
+            // Ažuriraj broj selektovanih učenika u modalu
+            $('#selectedCountText').text(selectedIds.length);
+
+            // Postavi URL za potvrdu
+            const url = '{{ url_for("transactions.send_selected_payment_slips", debt_id=request.view_args["debt_id"]) }}' + '?ids=' + selectedIds.join(',');
+            $('#sendSelectedConfirmBtn').attr('href', url);
+
+            $('#SendSelectedModal').modal('show');
         });
 
         // Kreiranje tabele
@@ -285,6 +414,8 @@ $(document).ready(function() {
         
         const inputFieldPurposeOfPayment = $('#purpose_of_payment');
         const errorMessage = $("#errorMessage");
+        const buttonSave = $('#save_button');
+        const buttonPrint = $('#print_button');
         inputFieldPurposeOfPayment.on('input', function() {
             if (inputFieldPurposeOfPayment.val() === "") {
                 buttonSave.prop('disabled', true);
@@ -299,8 +430,6 @@ $(document).ready(function() {
                 errorMessage.hide(); // Sakrijte errorMessage ako nije potrebno
             }
         });
-        const buttonSave = $('#save_button');
-        const buttonPrint = $('#print_button');
 
         buttonSave.on('click', (event) => {
             console.log('test radi - pritisnuto je dugme sačuvaj. nastavi kodiranje')

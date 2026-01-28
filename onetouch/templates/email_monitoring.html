@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Email Monitoring Dashboard</h1>
+
+    <!-- Statistika -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Poslato (24h)</h5>
+                    <h2>{{ sent_24h }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Greške (24h)</h5>
+                    <h2>{{ errors_24h }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Aktivni Task-ovi</h5>
+                    <h2>{{ queue_status.active if queue_status else 'N/A' }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Worker-i</h5>
+                    <h2>{{ queue_status.workers if queue_status else 'N/A' }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Greške po tipu -->
+    {% if error_stats %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Greške po Tipu</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Tip Greške</th>
+                        <th>Broj</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in error_stats %}
+                    <tr>
+                        <td>{{ stat.error_type }}</td>
+                        <td><span class="badge badge-danger">{{ stat.count }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Poslednje greške -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Poslednje Greške (50)</h5>
+        </div>
+        <div class="card-body">
+            {% if recent_errors %}
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Vreme</th>
+                            <th>Tip</th>
+                            <th>Email</th>
+                            <th>Poruka</th>
+                            <th>Retry Count</th>
+                            <th>Akcije</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in recent_errors %}
+                        <tr class="{% if not error.resolved %}table-danger{% endif %}">
+                            <td>{{ error.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td><code>{{ error.error_type }}</code></td>
+                            <td>{{ error.recipient_email }}</td>
+                            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                                {{ error.error_message }}
+                            </td>
+                            <td>{{ error.retry_count }}</td>
+                            <td>
+                                {% if not error.resolved %}
+                                    <form method="POST" action="{{ url_for('main.resolve_smtp_error', error_id=error.id) }}" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button type="submit" class="btn btn-sm btn-success">Reši</button>
+                                    </form>
+                                {% endif %}
+                                {% if error.record_id %}
+                                    <form method="POST" action="{{ url_for('main.retry_failed_email', record_id=error.record_id) }}" style="display: inline;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                        <button type="submit" class="btn btn-sm btn-warning">Retry</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">Nema grešaka za prikaz.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh svaka 2 minuta
+    setTimeout(function(){
+        location.reload();
+    }, 120000);
+</script>
+{% endblock %}

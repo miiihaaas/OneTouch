@@ -113,6 +113,7 @@
                   <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
                     <a class="dropdown-item loading" href="{{ url_for('main.users') }}">Korisnici</a>
                     <a class="dropdown-item loading" href="{{ url_for('main.school_license') }}">Škola</a>
+                    <a class="dropdown-item loading" href="{{ url_for('main.email_monitoring') }}">Monitoring mejlova</a>
                   </div>
                 </li>
                 {% endif %}
@@ -243,6 +244,7 @@
                 <div class="accordion-body">
                   <a class="nav-item nav-link loading" href="{{ url_for('main.users') }}" id="users">Korisnici</a>
                   <a class="nav-item nav-link loading" href="{{ url_for('main.school_license') }}" id="school_license">Škola</a>
+                  <a class="nav-item nav-link loading" href="{{ url_for('main.email_monitoring') }}" id="email_monitoring">Monitoring mejlova</a>
                 </div>
               </div>
             </div>
@@ -412,6 +414,7 @@
         "supplier_payments_archive_list": { section: '#collapseFour', link: '#supplier_payments_archive_list' },
         "users": { section: '#collapseFive', link: '#users' },
         "school_license": { section: '#collapseFive', link: '#school_license' },
+        "email_monitoring": { section: '#collapseFive', link: '#email_monitoring' }
 			};
 
 			// Sortiramo ključeve od najdužeg ka najkraćem da bi izbegli lažne matcheve
