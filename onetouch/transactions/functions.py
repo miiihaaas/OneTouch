@@ -968,56 +968,75 @@ def gen_report_student(data, unique_services_list, student, start_date, end_date
         # Redovi tabele
         pdf.set_fill_color(255, 255, 255)
         for record in data:
-            if record['service_item_id'] == service['id']:
+            if record['service_item_id'] != service['id']:
+                continue
+            
+            pdf.set_font('DejaVuSansCondensed', '', 9)
+            
+            # Priprema teksta za opis usluge
+            opis_text = record["description"]
+            if record.get("payment_amount") and record.get("student_payment_id"):
+                opis_text += f' (izvod: {record["student_payment_id"]})'
+            
+            # Računanje broja linija za visinu reda
+            temp_lines = pdf.multi_cell(88, 4, opis_text, split_only=True)
+            num_lines = len(temp_lines)
+            row_height = num_lines * 4
+            
+            # Provera da li ima dovoljno prostora na stranici
+            page_height = pdf.h - pdf.b_margin
+            if pdf.get_y() + row_height > page_height:
+                pdf.add_page()
+                # Ponovo iscrtaj zaglavlje tabele na novoj stranici
+                pdf.set_font('DejaVuSansCondensed', 'B', 13)
+                pdf.cell(0, 7, f'({service["id"]:03}) {service["service_name"]} (nastavak)', new_x='LMARGIN', new_y='NEXT', align='L')
+                pdf.set_fill_color(220, 220, 220)
+                pdf.set_font('DejaVuSansCondensed', 'B', 9)
+                pdf.cell(24, 6, 'Datum', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+                pdf.cell(88, 6, 'Opis usluge', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+                pdf.cell(25, 6, 'Zaduženje', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+                pdf.cell(25, 6, 'Uplate', border=1, new_x='RIGHT', new_y='TOP', align='C', fill=True)
+                pdf.cell(23, 6, 'Saldo', border=1, new_x='LMARGIN', new_y='NEXT', align='C', fill=True)
+                pdf.set_fill_color(255, 255, 255)
                 pdf.set_font('DejaVuSansCondensed', '', 9)
+            
+            # Pamćenje početne pozicije
+            y_start = pdf.get_y()
+            x_start = pdf.get_x()
                 
-                # Priprema teksta za opis usluge
-                opis_text = record["description"]
-                if record.get("payment_amount") and record.get("student_payment_id"):
-                    opis_text += f' (izvod: {record["student_payment_id"]})'
+            # Datum kolona
+            pdf.rect(x_start, y_start, 24, row_height)
+            pdf.set_xy(x_start, y_start + (row_height - 4) / 2)
+            pdf.cell(24, 4, f'{record["date"].strftime("%d.%m.%Y.")}', border=0, new_x='RIGHT', new_y='TOP', align='C')
+            
+            # Opis usluge kolona sa multi_cell
+            pdf.set_xy(x_start + 24, y_start)
+            pdf.multi_cell(88, 4, opis_text, border=1, align='L')
+            
+            # Zaduženje kolona
+            pdf.set_xy(x_start + 112, y_start)
+            pdf.rect(x_start + 112, y_start, 25, row_height)
+            pdf.set_xy(x_start + 112, y_start + (row_height - 4) / 2)
+            pdf.cell(25, 4, f'{record["debt_amount"]:.2f}', border=0, new_x='RIGHT', new_y='TOP', align='R')
+            
+            # Uplate kolona
+            pdf.set_xy(x_start + 137, y_start)
+            pdf.rect(x_start + 137, y_start, 25, row_height)
+            pdf.set_xy(x_start + 137, y_start + (row_height - 4) / 2)
+            pdf.cell(25, 4, f'{record["payment_amount"]:.2f}', border=0, new_x='RIGHT', new_y='TOP', align='R')
+            
+            # Saldo kolona
+            pdf.set_xy(x_start + 162, y_start)
+            pdf.rect(x_start + 162, y_start, 23, row_height)
+            pdf.set_xy(x_start + 162, y_start + (row_height - 4) / 2)
+            pdf.cell(23, 4, f'{record["saldo"]:.2f}', border=0, new_x='LMARGIN', new_y='TOP', align='R')
+            
+            # Postavljanje pozicije na početak sledećeg reda
+            pdf.set_xy(x_start, y_start + row_height)
+            
+            zaduzenje += record['debt_amount']
+            uplate += record['payment_amount']
                 
-                # Računanje broja linija za visinu reda
-                temp_lines = pdf.multi_cell(88, 4, opis_text, split_only=True)
-                num_lines = len(temp_lines)
-                row_height = num_lines * 4
-                
-                # Pamćenje početne pozicije
-                y_start = pdf.get_y()
-                x_start = pdf.get_x()
-                
-                # Datum kolona
-                pdf.rect(x_start, y_start, 24, row_height)
-                pdf.set_xy(x_start, y_start + (row_height - 4) / 2)
-                pdf.cell(24, 4, f'{record["date"].strftime("%d.%m.%Y.")}', border=0, new_x='RIGHT', new_y='TOP', align='C')
-                
-                # Opis usluge kolona sa multi_cell
-                pdf.set_xy(x_start + 24, y_start)
-                pdf.multi_cell(88, 4, opis_text, border=1, align='L')
-                
-                # Zaduženje kolona
-                pdf.set_xy(x_start + 112, y_start)
-                pdf.rect(x_start + 112, y_start, 25, row_height)
-                pdf.set_xy(x_start + 112, y_start + (row_height - 4) / 2)
-                pdf.cell(25, 4, f'{record["debt_amount"]:.2f}', border=0, new_x='RIGHT', new_y='TOP', align='R')
-                
-                # Uplate kolona
-                pdf.set_xy(x_start + 137, y_start)
-                pdf.rect(x_start + 137, y_start, 25, row_height)
-                pdf.set_xy(x_start + 137, y_start + (row_height - 4) / 2)
-                pdf.cell(25, 4, f'{record["payment_amount"]:.2f}', border=0, new_x='RIGHT', new_y='TOP', align='R')
-                
-                # Saldo kolona
-                pdf.set_xy(x_start + 162, y_start)
-                pdf.rect(x_start + 162, y_start, 23, row_height)
-                pdf.set_xy(x_start + 162, y_start + (row_height - 4) / 2)
-                pdf.cell(23, 4, f'{record["saldo"]:.2f}', border=0, new_x='LMARGIN', new_y='TOP', align='R')
-                
-                # Postavljanje pozicije na početak sledećeg reda
-                pdf.set_xy(x_start, y_start + row_height)
-                
-                zaduzenje += record['debt_amount']
-                uplate += record['payment_amount']
-        
         pdf.ln(5)
     saldo = zaduzenje - uplate
     
