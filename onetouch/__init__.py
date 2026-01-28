@@ -37,8 +37,12 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
 #kod ispod treba da reši problem Internal Server Error - komunikacija sa serverom
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    "pool_pre_ping": True,
-    "pool_recycle": 300,
+    "pool_pre_ping": True,       # Testira konekciju pre korišćenja
+    "pool_recycle": 300,          # Recycle konekcije posle 5 minuta
+    "pool_size": 20,              # Povećano sa 5 na 20 za Celery worker-e
+    "max_overflow": 10,           # Dodatnih 10 konekcija u peak-u
+    "pool_timeout": 30,           # Timeout posle 30s ako nema slobodnih
+    "echo_pool": False,           # Debug pool events (True za debugging)
 }
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['FLASK_APP'] = 'run.py'
@@ -62,7 +66,9 @@ app.config['LICENSE_NOTIFICATION_DAYS'] = [int(x) for x in os.getenv('LICENSE_NO
 app.config['LICENSE_NOTIFICATION_EMAILS'] = os.getenv('LICENSE_NOTIFICATION_EMAILS').split(',')
 mail = Mail(app)
 
-
+# NOVO: Celery inicijalizacija
+from onetouch.celery_config import make_celery
+celery = make_celery(app)
 
 logger.info('Aplikacija je pokrenuta')
 
@@ -123,7 +129,9 @@ scheduler = None
 def check_license_expiry():
     warning_shown = {}
     school = None
-    if current_user.is_authenticated:
+    # Proveri da li current_user postoji (nije None) i da li je autentifikovan
+    # Ovo je potrebno jer context processor se poziva i u Celery task-ovima gde current_user ne postoji
+    if current_user and hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
         school = current_user.user_school
         if school and school.license_expiry_date:
             days_left = school.days_until_license_expiry()

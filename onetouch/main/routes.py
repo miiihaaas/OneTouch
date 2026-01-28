@@ -2,12 +2,14 @@ from flask import Blueprint
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_required
 from flask_mail import Message, Mail
-from onetouch import mail
+from onetouch import mail, celery
 from onetouch.main.functions import send_license_expiry_notification
 from onetouch.users.routes import send_reset_email
 import logging
-from onetouch.models import User, School
+from onetouch.models import User, School, SMTPErrorLog, TransactionRecord
 from onetouch import db
+from sqlalchemy import func
+from datetime import datetime, timedelta
 
 main = Blueprint('main', __name__)
 
@@ -297,3 +299,126 @@ def users_list():
             'recordsFiltered': 0,
             'data': []
         }), 500
+
+
+@main.route('/email_monitoring')
+@login_required
+def email_monitoring():
+    """
+    Dashboard za monitoring email slanja i grešaka.
+    """
+    try:
+        from flask_wtf.csrf import generate_csrf
+        route_name = request.endpoint
+
+        # Statistika grešaka po tipu
+        error_stats = (db.session.query(
+            SMTPErrorLog.error_type,
+            func.count(SMTPErrorLog.id).label('count')
+        )
+        .filter(SMTPErrorLog.resolved == False)
+        .group_by(SMTPErrorLog.error_type)
+        .all())
+
+        # Poslednje greške (50)
+        recent_errors = (SMTPErrorLog.query
+                         .order_by(SMTPErrorLog.timestamp.desc())
+                         .limit(50)
+                         .all())
+
+        # Greške u poslednjih 24h
+        yesterday = datetime.utcnow() - timedelta(hours=24)
+        errors_24h = SMTPErrorLog.query.filter(
+            SMTPErrorLog.timestamp >= yesterday
+        ).count()
+
+        # Uspešno poslati mejlovi u poslednjih 24h
+        # Pretpostavljamo da su mejlovi poslati u poslednjih 24h oni sa debt_sent=True
+        sent_24h = TransactionRecord.query.filter(
+            TransactionRecord.debt_sent == True
+        ).count()
+
+        # Celery queue status (ako je Redis dostupan)
+        try:
+            inspect = celery.control.inspect()
+
+            active_tasks = inspect.active()
+            scheduled_tasks = inspect.scheduled()
+
+            # Broj aktivnih task-ova
+            active_count = sum(len(tasks) for tasks in (active_tasks or {}).values())
+            scheduled_count = sum(len(tasks) for tasks in (scheduled_tasks or {}).values())
+
+            queue_status = {
+                'active': active_count,
+                'scheduled': scheduled_count,
+                'workers': len(active_tasks or {})
+            }
+        except Exception as e:
+            logging.error(f'Error fetching Celery status: {str(e)}')
+            queue_status = None
+
+        return render_template(
+            'email_monitoring.html',
+            title='Email Monitoring',
+            legend='Email Monitoring Dashboard',
+            route_name=route_name,
+            csrf_token=generate_csrf(),
+            error_stats=error_stats,
+            recent_errors=recent_errors,
+            errors_24h=errors_24h,
+            sent_24h=sent_24h,
+            queue_status=queue_status
+        )
+    except Exception as e:
+        logging.error(f'Error in email_monitoring route: {str(e)}')
+        flash('Došlo je do greške prilikom učitavanja email monitoring dashboarda.', 'danger')
+        return render_template('errors/500.html'), 500
+
+
+@main.route('/resolve_smtp_error/<int:error_id>', methods=['POST'])
+@login_required
+def resolve_smtp_error(error_id):
+    """Označi SMTP grešku kao rešenu."""
+    try:
+        error = SMTPErrorLog.query.get_or_404(error_id)
+        error.resolved = True
+        db.session.commit()
+        flash('Greška označena kao rešena.', 'success')
+        return redirect(url_for('main.email_monitoring'))
+    except Exception as e:
+        logging.error(f'Error in resolve_smtp_error route: {str(e)}')
+        flash('Došlo je do greške prilikom rešavanja greške.', 'danger')
+        return redirect(url_for('main.email_monitoring'))
+
+
+@main.route('/retry_failed_email/<int:record_id>', methods=['POST'])
+@login_required
+def retry_failed_email(record_id):
+    """Ručno retry-uj neuspeo mejl."""
+    try:
+        record = TransactionRecord.query.get_or_404(record_id)
+
+        # Reset debt_sent flag
+        record.debt_sent = False
+        db.session.commit()
+
+        # Re-queue email task
+        from onetouch.tasks.email_tasks import send_email_task
+        from onetouch.transactions.functions import project_folder
+        import os
+
+        user_folder = os.path.join(project_folder, 'static', 'payment_slips', f'user_{current_user.id}')
+        file_name = f'uplatnica_{record.id}.pdf'
+
+        # Dobij database URI za ovu školu
+        database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
+
+        send_email_task.delay(record.id, user_folder, file_name, database_uri)
+
+        flash(f'Mejl za učenika {record.transaction_record_student.student_name} je ponovo queue-ovan.', 'success')
+        return redirect(url_for('main.email_monitoring'))
+    except Exception as e:
+        logging.error(f'Error in retry_failed_email route: {str(e)}')
+        flash('Došlo je do greške prilikom retry-a mejla.', 'danger')
+        return redirect(url_for('main.email_monitoring'))

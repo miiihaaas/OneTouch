@@ -287,12 +287,61 @@ class DebtWriteOff(db.Model):
     amount = db.Column(db.Float, nullable=False)
     note = db.Column(db.String(255), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
+
     # Relacije
     student = db.relationship('Student', backref='debt_writeoffs', lazy=True)
     service = db.relationship('ServiceItem', backref='writeoffs', lazy=True)
     user = db.relationship('User', backref='writeoffs_created', lazy=True)
     transaction_records = db.relationship('TransactionRecord', backref='writeoff_record', lazy=True)
+
+
+class SMTPErrorLog(db.Model):
+    """
+    Log svih SMTP grešaka pri slanju mejlova.
+    Omogućava analizu problema sa email slanjem.
+    """
+    __tablename__ = 'smtp_error_logs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    error_type = db.Column(db.String(50), nullable=False, index=True)
+    recipient_email = db.Column(db.String(255), nullable=False)
+    error_message = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    record_id = db.Column(db.Integer, db.ForeignKey('transaction_record.id'))
+    resolved = db.Column(db.Boolean, default=False, index=True)
+    task_id = db.Column(db.String(255))  # Celery task ID
+    retry_count = db.Column(db.Integer, default=0)
+
+    # Relationship
+    record = db.relationship('TransactionRecord', backref='smtp_errors')
+
+    def __repr__(self):
+        return f'<SMTPError {self.error_type} to {self.recipient_email}>'
+
+    @staticmethod
+    def log_error(error_type, recipient, error_msg, record_id=None, task_id=None, retry_count=0):
+        """
+        Helper metoda za brzo logovanje greške.
+
+        Args:
+            error_type: Tip greške (npr. 'SMTP_550', 'TIMEOUT', 'CONNECT_FAIL')
+            recipient: Email adresa primaoca
+            error_msg: Detaljna poruka greške
+            record_id: Optional ID TransactionRecord-a
+            task_id: Optional Celery task ID
+            retry_count: Broj pokušaja
+        """
+        error_log = SMTPErrorLog(
+            error_type=error_type,
+            recipient_email=recipient,
+            error_message=error_msg,
+            record_id=record_id,
+            task_id=task_id,
+            retry_count=retry_count
+        )
+        db.session.add(error_log)
+        db.session.commit()
+        return error_log
 
 
 # NAPOMENA: db.create_all() je zakomentarisan jer koristimo Flask-Migrate za upravljanje šemom baze

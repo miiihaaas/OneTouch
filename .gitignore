@@ -6,6 +6,14 @@
 #TODO: komanda za brisanje fajlova sa gita: git rm -r --cached .\your\file\destination\file.extension
 PREDLOG_IMPLEMENTACIJE_DOBAVLJACKE_FAKTURE.md
 PLAN_IMPLEMENTACIJE_EMAIL_OPCIJA.md
+CELERY_IMPLEMENTATION_PLAN.md
+celery_redis_implementacija.md
+celerybeat-schedule-shm
+celerybeat-schedule-wal
+PRODUCTION_DEPLOYMENT_GUIDE.md
+PRODUCTION_DEPLOYMENT_GUIDE.md
+server_testiranje.txt
+
 .claude/
 instance/
 # run.py
