@@ -66,6 +66,11 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
         student = record.transaction_record_student
         school = session.query(School).first()
 
+        # DEBUG: Provera koji podaci se koriste
+        logger.info(f'[Payment Task {self.request.id}] DEBUG database_uri: {database_uri}')
+        logger.info(f'[Payment Task {self.request.id}] DEBUG school from session: {school.school_name if school else "None"}')
+        logger.info(f'[Payment Task {self.request.id}] DEBUG school_info param: {school_info}')
+
         # 2. VALIDACIJA
         if not student.parent_email or not student.send_mail:
             logger.info(f'[Payment Task {self.request.id}] Student {student.id} has no email or send_mail=False')
@@ -96,6 +101,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
 
         try:
             payment_data = prepare_payment_data(record, purpose_of_payment, school_info, school)
+            logger.info(f'[Payment Task {self.request.id}] DEBUG primalac after prepare: {payment_data["primalac"]}')
             qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
 
             # Generiši QR kod (HTTP zahtev - potencijalno sporo!)
