@@ -95,7 +95,7 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
         )
 
         try:
-            payment_data = prepare_payment_data(record, purpose_of_payment, school_info)
+            payment_data = prepare_payment_data(record, purpose_of_payment, school_info, school)
             qr_data = prepare_qr_data(payment_data, payment_data['primalac'])
 
             # Generiši QR kod (HTTP zahtev - potencijalno sporo!)

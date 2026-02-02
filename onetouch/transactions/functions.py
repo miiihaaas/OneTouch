@@ -372,11 +372,12 @@ def export_payment_stats(data):
     return file_name
 
 
-def prepare_payment_data(record, purpose_of_payment, school_info):
+def prepare_payment_data(record, purpose_of_payment, school_info, school=None):
     """Priprema podatke za uplatnicu iz zapisa."""
     
     # Dobavi podatke o bankovnom računu
-    school = School.query.first()
+    if school is None:
+        school = School.query.first()   # fallback za pozive iz ruta
     bank_account_number = record.transaction_record_service_item.bank_account
     
     # Pronađi podaci o primaocu iz bankovnog računa
