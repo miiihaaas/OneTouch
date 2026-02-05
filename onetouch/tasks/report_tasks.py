@@ -53,10 +53,10 @@ def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_servic
         logger.info(f'[Report Task {self.request.id}] Starting for student {student_id}')
 
         # 1. UČITAJ PODATKE
-        from onetouch.overviews.routes import get_filtered_transactions_data
+        from onetouch.overviews.functions import get_filtered_transactions_data
 
         services_with_positive_saldo, selected_service_names, student = get_filtered_transactions_data(
-            student_id, selected_services, min_debt_amount
+            student_id, selected_services, min_debt_amount, session=session
         )
 
         if not student:
@@ -74,7 +74,7 @@ def generate_pdf_reports_task(self, student_id, min_debt_amount, selected_servic
 
         # 2. GENERIŠI PRVI PDF - LISTA DUGOVANJA
         from onetouch.transactions.functions import add_fonts, project_folder
-        from onetouch.overviews.routes import add_filter_info_to_pdf
+        from onetouch.overviews.functions import add_filter_info_to_pdf
 
         pdf = FPDF()
         add_fonts(pdf)
