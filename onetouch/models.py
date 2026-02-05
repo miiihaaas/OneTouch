@@ -319,7 +319,7 @@ class SMTPErrorLog(db.Model):
         return f'<SMTPError {self.error_type} to {self.recipient_email}>'
 
     @staticmethod
-    def log_error(error_type, recipient, error_msg, record_id=None, task_id=None, retry_count=0):
+    def log_error(error_type, recipient, error_msg, record_id=None, task_id=None, retry_count=0, session=None):
         """
         Helper metoda za brzo logovanje greške.
 
@@ -330,6 +330,7 @@ class SMTPErrorLog(db.Model):
             record_id: Optional ID TransactionRecord-a
             task_id: Optional Celery task ID
             retry_count: Broj pokušaja
+            session: Optional SQLAlchemy sesija (za Celery taskove)
         """
         error_log = SMTPErrorLog(
             error_type=error_type,
@@ -339,8 +340,9 @@ class SMTPErrorLog(db.Model):
             task_id=task_id,
             retry_count=retry_count
         )
-        db.session.add(error_log)
-        db.session.commit()
+        target_session = session if session is not None else db.session
+        target_session.add(error_log)
+        target_session.commit()
         return error_log
 
 
