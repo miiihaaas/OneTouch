@@ -178,7 +178,8 @@ def send_email_task(self, record_id, user_folder, file_name, database_uri):
                 error_msg=error_msg,
                 record_id=record_id,
                 task_id=self.request.id,
-                retry_count=self.request.retries
+                retry_count=self.request.retries,
+                session=session
             )
 
             # Rollback debt_sent flag
@@ -208,7 +209,8 @@ def send_email_task(self, record_id, user_folder, file_name, database_uri):
                 error_msg=str(e),
                 record_id=record_id,
                 task_id=self.request.id,
-                retry_count=self.request.retries
+                retry_count=self.request.retries,
+                session=session
             )
 
             # Rollback debt_sent flag
@@ -231,7 +233,8 @@ def send_email_task(self, record_id, user_folder, file_name, database_uri):
                 error_msg=f'Failed after {self.max_retries} attempts: {str(e)}',
                 record_id=record_id,
                 task_id=self.request.id,
-                retry_count=self.max_retries
+                retry_count=self.max_retries,
+                session=session
             )
         except Exception as log_error:
             logger.error(f'[Task {self.request.id}] Failed to log error: {str(log_error)}')
@@ -367,7 +370,8 @@ def send_report_email_task(self, student_id, report_type, user_folder, file_name
                 recipient=parent_email,
                 error_msg=error_msg,
                 task_id=self.request.id,
-                retry_count=self.request.retries
+                retry_count=self.request.retries,
+                session=session
             )
 
             # Retry za određene greške

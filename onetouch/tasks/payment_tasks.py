@@ -238,7 +238,8 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
                 error_msg=error_msg,
                 record_id=record_id,
                 task_id=self.request.id,
-                retry_count=self.request.retries
+                retry_count=self.request.retries,
+                session=session
             )
 
             # Rollback debt_sent flag
@@ -273,7 +274,8 @@ def generate_and_send_payment_task(self, record_id, purpose_of_payment, school_i
                 error_msg=f'Failed after {self.max_retries} attempts: {str(e)}',
                 record_id=record_id,
                 task_id=self.request.id,
-                retry_count=self.max_retries
+                retry_count=self.max_retries,
+                session=session
             )
         except Exception as log_error:
             logger.error(f'[Payment Task {self.request.id}] Failed to log error: {str(log_error)}')
