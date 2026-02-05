@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, url_for, flash, redirect, request,
 from flask_login import login_required, current_user
 from onetouch.models import Student, ServiceItem, Teacher, User, TransactionRecord, School
 from onetouch.transactions.functions import gen_report_student, gen_report_school, gen_report_student_list, send_mail, add_fonts
-from onetouch.overviews.functions import get_filtered_transactions_data, add_filter_info_to_pdf
+from onetouch.overviews.functions import get_filtered_transactions_data, add_filter_info_to_pdf, generate_debt_report_pdfs
 from flask_mail import Message
 from onetouch import mail, app
 from sqlalchemy.exc import SQLAlchemyError
@@ -1086,16 +1086,11 @@ def generate_pdf_reports(student_id):
         os.makedirs(user_folder, exist_ok=True)
 
         # Sinhrono generisanje PDF izveštaja
-        from onetouch.tasks.report_tasks import generate_pdf_reports_task
+        school = School.query.first()
 
-        database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
-
-        result = generate_pdf_reports_task.run(
-            student_id=student_id,
-            min_debt_amount=min_debt_amount,
-            selected_services=selected_services,
-            user_folder=user_folder,
-            database_uri=database_uri
+        result = generate_debt_report_pdfs(
+            services_with_positive_saldo, selected_service_names,
+            student, school, user_folder, student_id, min_debt_amount
         )
 
         if result.get('status') != 'success':
