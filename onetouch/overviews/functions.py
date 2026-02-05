@@ -2,7 +2,7 @@ from onetouch.models import Student, ServiceItem, TransactionRecord
 from datetime import datetime
 
 
-def get_filtered_transactions_data(student_id, selected_services=None, min_debt_amount=0):
+def get_filtered_transactions_data(student_id, selected_services=None, min_debt_amount=0, session=None):
     """
     Dobavlja i filtrira podatke o transakcijama za učenika.
     
@@ -18,10 +18,18 @@ def get_filtered_transactions_data(student_id, selected_services=None, min_debt_
             - student: Objekat učenika
     """
     # Dobavljanje podataka o učeniku
-    student = Student.query.get_or_404(student_id)
+    if session is not None:
+        student = session.query(Student).get(student_id)
+        if not student:
+            return [], [], None
+    else:
+        student = Student.query.get_or_404(student_id)
     
     # Filter za transakcije - osnovna pretraga po učeniku
-    query = TransactionRecord.query.filter_by(student_id=student_id)
+    if session is not None:
+        query = session.query(TransactionRecord).filter_by(student_id=student_id)
+    else:
+        query = TransactionRecord.query.filter_by(student_id=student_id)
     
     # Dodatni filter po izabranim uslugama
     selected_service_names = []
@@ -31,7 +39,10 @@ def get_filtered_transactions_data(student_id, selected_services=None, min_debt_
             query = query.filter(TransactionRecord.service_item_id.in_(service_ids))
             
             # Prikupljanje naziva izabranih usluga za prikaz
-            service_items = ServiceItem.query.filter(ServiceItem.id.in_(service_ids)).all()
+            if session is not None:
+                service_items = session.query(ServiceItem).filter(ServiceItem.id.in_(service_ids)).all()
+            else:
+                service_items = ServiceItem.query.filter(ServiceItem.id.in_(service_ids)).all()
             selected_service_names = [f"{item.service_item_service.service_name} - {item.service_item_name}" for item in service_items]
     
     # Izvršavanje upita

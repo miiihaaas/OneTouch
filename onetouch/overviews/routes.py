@@ -1085,23 +1085,25 @@ def generate_pdf_reports(student_id):
         user_folder = f'{project_folder}/static/reports/user_{student_id}'
         os.makedirs(user_folder, exist_ok=True)
 
-        # QUEUE-UJ ASINHRONI TASK ZA GENERISANJE PDF-OVA! 🚀
+        # Sinhrono generisanje PDF izveštaja
         from onetouch.tasks.report_tasks import generate_pdf_reports_task
 
-        # Dobij database URI za ovu školu
         database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
 
-        generate_pdf_reports_task.delay(
-            student_id=student_id,
-            min_debt_amount=min_debt_amount,
-            selected_services=selected_services,
-            user_folder=user_folder,
-            database_uri=database_uri
-        )
+        result = generate_pdf_reports_task.apply(kwargs={
+            'student_id': student_id,
+            'min_debt_amount': min_debt_amount,
+            'selected_services': selected_services,
+            'user_folder': user_folder,
+            'database_uri': database_uri
+        }).get()
 
-        logging.info(f'Queued PDF report generation task for student {student_id}')
+        if result.get('status') != 'success':
+            flash(result.get('message', 'Greška pri generisanju PDF izveštaja.'), 'danger')
+            return redirect(url_for('overviews.overview_debts'))
 
-        # Priprema linkova za PDF fajlove (biće dostupni kada task završi)
+        logging.info(f'PDF izveštaji uspešno generisani za učenika {student_id}')
+
         pdf_links = [
             {
                 'name': 'Lista dugovanja',
@@ -1113,11 +1115,9 @@ def generate_pdf_reports(student_id):
             }
         ]
 
-        # REQUEST ZAVRŠAVA ZA < 1 SEKUNDU! 🚀🚀🚀
-        # PDF-ovi se generišu u pozadini
         return render_template('operation_success.html',
-                            title='PDF izveštaji se generišu',
-                            message='PDF izveštaji se generišu u pozadini. Fajlovi će biti dostupni za download za nekoliko sekundi. Možete kliknuti na linkove ispod.',
+                            title='PDF izveštaji su generisani',
+                            message='PDF izveštaji su uspešno generisani. Kliknite na linkove ispod za preuzimanje.',
                             pdf_links=pdf_links,
                             auto_close=False)
 
