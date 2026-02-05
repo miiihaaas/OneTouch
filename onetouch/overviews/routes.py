@@ -1090,13 +1090,13 @@ def generate_pdf_reports(student_id):
 
         database_uri = os.getenv('SQLALCHEMY_DATABASE_URI')
 
-        result = generate_pdf_reports_task.apply(kwargs={
-            'student_id': student_id,
-            'min_debt_amount': min_debt_amount,
-            'selected_services': selected_services,
-            'user_folder': user_folder,
-            'database_uri': database_uri
-        }).get()
+        result = generate_pdf_reports_task.run(
+            student_id=student_id,
+            min_debt_amount=min_debt_amount,
+            selected_services=selected_services,
+            user_folder=user_folder,
+            database_uri=database_uri
+        )
 
         if result.get('status') != 'success':
             flash(result.get('message', 'Greška pri generisanju PDF izveštaja.'), 'danger')
