@@ -483,7 +483,7 @@ def payments_archive_list():
         if not school:
             raise ValueError("Škola nije pronađena u bazi podataka")
         
-        bank_accounts = [bank_account['reference_number_spiri'][2:11] for bank_account in school.school_bank_accounts['bank_accounts']]
+        bank_accounts = [bank_account['reference_number_spiri'][2:11] if bank_account['reference_number_spiri'] else bank_account['bank_account_number'] for bank_account in school.school_bank_accounts['bank_accounts']]
         
         filtered_bank_account_number = request.args.get('bank_account')
         start_date = request.args.get('start_date')
