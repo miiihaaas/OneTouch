@@ -93,9 +93,9 @@
             <td><a class="btn btn-primary loading" href="{{url_for('overviews.overview_student', student_id=record.transaction_record_student.id)}}">{{ record.transaction_record_student.student_name }} {{ record.transaction_record_student.student_surname }}</a></td>
             <td>{{ "{:04d}-{:03d}".format(record.student_id, record.service_item_id) }}</td>
             <td>{{ record.transaction_record_student_debt.student_debt_service_item.service_item_service.service_name }} - {{ record.transaction_record_student_debt.student_debt_service_item.service_item_name }}</td>
-            <td style="text-align: center;" id="kolicina_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ record.student_debt_amount }}</td>
+            <td><input style="text-align: center;" id="kolicina_{{ record.transaction_record_student.id }}" class="form-control edit-cell" type="number" step="1" min="0" data-id="{{ record.transaction_record_student.id }}" value="{{ record.student_debt_amount }}"></td>
             <td style="text-align: right;" id="installment_{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.studetn_debt_installment_value) }}</td>
-            <td style="text-align: right;" id="olaksice_{{ record.transaction_record_student.id }}" contenteditable="true" class="edit-cell" data-id="{{ record.transaction_record_student.id }}">{{ "{:.2f}".format(record.student_debt_discount)}}</td>
+            <td><input style="text-align: right;" id="olaksice_{{ record.transaction_record_student.id }}" class="form-control edit-cell" type="number" step="0.01" min="0" data-id="{{ record.transaction_record_student.id }}" value="{{ "{:.2f}".format(record.student_debt_discount) }}"></td>
             <td style="text-align: right;" id="iznos_zaduženja_{{ record.transaction_record_student.id }}" class="iznos-zaduzenja">{{ "{:.2f}".format(record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount)}}</td>
             <td  style="text-align: right;">
                 {% if (record.student_debt_amount * record.studetn_debt_installment_value - record.student_debt_discount) > 0 %}
@@ -269,7 +269,7 @@
             var kolicinaElems = document.querySelectorAll('[id^="kolicina_"]');
             
             kolicinaElems.forEach(function(elem) {
-                var kolicina = parseFloat(elem.textContent || 0);
+                var kolicina = parseFloat(elem.value || 0);
                 if (kolicina > 0) {
                     count++;
                 }
@@ -401,8 +401,8 @@ $(document).ready(function() {
         // Postavljanje događaja nakon izmjene ćelija "Količina" i "Olakšica"
         $('.edit-cell').on('input', function() {
             var id = $(this).data('id');
-            var kolicina = parseFloat($('#kolicina_' + id).text());
-            var olaksice = parseFloat($('#olaksice_' + id).text());
+            var kolicina = parseFloat($('#kolicina_' + id).val());
+            var olaksice = parseFloat($('#olaksice_' + id).val());
             var iznosRate = parseFloat($('#installment_' + id).text());
             console.log('test vrednosti radte: ', parseFloat($('#installment').val()))
             var iznosZaduzenja = (kolicina * iznosRate) - olaksice;
@@ -458,7 +458,7 @@ $(document).ready(function() {
                 // console.log('student_id: ', studentId)
                 
                 var quantityCell = rows[i].querySelector('[id^="kolicina_"]');
-                var quantity = parseInt(quantityCell.textContent); // ovaj podatak mi treba
+                var quantity = parseInt(quantityCell.value); // ovaj podatak mi treba
                 console.log('red: ', quantityCell);
                 console.log('red, vrednost količina: ', quantity);
 
@@ -470,7 +470,7 @@ $(document).ready(function() {
                 // console.log('red, vrednost iznos: ', installmentValue);
 
                 var olaksicaCell = rows[i].querySelector('[id^="olaksice_"]');
-                var olaksica = parseFloat(olaksicaCell.textContent);
+                var olaksica = parseFloat(olaksicaCell.value);
                 console.log('red, vrednost olakšica: ', olaksica);
 
                 records.push({
