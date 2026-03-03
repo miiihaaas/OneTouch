@@ -1019,7 +1019,6 @@ def send_student_report_email(student_id):
 
         # QUEUE-UJ ASINHRONI EMAIL TASK
         from onetouch.tasks.email_tasks import send_report_email_task
-        import os
 
         try:
             # Konvertuj datume u string format za task
