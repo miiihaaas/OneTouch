@@ -9,7 +9,7 @@ from flask import Blueprint
 from flask_login import login_required, current_user
 
 from onetouch import db, bcrypt
-from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer, DebtWriteOff
+from onetouch.models import Teacher, Student, ServiceItem, StudentDebt, StudentPayment, School, TransactionRecord, User, FundTransfer, DebtWriteOff, Supplier, Service
 from onetouch.transactions.functions import izvuci_poziv_na_broj_iz_svrhe_uplate, provera_validnosti_poziva_na_broj, uplatnice_gen, export_payment_stats, gen_debt_report, uplatnice_gen_selected, prepare_payment_data, prepare_qr_data, generate_qr_code, setup_pdf_page, add_payment_slip_content, PDF, add_fonts, cleanup_qr_codes, project_folder
 from onetouch.overviews.functions import get_filtered_transactions_data
 from sqlalchemy.exc import SQLAlchemyError
@@ -1631,6 +1631,34 @@ def posting_payment():
                     number_of_errors = 0
                     student_ids = [str(student.id).zfill(4) for student in Student.query.all()]
                     service_item_ids = [str(service_item.id).zfill(3) for service_item in ServiceItem.query.all()]
+
+                    #! Provera da li postoji ServiceItem sa id=0 (za greške/ignorisane uplatnice)
+                    error_service_item = ServiceItem.query.get(0)
+                    if not error_service_item:
+                        error_supplier = Supplier.query.get(0)
+                        if not error_supplier:
+                            error_supplier = Supplier(id=0, supplier_name='Greška', archived=True)
+                            db.session.add(error_supplier)
+                            db.session.commit()
+                        error_service = Service.query.get(0)
+                        if not error_service:
+                            error_service = Service(id=0, service_name='Greška', payment_per_unit='komad', supplier_id=0)
+                            db.session.add(error_service)
+                            db.session.commit()
+                        error_service_item = ServiceItem(
+                            id=0,
+                            service_item_name='Greška',
+                            service_item_date=datetime.now(),
+                            supplier_id=0,
+                            service_id=0,
+                            bank_account='0',
+                            reference_number_spiri='',
+                            price=0,
+                            installment_number=0
+                        )
+                        db.session.add(error_service_item)
+                        db.session.commit()
+
                     for record in records:
                         payer = record['uplatilac']
                         purpose_of_payment = record['svrha_uplate']
