@@ -228,3 +228,7 @@ $RECYCLE.BIN/
 
 # windsurf rules
 .windsurfrules
+
+docs/
+izvestaj_slanja_*
+convert_md_to_pdf.py

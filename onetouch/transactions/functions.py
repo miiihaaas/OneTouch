@@ -444,7 +444,7 @@ def prepare_qr_data(payment_data, school_info):
 
     racun = payment_data['racun_primaoca'].replace('-', '')
     racun = racun[:3] + racun[3:].zfill(15)
-    dug = "RSD" + str(payment_data['iznos']).replace('.', ',')
+    dug = "RSD" + f"{float(payment_data['iznos']):.2f}".replace('.', ',')
     
     # Koristi primalac iz payment_data umesto school_info
     primalac_name = payment_data['primalac'].split('\r\n')[0]  # Uzima samo prvu liniju za QR kod
@@ -588,7 +588,7 @@ def add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_us
     pdf.multi_cell(7,6, f"", new_y='LAST', align='L', border=0)
     pdf.multi_cell(13,6, f"RSD", new_y='LAST', align='L', border=1)
     pdf.multi_cell(10,6, f"", new_y='LAST', align='L', border=0)
-    pdf.multi_cell(22,6, f"{uplatnica['iznos']}", new_y='NEXT', align='L', border=1)
+    pdf.multi_cell(22,6, f"{float(uplatnica['iznos']):.2f}", new_y='NEXT', align='L', border=1)
     
     pdf.set_x(73)
     pdf.set_font('DejaVuSansCondensed', '', 8)
@@ -622,7 +622,7 @@ def add_payment_slip_content(pdf, uplatnica, y, y_qr, project_folder, current_us
     pdf.multi_cell(7,6, f"", new_y='LAST', align='L', border=0)
     pdf.multi_cell(13,6, f"RSD", new_y='LAST', align='L', border=1)
     pdf.multi_cell(10,6, f"", new_y='LAST', align='L', border=0)
-    pdf.multi_cell(22,6, f"{uplatnica['iznos']}", new_y='NEXT', align='L', border=1)
+    pdf.multi_cell(22,6, f"{float(uplatnica['iznos']):.2f}", new_y='NEXT', align='L', border=1)
     
     pdf.set_x(141)
     pdf.set_font('DejaVuSansCondensed', '', 8)
