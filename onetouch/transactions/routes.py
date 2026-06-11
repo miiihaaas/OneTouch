@@ -662,11 +662,14 @@ def service_total_payment_slip(service_id, student_id):
                 logging.error(f'Greška pri obradi transakcije (ID: {record.id}): {str(e)}')
                 continue
                 
-        # Sortiramo podatke po datumu
+        # Sortiramo podatke po datumu (radi prikaza/loga, ne za računanje salda)
         data.sort(key=lambda x: x['date'])
-        
-        # Uzimamo saldo iz poslednje transakcije
-        remaining_balance = data[-1]['saldo'] if data else 0
+
+        # Preostali dug = zbir svih zaduženja minus zbir svih uplata.
+        # Ne oslanjamo se na data[-1]['saldo'] jer se kumulativ računa u redosledu upita,
+        # a sortiranje po datumu može da pomeri poslednji element (uplata ima raniji
+        # datum ali viši id), pa data[-1] ne bi bio pravi konačni saldo.
+        remaining_balance = sum(d['debt_amount'] for d in data) - sum(d['payment_amount'] for d in data)
         
         print(f'{data=}')
         print(f'{remaining_balance=}')
